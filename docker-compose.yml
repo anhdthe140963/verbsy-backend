@@ -1,12 +1,12 @@
 version: '3'
 services:
   db:
-    container_name: verbsy_backend
+    container_name: verbsy_db
     image: mysql:5.7.22
     restart: unless-stopped
     tty: true
     ports:
-      - 11306:3306
+      - 11305:3306
     environment:
       MYSQL_DATABASE: verbsy_backend
       MYSQL_USER: root
@@ -16,7 +16,7 @@ services:
       SERVICE_NAME: mysql
     volumes:
       - dbdata:/var/lib/mysql/
-      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./docker/mysql/my.cnf:/etc/mysql/my.conf
     networks:
       - app-network
 
@@ -30,12 +30,12 @@ services:
       PMA_HOST: db
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: password
+      PMA_PASSWORD: anhdeptrai
       PMA_ARBITRARY: 1
       UPLOAD_LIMIT: 300M
     restart: always
     ports:
-      - 11307:80
+      - 9999:80
     networks:
       - app-network
 

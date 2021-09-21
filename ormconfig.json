@@ -1,0 +1,10 @@
+{
+  "type": "mysql",
+  "host": "localhost",
+  "port": "11305",
+  "username": "root",
+  "password": "anhdeptrai",
+  "synchronize": true,
+  "database": "verbsy_backend",
+  "entities": ["dist/**/*.entity{.ts,.js}"]
+}
