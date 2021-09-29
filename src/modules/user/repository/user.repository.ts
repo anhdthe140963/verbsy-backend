@@ -22,7 +22,7 @@ export class UserRepository extends Repository<User> {
         email: logInDto.email,
       })
       .getOne();
-    if (user.validatePassword(logInDto.password)) {
+    if (user && (await user.validatePassword(logInDto.password))) {
       return user;
     }
     return null;
