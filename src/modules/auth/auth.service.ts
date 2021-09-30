@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { GetUserDto } from '../user/dto/get-user.dto';
 import { UserRepository } from '../user/repository/user.repository';
 import { LogInDto } from './dto/log-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -14,22 +15,43 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto): Promise<{ accessToken }> {
+  async signUp(signUpDto: SignUpDto): Promise<{ user; accessToken }> {
     const user = await this.userRepository.createUser(signUpDto);
     const payload: JwtPayload = { email: user.email };
     const accessToken = await this.jwtService.sign(payload);
-    return { accessToken: accessToken };
+
+    //set data for user info
+    const getUserDto = new GetUserDto();
+    getUserDto.username = user.username;
+    getUserDto.fullName = user.fullName;
+    getUserDto.email = user.email;
+    getUserDto.phone = user.phone;
+    getUserDto.id = user.id;
+    getUserDto.role = user.role;
+    getUserDto.avatar = user.avatar;
+    return { user: getUserDto, accessToken: accessToken };
   }
 
-  async logIn(logInDto: LogInDto): Promise<{ accessToken }> {
+  async logIn(logInDto: LogInDto): Promise<{ user; accessToken }> {
     const user = await this.userRepository.validate(logInDto);
+    //check if user is authenticated
     if (!user) {
       throw new UnauthorizedException('Invalid Credentials');
     }
     const email = user.email;
     const payload: JwtPayload = { email };
     const accessToken = await this.jwtService.sign(payload);
+    //set data for user info
+    const getUserDto = new GetUserDto();
+    getUserDto.username = user.username;
+    getUserDto.fullName = user.fullName;
+    getUserDto.email = user.email;
+    getUserDto.phone = user.phone;
+    getUserDto.id = user.id;
+    getUserDto.role = user.role;
+    getUserDto.avatar = user.avatar;
     return {
+      user: getUserDto,
       accessToken: accessToken,
     };
   }

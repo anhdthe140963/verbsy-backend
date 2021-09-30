@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GetUserDto } from './dto/get-user.dto';
-import { User } from './entity/user.entity';
 import { UserRepository } from './repository/user.repository';
 
 @Injectable()
