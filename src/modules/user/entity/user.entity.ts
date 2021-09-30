@@ -20,8 +20,8 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ name: 'role_id', type: 'tinyint', default: 2 })
-  roleId: number;
+  @Column({ name: 'role', type: 'tinyint', default: 2 })
+  role: number;
 
   @Column({ type: 'text', nullable: true })
   avatar: string;
