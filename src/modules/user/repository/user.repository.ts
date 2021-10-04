@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { LogInDto } from 'src/modules/auth/dto/log-in.dto';
 import { SignUpDto } from 'src/modules/auth/dto/sign-up.dto';
@@ -7,6 +8,12 @@ import { User } from '../entity/user.entity';
 export class UserRepository extends Repository<User> {
   async createUser(signUpDto: SignUpDto) {
     const { email, username, password } = signUpDto;
+    const userByEmailorUsername = this.find({
+      where: [{ email: email }, { username: username }],
+    });
+    if (userByEmailorUsername) {
+      throw new BadRequestException('Duplicated username or email');
+    }
     const user = new User();
     user.username = username;
     user.email = email;
