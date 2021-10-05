@@ -3,5 +3,7 @@ export class SignUpDto {
 
   username: string;
 
+  fullname: string;
+
   password: string;
 }

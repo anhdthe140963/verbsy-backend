@@ -22,6 +22,7 @@ export class QuestionService {
     question.answer = createQuestionDto.answer;
     question.type = createQuestionDto.type;
     question.duration = createQuestionDto.duration;
+    question.imageUrl = createQuestionDto.imageUrl;
     return await question.save();
   }
 

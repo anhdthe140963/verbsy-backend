@@ -17,6 +17,9 @@ export class Question extends BaseEntity {
   @Column({ type: 'tinyint' })
   type: number;
 
+  @Column({ name: 'image_url', type: 'text' })
+  imageUrl: string;
+
   @Column()
   duration: number;
 }

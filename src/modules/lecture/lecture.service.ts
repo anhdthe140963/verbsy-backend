@@ -18,7 +18,6 @@ export class LectureService {
     lecture.name = createLectureDto.name;
     lecture.publicity = createLectureDto.publicity;
     lecture.content = createLectureDto.content;
-    lecture.description = createLectureDto.description;
     lecture.ownerId = createLectureDto.ownerId;
     return await lecture.save();
   }

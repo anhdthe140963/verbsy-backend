@@ -7,16 +7,18 @@ import { User } from '../entity/user.entity';
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
   async createUser(signUpDto: SignUpDto) {
-    const { email, username, password } = signUpDto;
-    const userByEmailorUsername = this.find({
+    const { email, username, password, fullname } = signUpDto;
+    const userByEmailorUsername = await this.find({
       where: [{ email: email }, { username: username }],
     });
-    if (userByEmailorUsername) {
+    //check if username or email is duplicated
+    if (userByEmailorUsername.length != 0) {
       throw new BadRequestException('Duplicated username or email');
     }
     const user = new User();
     user.username = username;
     user.email = email;
+    user.fullName = fullname;
     user.salt = await bcrypt.genSalt();
     user.password = await this.hashPassword(password, user.salt);
     await user.save();
@@ -25,8 +27,8 @@ export class UserRepository extends Repository<User> {
 
   async validate(logInDto: LogInDto) {
     const user = await this.createQueryBuilder()
-      .where('email = :email', {
-        email: logInDto.email,
+      .where('username = :username', {
+        username: logInDto.username,
       })
       .getOne();
     if (user && (await user.validatePassword(logInDto.password))) {

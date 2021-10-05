@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -11,10 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { UpdateResult } from 'typeorm';
 import { CreateQuestionDto } from './dto/question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { Question } from './entity/question.entity';
 import { QuestionService } from './question.service';
 
 @Controller('question')
@@ -26,8 +25,14 @@ export class QuestionController {
   @Post()
   async createQuestion(
     @Body() createQuestionDto: CreateQuestionDto,
-  ): Promise<Question> {
-    return await this.questionService.createQuestion(createQuestionDto);
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.questionService.createQuestion(createQuestionDto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: null,
+      data: data,
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -35,8 +40,14 @@ export class QuestionController {
   @Get(':questionId')
   async getQuestionDetail(
     @Param('questionId') questionId: number,
-  ): Promise<Question> {
-    return await this.questionService.getQuestionDetail(questionId);
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.questionService.getQuestionDetail(questionId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: null,
+      data: data,
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -45,10 +56,12 @@ export class QuestionController {
   async updateQuestion(
     @Param('questionId') questionId: number,
     @Body() updateQuestionDto: UpdateQuestionDto,
-  ): Promise<UpdateResult> {
-    return await this.questionService.updateQuestion(
-      questionId,
-      updateQuestionDto,
-    );
+  ): Promise<{ statusCode; error; message }> {
+    await this.questionService.updateQuestion(questionId, updateQuestionDto);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: null,
+    };
   }
 }
