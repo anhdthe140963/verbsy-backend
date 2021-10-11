@@ -6,13 +6,16 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Role } from 'src/constant/role.enum';
-import { Roles } from 'src/decorator/roles.decorator';
-import { RolesGuard } from 'src/guards/roles.guard';
+import { PaginationEnum } from '../../constant/pagination.enum';
+import { Role } from '../../constant/role.enum';
+import { Roles } from '../../decorator/roles.decorator';
+import { RolesGuard } from '../../guards/roles.guard';
 import { CreateLectureDto } from './dto/create-lecture.dto';
+import { GetLecturesFilter } from './dto/get-lectures.filter';
 import { UpdateLectureDto } from './dto/update-lecture.dto';
 import { LectureService } from './lecture.service';
 
@@ -37,26 +40,16 @@ export class LectureController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Get(':lectureId')
-  async getLectureDetail(
-    @Param('lectureId') lectureId: number,
-  ): Promise<{ statusCode; error; message; data }> {
-    const data = await this.lectureService.getLectureDetail(lectureId);
-    return {
-      statusCode: HttpStatus.OK,
-      error: null,
-      message: null,
-      data: data,
-    };
-  }
-
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
-  @Get(':lectureId')
+  @Get('list')
   async getLectureList(
-    @Param('lectureId') lectureId: number,
+    @Query() filter: GetLecturesFilter,
   ): Promise<{ statusCode; error; message; data }> {
-    const data = await this.lectureService.getLectureDetail(lectureId);
+    filter.page = filter.page ? filter.page : PaginationEnum.DefaultPage;
+    filter.limit = filter.limit ? filter.limit : PaginationEnum.DefaultLimit;
+    const data = await this.lectureService.getLectureList(
+      { page: filter.page, limit: filter.limit },
+      filter.ownerId,
+    );
     return {
       statusCode: HttpStatus.OK,
       error: null,
@@ -68,7 +61,7 @@ export class LectureController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':lectureId')
-  async updateQuestion(
+  async update(
     @Param('lectureId') lectureId: number,
     @Body() updateLectureDto: UpdateLectureDto,
   ): Promise<{ statusCode; error; message }> {
@@ -77,6 +70,20 @@ export class LectureController {
       statusCode: HttpStatus.OK,
       error: null,
       message: null,
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get(':lectureId')
+  async getLectureDetail(
+    @Param('lectureId') lectureId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.lectureService.getLectureDetail(lectureId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: null,
+      data: data,
     };
   }
 }
