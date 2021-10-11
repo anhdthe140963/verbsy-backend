@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -85,5 +86,15 @@ export class LectureController {
       message: null,
       data: data,
     };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Delete(':lectureId')
+  async delete(
+    @Param('lectureId') lectureId: number,
+  ): Promise<{ statusCode; error; message }> {
+    await this.lectureService.delete(lectureId);
+    return { statusCode: HttpStatus.OK, error: null, message: null };
   }
 }

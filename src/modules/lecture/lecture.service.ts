@@ -63,4 +63,13 @@ export class LectureService {
     }
     return paginate<Lecture>(query, options);
   }
+
+  async delete(lectureId: number) {
+    const data = await this.lectureRepository.findOne({ id: lectureId });
+    //check if lecture exist
+    if (!data) {
+      throw new BadRequestException('Lecture does not exist');
+    }
+    await this.lectureRepository.delete({ id: lectureId });
+  }
 }

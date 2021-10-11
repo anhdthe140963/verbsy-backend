@@ -7,6 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { AuthModule } from '../auth/auth.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([QuestionRepository]),
+    TypeOrmModule.forFeature([QuestionRepository, LectureRepository]),
     AuthModule,
   ],
   controllers: [QuestionController],
