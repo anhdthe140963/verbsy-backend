@@ -25,12 +25,11 @@ export class QuestionService {
     createQuestionDto: CreateQuestionDto,
   ): Promise<Question> {
     const question = new Question();
-    question.lectureId = createQuestionDto.lectureId;
-    question.question = createQuestionDto.question;
-    question.answer = createQuestionDto.answer;
-    question.type = createQuestionDto.type;
+    question.answers = createQuestionDto.answers;
     question.duration = createQuestionDto.duration;
     question.imageUrl = createQuestionDto.imageUrl;
+    question.lectureId = createQuestionDto.lectureId;
+    question.question = createQuestionDto.question;
     return await question.save();
   }
 

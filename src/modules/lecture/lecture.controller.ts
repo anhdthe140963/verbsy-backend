@@ -34,7 +34,7 @@ export class LectureController {
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
-      message: null,
+      message: 'Lecture created',
       data: data,
     };
   }
@@ -54,7 +54,7 @@ export class LectureController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Get lecture data successfully',
       data: data,
     };
   }
@@ -70,7 +70,7 @@ export class LectureController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Lecture updated',
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)
@@ -83,7 +83,7 @@ export class LectureController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Get lecture detail successfully',
       data: data,
     };
   }
@@ -95,6 +95,10 @@ export class LectureController {
     @Param('lectureId') lectureId: number,
   ): Promise<{ statusCode; error; message }> {
     await this.lectureService.delete(lectureId);
-    return { statusCode: HttpStatus.OK, error: null, message: null };
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Lecture deleted',
+    };
   }
 }

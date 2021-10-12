@@ -1,4 +1,11 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Answer } from './answer.entity';
 
 @Entity('question')
 export class Question extends BaseEntity {
@@ -11,15 +18,15 @@ export class Question extends BaseEntity {
   @Column({ type: 'text' })
   question: string;
 
-  @Column({ type: 'text' })
-  answer: string;
-
-  @Column({ type: 'tinyint' })
-  type: number;
-
   @Column({ name: 'image_url', type: 'text' })
   imageUrl: string;
 
   @Column()
   duration: number;
+
+  @OneToMany(() => Answer, (answer) => answer.question, {
+    eager: true,
+    cascade: true,
+  })
+  answers: Answer[];
 }

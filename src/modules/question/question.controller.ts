@@ -34,7 +34,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
-      message: null,
+      message: 'Question created',
       data: data,
     };
   }
@@ -49,7 +49,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Get question detail succesfully',
       data: data,
     };
   }
@@ -65,7 +65,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Question updated',
     };
   }
 
@@ -84,7 +84,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Get question data successfully',
       data: data,
     };
   }
