@@ -7,5 +7,7 @@ export class CreateQuestionDto {
 
   type: number;
 
+  imageUrl: string;
+
   duration: number;
 }
