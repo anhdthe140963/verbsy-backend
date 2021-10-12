@@ -1,13 +1,25 @@
-export class CreateQuestionDto {
+import { PartialType } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Answer } from '../entity/answer.entity';
+import { Question } from '../entity/question.entity';
+
+export class CreateQuestionDto extends PartialType(Question) {
+  @IsNotEmpty()
+  @IsNumber()
   lectureId: number;
 
+  @IsNotEmpty()
+  @IsString()
   question: string;
 
-  answer: string;
+  @IsNotEmpty()
+  answers: Answer[];
 
-  type: number;
-
+  @IsNotEmpty()
+  @IsString()
   imageUrl: string;
 
+  @IsNotEmpty()
+  @IsNumber()
   duration: number;
 }
