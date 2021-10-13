@@ -41,21 +41,6 @@ export class QuestionController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Get(':questionId')
-  async getQuestionDetail(
-    @Param('questionId') questionId: number,
-  ): Promise<{ statusCode; error; message; data }> {
-    const data = await this.questionService.getQuestionDetail(questionId);
-    return {
-      statusCode: HttpStatus.OK,
-      error: null,
-      message: 'Get question detail succesfully',
-      data: data,
-    };
-  }
-
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
   @Put(':questionId')
   async updateQuestion(
     @Param('questionId') questionId: number,
@@ -97,5 +82,19 @@ export class QuestionController {
   ): Promise<{ statusCode; error; message }> {
     await this.questionService.delete(questionId);
     return { statusCode: HttpStatus.OK, error: null, message: null };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get(':questionId')
+  async getQuestionDetail(
+    @Param('questionId') questionId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.questionService.getQuestionDetail(questionId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get question detail succesfully',
+      data: data,
+    };
   }
 }
