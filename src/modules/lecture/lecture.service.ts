@@ -51,7 +51,7 @@ export class LectureService {
   ): Promise<Pagination<Lecture>> {
     const query = this.lectureRepository
       .createQueryBuilder()
-      .orderBy('id', 'ASC');
+      .orderBy('createAt', 'DESC');
 
     if (ownerId) {
       const user = await this.userRepo.findOne(ownerId);

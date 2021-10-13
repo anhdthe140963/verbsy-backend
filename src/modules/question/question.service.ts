@@ -5,10 +5,11 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
-import { UpdateResult } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { CreateQuestionDto } from './dto/question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { Answer } from './entity/answer.entity';
 import { Question } from './entity/question.entity';
 import { QuestionRepository } from './repository/question.repository';
 
@@ -19,11 +20,18 @@ export class QuestionService {
     private questionRepo: QuestionRepository,
     @InjectRepository(LectureRepository)
     private lectureRepo: LectureRepository,
+    @InjectRepository(Answer)
+    private answerRepo: Repository<Answer>,
   ) {}
 
   async createQuestion(
     createQuestionDto: CreateQuestionDto,
   ): Promise<Question> {
+    const lecture = await this.lectureRepo.findOne(createQuestionDto.lectureId);
+    //check if user exist
+    if (!lecture) {
+      throw new BadRequestException('Lecture not exist');
+    }
     const question = new Question();
     question.answers = createQuestionDto.answers;
     question.duration = createQuestionDto.duration;
@@ -40,8 +48,52 @@ export class QuestionService {
   async updateQuestion(
     questionId: number,
     updateQuestionDto: UpdateQuestionDto,
-  ): Promise<UpdateResult> {
-    return await this.questionRepo.update(questionId, updateQuestionDto);
+  ): Promise<Question> {
+    const { lectureId, question, imageUrl, answers, duration } =
+      updateQuestionDto;
+    const questionById = await this.questionRepo.findOne(questionId);
+    //check if question by id exist
+    if (!questionById) {
+      throw new BadRequestException('Question not exist');
+    }
+    //check if lecture id need update
+    if (lectureId) {
+      const lecture = await this.lectureRepo.findOne(lectureId);
+      //check if user exist
+      if (!lecture) {
+        throw new BadRequestException('Lecture not exist');
+      }
+      questionById.lectureId = lectureId;
+    }
+    //check if question need update
+    if (question) {
+      questionById.question = question;
+    }
+    //check if imageUrl need update
+    if (imageUrl) {
+      questionById.imageUrl = imageUrl;
+    }
+    //check if duration need update
+    if (duration) {
+      questionById.duration = duration;
+    }
+    //check if answers need update
+    if (answers.length != 0) {
+      await Promise.all(
+        answers.map(async (answer) => {
+          const anwserById = await this.answerRepo.findOne(answer.id);
+          if (!anwserById) {
+            throw new BadRequestException(
+              `Answer with id ${answer.id} not exist`,
+            );
+          }
+          anwserById.content = answer.content;
+          anwserById.isCorrect = answer.isCorrect;
+          anwserById.save();
+        }),
+      );
+    }
+    return questionById.save();
   }
 
   async getQuestionList(
@@ -51,9 +103,9 @@ export class QuestionService {
     const query = this.questionRepo.createQueryBuilder().orderBy('id', 'ASC');
 
     if (lectureId) {
-      const user = await this.lectureRepo.findOne(lectureId);
+      const lecture = await this.lectureRepo.findOne(lectureId);
       //check if user exist
-      if (!user) {
+      if (!lecture) {
         throw new BadRequestException('Lecture not exist');
       }
       query.where('lecture_id = :lectureId', { lectureId: lectureId });

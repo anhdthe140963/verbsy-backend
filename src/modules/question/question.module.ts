@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { Answer } from './entity/answer.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { LectureRepository } from '../lecture/repository/lecture.repository';
         },
       }),
     }),
-    TypeOrmModule.forFeature([QuestionRepository, LectureRepository]),
+    TypeOrmModule.forFeature([QuestionRepository, LectureRepository, Answer]),
     AuthModule,
   ],
   controllers: [QuestionController],
