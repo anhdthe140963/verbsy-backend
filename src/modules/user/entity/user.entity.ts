@@ -5,16 +5,16 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Column({ name: 'username', type: 'text' })
+  @Column({ name: 'username', type: 'text', nullable: true })
   username: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column({ name: 'full_name', type: 'text', nullable: true })
   fullName: string;
 
-  @Column({ name: 'email', type: 'text' })
+  @Column({ name: 'email', type: 'text', nullable: true })
   email: string;
 
   @Column({ nullable: true })
@@ -26,7 +26,7 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   avatar: string;
 
-  @Column()
+  @Column({ nullable: true })
   salt: string;
 
   async validatePassword(password: string): Promise<boolean> {
