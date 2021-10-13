@@ -81,7 +81,11 @@ export class QuestionController {
     @Param('questionId') questionId: number,
   ): Promise<{ statusCode; error; message }> {
     await this.questionService.delete(questionId);
-    return { statusCode: HttpStatus.OK, error: null, message: null };
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Delete question successfully',
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

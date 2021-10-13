@@ -93,7 +93,7 @@ export class QuestionService {
           }
           anwserById.content = answer.content;
           anwserById.isCorrect = answer.isCorrect;
-          anwserById.save();
+          await anwserById.save();
         }),
       );
     }
@@ -117,11 +117,15 @@ export class QuestionService {
   }
 
   async delete(lectureId: number) {
-    const data = await this.questionRepo.findOne({ id: lectureId });
-    if (!data) {
-      throw new BadRequestException('Question does not exist');
+    try {
+      const data = await this.questionRepo.findOne({ id: lectureId });
+      if (!data) {
+        throw new BadRequestException('Question does not exist');
+      }
+      await this.questionRepo.delete({ id: lectureId });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
-    await this.questionRepo.delete({ id: lectureId });
   }
 
   async getAnswerList(questionId: number): Promise<Answer[]> {

@@ -18,6 +18,8 @@ export class Answer extends BaseEntity {
   @Column({ name: 'is_correct', type: 'boolean' })
   isCorrect: boolean;
 
-  @ManyToOne(() => Question, (question) => question.answers)
+  @ManyToOne(() => Question, (question) => question.answers, {
+    onDelete: 'CASCADE',
+  })
   question: Question;
 }
