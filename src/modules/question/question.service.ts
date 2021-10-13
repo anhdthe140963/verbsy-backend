@@ -104,17 +104,16 @@ export class QuestionService {
     options: IPaginationOptions,
     lectureId: number,
   ): Promise<Pagination<Question>> {
-    const query = this.questionRepo.createQueryBuilder().orderBy('id', 'ASC');
-
     if (lectureId) {
       const lecture = await this.lectureRepo.findOne(lectureId);
       //check if user exist
       if (!lecture) {
         throw new BadRequestException('Lecture not exist');
       }
-      query.where('lecture_id = :lectureId', { lectureId: lectureId });
     }
-    return paginate<Question>(query, options);
+    return paginate<Question>(this.questionRepo, options, {
+      where: `lecture_id = ${lectureId}`,
+    });
   }
 
   async delete(lectureId: number) {

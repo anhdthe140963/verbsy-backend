@@ -85,7 +85,7 @@ export class QuestionController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
   @Get('answers/:questionId')
   async getAnswerList(
     @Param('questionId') questionId: number,
@@ -99,7 +99,7 @@ export class QuestionController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
   @Get(':questionId')
   async getQuestionDetail(
     @Param('questionId') questionId: number,
