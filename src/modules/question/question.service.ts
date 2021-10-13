@@ -1,11 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { CreateQuestionDto } from './dto/question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
@@ -119,5 +123,20 @@ export class QuestionService {
       throw new BadRequestException('Question does not exist');
     }
     await this.questionRepo.delete({ id: lectureId });
+  }
+
+  async getAnswerList(questionId: number): Promise<Answer[]> {
+    try {
+      const question = await this.questionRepo.findOne(questionId);
+      if (!question) {
+        throw new BadRequestException('question does not exist');
+      }
+      return await this.answerRepo
+        .createQueryBuilder()
+        .where('questionId = :questionId', { questionId: questionId })
+        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

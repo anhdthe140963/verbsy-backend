@@ -83,6 +83,21 @@ export class QuestionController {
     await this.questionService.delete(questionId);
     return { statusCode: HttpStatus.OK, error: null, message: null };
   }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('answers/:questionId')
+  async getAnswerList(
+    @Param('questionId') questionId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get answers successfully',
+      data: await this.questionService.getAnswerList(questionId),
+    };
+  }
+
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get(':questionId')
