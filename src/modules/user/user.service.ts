@@ -1,10 +1,20 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entity/user.entity';
 import { UserRepository } from './repository/user.repository';
 import * as bcrypt from 'bcrypt';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
+import { GetUserFilter } from './dto/get-user.filter';
 @Injectable()
 export class UserService {
   constructor(
@@ -46,5 +56,18 @@ export class UserService {
     user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
     await user.save();
     return { username: username, password: randomPassword };
+  }
+
+  async getUserByFilter(
+    options: IPaginationOptions,
+    roleId: number,
+  ): Promise<Pagination<User>> {
+    try {
+      return await paginate<User>(this.userRepo, options, {
+        where: `role = ${roleId}`,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

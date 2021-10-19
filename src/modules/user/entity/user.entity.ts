@@ -1,5 +1,5 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity('user')
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -8,7 +8,7 @@ export class User extends BaseEntity {
   @Column({ name: 'username', type: 'text', nullable: true })
   username: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   password: string;
 
   @Column({ name: 'full_name', type: 'text', nullable: true })
@@ -26,7 +26,7 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   avatar: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   salt: string;
 
   async validatePassword(password: string): Promise<boolean> {

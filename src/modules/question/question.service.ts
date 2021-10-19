@@ -111,7 +111,7 @@ export class QuestionService {
         throw new BadRequestException('Lecture not exist');
       }
     }
-    return paginate<Question>(this.questionRepo, options, {
+    return await paginate<Question>(this.questionRepo, options, {
       where: `lecture_id = ${lectureId}`,
     });
   }
