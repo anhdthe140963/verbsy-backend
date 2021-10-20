@@ -4,17 +4,16 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GenerateAccountDto } from './dto/generate-account.dto';
-import { GetUserDto } from './dto/get-user.dto';
-import { User } from './entity/user.entity';
-import { UserRepository } from './repository/user.repository';
 import * as bcrypt from 'bcrypt';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
-import { GetUserFilter } from './dto/get-user.filter';
+import { GenerateAccountDto } from './dto/generate-account.dto';
+import { GetUserDto } from './dto/get-user.dto';
+import { User } from './entity/user.entity';
+import { UserRepository } from './repository/user.repository';
 @Injectable()
 export class UserService {
   constructor(
