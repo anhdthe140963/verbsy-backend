@@ -19,6 +19,12 @@ services:
       - ./docker/mysql/my.cnf:/etc/mysql/my.conf
     networks:
       - app-network
+    command:
+      [
+        'mysqld',
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_unicode_ci',
+      ]
 
   phpmyadmin:
     container_name: verbsy_myphpadmin
