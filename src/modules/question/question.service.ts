@@ -81,23 +81,33 @@ export class QuestionService {
     if (duration) {
       questionById.duration = duration;
     }
+    const data = await questionById.save();
     //check if answers need update
     if (answers.length != 0) {
       await Promise.all(
         answers.map(async (answer) => {
-          const anwserById = await this.answerRepo.findOne(answer.id);
-          if (!anwserById) {
-            throw new BadRequestException(
-              `Answer with id ${answer.id} not exist`,
-            );
+          //
+          if (!answer.id) {
+            const newAns = new Answer();
+            newAns.question = questionById;
+            newAns.content = answer.content;
+            newAns.isCorrect = answer.isCorrect;
+            await newAns.save();
+          } else {
+            const anwserById = await this.answerRepo.findOne(answer.id);
+            if (!anwserById) {
+              throw new BadRequestException(
+                `Answer with id ${answer.id} not exist`,
+              );
+            }
+            anwserById.content = answer.content;
+            anwserById.isCorrect = answer.isCorrect;
+            await anwserById.save();
           }
-          anwserById.content = answer.content;
-          anwserById.isCorrect = answer.isCorrect;
-          await anwserById.save();
         }),
       );
     }
-    return questionById.save();
+    return data;
   }
 
   async getQuestionList(
