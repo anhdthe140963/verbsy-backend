@@ -30,9 +30,10 @@ export class AuthController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   @Post('gen-student-acc')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { dest: './uploads' }))
   async generateStudentAccount(@UploadedFile() file: Express.Multer.File) {
     console.log(file.path);
-    // const xlxs = await readXlsxFile(file, { sheet: 1 });
+    // const xlxs = await readXlsxFile('./uploads', { sheet: 1 });
+    // console.log(xlxs);
   }
 }
