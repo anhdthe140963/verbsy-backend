@@ -17,7 +17,6 @@ import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { GetUserFilter } from './dto/get-user.filter';
 import { UserService } from './user.service';
-
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

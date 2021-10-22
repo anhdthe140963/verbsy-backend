@@ -12,7 +12,9 @@ import { TestModule } from './test/test.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot(),
+    TypeOrmModule.forRoot({
+      charset: 'utf8_unicode_ci',
+    }),
     QuestionModule,
     TestModule,
     LectureModule,
@@ -21,4 +23,4 @@ import { TestModule } from './test/test.module';
     UserModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
