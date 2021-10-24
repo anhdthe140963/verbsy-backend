@@ -1,0 +1,17 @@
+{
+    "header": {
+        "rows": 6
+    },
+    "sheets": [
+        "Sheet1"
+    ],
+    "columnToKey": {
+        "C": "studentCode",
+        "D": "fullName",
+        "E": "dob",
+        "F": "gender",
+        "G": "ethnic",
+        "H": "status",
+        "I": "phone"
+    }
+}

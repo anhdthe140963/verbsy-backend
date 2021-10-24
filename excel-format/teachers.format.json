@@ -1,0 +1,20 @@
+{
+    "header": {
+        "rows": 6
+    },
+    "sheets": [
+        "Sheet1"
+    ],
+    "columnToKey": {
+        "B": "teacherCode",
+        "C": "fullName",
+        "D": "dob",
+        "E": "gender",
+        "H": "phone",
+        "I": "position",
+        "J": "title",
+        "K": "contractType",
+        "L": "qualification",
+        "M": "teachingSubject"
+    }
+}
