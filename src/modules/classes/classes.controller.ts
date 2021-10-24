@@ -7,40 +7,62 @@ import {
   Param,
   Post,
   Put,
-  Request,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import excelClassesFormat from 'excel-format/classes.format.json';
+import { PaginationEnum } from 'src/constant/pagination.enum';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { UpdateResult } from 'typeorm';
-import { ClassesService } from './classes.service';
-import { CreateClassDto } from './dto/create-classes.dto';
-import { UpdateClassDto } from './dto/update-classes.dto';
-import { Classes } from './entity/classes.entity';
-import { Express } from 'express';
 import fileExcelFilter from '../../filter/file.excel.filter';
+import { ClassesService } from './classes.service';
 import { addClassDto } from './dto/add-class.dto';
-import excelClassesFormat from 'excel-format/classes.format.json';
+import { CreateClassDto } from './dto/create-classes.dto';
+import { GetClassFilter } from './dto/get-class.filter';
+import { UpdateClassDto } from './dto/update-classes.dto';
 @Controller('class')
 export class ClassesController {
-  constructor(private readonly classesService: ClassesService) { }
+  constructor(private readonly classesService: ClassesService) {}
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Post()
-  async createClass(@Body() createClassDto: CreateClassDto): Promise<Classes> {
-    return await this.classesService.createClasses(createClassDto);
+  async createClass(
+    @Body() createClassDto: CreateClassDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.classesService.createClasses(createClassDto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Class created',
+      data: data,
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Get(':classId')
-  async getQuestionDetail(@Param('classId') classId: number): Promise<Classes> {
-    return await this.classesService.getClassesDetail(classId);
+  @Get('list')
+  async getClassList(
+    @Query() filter: GetClassFilter,
+  ): Promise<{ statusCode; error; message; data }> {
+    filter.page = filter.page ? filter.page : PaginationEnum.DefaultPage;
+    filter.limit = filter.limit ? filter.limit : PaginationEnum.DefaultLimit;
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getClassList(
+        {
+          page: filter.page,
+          limit: filter.limit,
+        },
+        filter.teacherId,
+      ),
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -49,8 +71,13 @@ export class ClassesController {
   async updateQuestion(
     @Param('classId') classId: number,
     @Body() updateClassDto: UpdateClassDto,
-  ): Promise<UpdateResult> {
-    return await this.classesService.updateClass(classId, updateClassDto);
+  ): Promise<{ statusCode; error; message }> {
+    await this.classesService.updateClass(classId, updateClassDto);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Class updated',
+    };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -100,6 +127,20 @@ export class ClassesController {
       error: null,
       message: 'Classes added succesfully',
       data: await this.classesService.addClasses(classes),
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get(':classId')
+  async getQuestionDetail(
+    @Param('classId') classId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.classesService.getClassesDetail(classId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class detail successfully',
+      data: data,
     };
   }
 }

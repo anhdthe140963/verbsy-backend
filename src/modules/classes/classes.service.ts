@@ -1,6 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
 import { UpdateResult } from 'typeorm';
+import { UserRepository } from '../user/repository/user.repository';
 import { addClassDto } from './dto/add-class.dto';
 import { CreateClassDto } from './dto/create-classes.dto';
 import { UpdateClassDto } from './dto/update-classes.dto';
@@ -12,11 +22,15 @@ export class ClassesService {
   constructor(
     @InjectRepository(ClassesRepository)
     private classesRepository: ClassesRepository,
-  ) { }
+    @InjectRepository(UserRepository)
+    private userRepo: UserRepository,
+  ) {}
   async createClasses(createClassesDto: CreateClassDto): Promise<Classes> {
     const classes = new Classes();
     classes.name = createClassesDto.name;
     classes.teacherId = createClassesDto.teacherId;
+    classes.grade = createClassesDto.grade;
+    classes.schoolyear = createClassesDto.schoolYear;
     return await classes.save();
   }
 
@@ -54,5 +68,20 @@ export class ClassesService {
       addedClasses: addedClasses,
       duplicatedClasses: duplicatedClasses,
     };
+  }
+  async getClassList(
+    options: IPaginationOptions,
+    teacherId: number,
+  ): Promise<Pagination<Classes>> {
+    if (teacherId) {
+      const teacher = await this.userRepo.findOne(teacherId);
+      //check if user exist
+      if (!teacher) {
+        throw new BadRequestException('Teacher not exist');
+      }
+    }
+    return await paginate<Classes>(this.classesRepository, options, {
+      where: `teacher_id = ${teacherId}`,
+    });
   }
 }
