@@ -1,5 +1,5 @@
 export enum Role {
-  Administrator = 1,
-  Teacher = 2,
-  Student = 3,
+  Administrator = 0,
+  Teacher = 1,
+  Student = 2,
 }

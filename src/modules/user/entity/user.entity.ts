@@ -3,7 +3,7 @@ import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity('user')
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @Column({ name: 'username', type: 'text', nullable: true })
   username: string;
@@ -20,11 +20,20 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   phone: string;
 
+  @Column({ name: 'gender', type: 'boolean', default: true })
+  gender: boolean;
+
   @Column({ name: 'role', type: 'tinyint', default: 2 })
   role: number;
 
+  @Column({ name: 'dob', type: 'date', nullable: true })
+  dob: string;
+
   @Column({ type: 'text', nullable: true })
   avatar: string;
+
+  @Column({ name: 'last_login', type: 'date', nullable: true })
+  lastLogin: string;
 
   @Column({ nullable: true, select: false })
   salt: string;

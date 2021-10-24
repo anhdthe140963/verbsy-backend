@@ -10,16 +10,28 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import { Role } from 'src/constant/role.enum';
+import { removeVietnameseTones } from 'src/utils/convertVie';
+import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entity/user.entity';
+import { TeacherInfoRepository } from './repository/teacher-info.repostitory';
 import { UserRepository } from './repository/user.repository';
+import { GenerateAccountOption } from 'src/interfaces/generate-account-option.interface';
+import moment from 'moment';
+import { StudentInfoRepository } from './repository/student-info.repository';
+import { ImportStudentDto } from './dto/import-student.dto';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserRepository)
+    @InjectRepository(TeacherInfoRepository)
+    @InjectRepository(StudentInfoRepository)
     private userRepo: UserRepository,
-  ) {}
+    private teacherInfoRepository: TeacherInfoRepository,
+    private studentInfoRepository: StudentInfoRepository,
+  ) { }
 
   async getUserDetail(userId: number): Promise<GetUserDto> {
     const user = await this.userRepo.findOne(userId);
@@ -68,5 +80,142 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async generateAccount(
+    fullName: string,
+    role: Role,
+    options?: GenerateAccountOption,
+  ) {
+    const user = await new User().save();
+
+    user.fullName = fullName;
+
+    const nameWithoutTones = removeVietnameseTones(fullName);
+    const nameSections = nameWithoutTones.split(' ');
+
+    //part 1 = first name
+    const usernamePart1 = nameSections[nameSections.length - 1];
+
+    // part 2 = last name initial + middlename initials
+    let usernamePart2 = '';
+    if (nameSections.length > 1) {
+      for (let i = 0; i < nameSections.length - 1; i++) {
+        usernamePart2 += nameSections[i].charAt(0);
+      }
+    }
+
+    //part 3 = role
+    let usernamePart3 = '';
+    switch (role) {
+      case Role.Administrator:
+        usernamePart3 = 'AD';
+        user.role = Role.Administrator;
+        break;
+      case Role.Teacher:
+        usernamePart3 = 'TE';
+        user.role = Role.Teacher;
+        break;
+      case Role.Student:
+        usernamePart3 = 'ST';
+        user.role = Role.Student;
+        break;
+    }
+
+    //part 4 = id
+    const usernamePart4 = user.id;
+
+    const username =
+      usernamePart1 + usernamePart2 + usernamePart3 + usernamePart4;
+
+    const randomPassword = Math.random().toString(36).slice(-8);
+
+    user.username = username;
+    user.salt = await bcrypt.genSalt();
+    user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
+
+    for (const prop in options) {
+      user[prop] =
+        prop != 'dob'
+          ? options[prop]
+          : moment(options.dob, 'DD/MM/yyyy').toDate();
+    }
+
+    await user.save();
+    return user;
+  }
+
+  async importTeachers(teachers: ImportTeacherDto[]) {
+    const duplicatedTeachers: ImportTeacherDto[] = [];
+    const addedTeachers: ImportTeacherDto[] = [];
+    for (const teacher of teachers) {
+      const duplicatedTeacher = await this.teacherInfoRepository.findOne({
+        where: { teacherCode: teacher.teacherCode },
+      });
+
+      if (duplicatedTeacher) {
+        duplicatedTeachers.push(teacher);
+      } else {
+        try {
+          const user = await this.generateAccount(
+            teacher.fullName,
+            Role.Teacher,
+            { dob: teacher.dob, gender: teacher.gender, phone: teacher.phone },
+          );
+
+          await this.teacherInfoRepository.insert(
+            Object.assign(teacher, { userId: user.id }),
+          );
+
+          addedTeachers.push(teacher);
+        } catch (error) {
+          console.log(error);
+
+          throw new InternalServerErrorException('Error during insertion');
+        }
+      }
+    }
+
+    return {
+      addedTeachers: addedTeachers,
+      duplicatedTeachers: duplicatedTeachers,
+    };
+  }
+
+  async importStudents(students: ImportStudentDto[]) {
+    const duplicatedStudents: ImportStudentDto[] = [];
+    const addedStudents: ImportStudentDto[] = [];
+    for (const student of students) {
+      const duplicatedStudent = await this.studentInfoRepository.findOne({
+        where: { studentCode: student.studentCode },
+      });
+
+      if (duplicatedStudent) {
+        duplicatedStudents.push(student);
+      } else {
+        try {
+          const user = await this.generateAccount(
+            student.fullName,
+            Role.Student,
+            { dob: student.dob, gender: student.gender, phone: student.phone },
+          );
+
+          await this.studentInfoRepository.insert(
+            Object.assign(student, { userId: user.id }),
+          );
+
+          addedStudents.push(student);
+        } catch (error) {
+          console.log(error);
+
+          throw new InternalServerErrorException('Error during insertion');
+        }
+      }
+    }
+
+    return {
+      addedStudents: addedStudents,
+      duplicatedStudents: duplicatedStudents,
+    };
   }
 }
