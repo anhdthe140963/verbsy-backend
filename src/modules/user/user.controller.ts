@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -26,6 +27,7 @@ import { UserService } from './user.service';
 import excelTeachersFormat from 'excel-format/teachers.format.json';
 import excelStudentsFormat from 'excel-format/students.format.json';
 import { ImportStudentDto } from './dto/import-student.dto';
+import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -196,6 +198,37 @@ export class UserController {
       error: null,
       message: 'Students added succesfully',
       data: await this.userService.importStudents(students),
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('student/student-info/:userId')
+  async getStudentInfoByUserId(
+    @Param('userId') userId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get student info successfully',
+      data: await this.userService.getStudentInfoByUserId(userId),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Put('student/student-info/:userId')
+  async updateStudentInfoByUserId(
+    @Param('userId') userId: number,
+    @Body() updateStudentInfoDto: UpdateStudentInfoDto,
+  ): Promise<{ statusCode; error; message }> {
+    await this.userService.updateStudentInfoByUserId(
+      userId,
+      updateStudentInfoDto,
+    );
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Update student info successfully',
     };
   }
 }

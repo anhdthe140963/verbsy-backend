@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/constant/role.enum';
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity('user')
 export class User extends BaseEntity {
@@ -23,7 +24,7 @@ export class User extends BaseEntity {
   @Column({ name: 'gender', type: 'boolean', default: true })
   gender: boolean;
 
-  @Column({ name: 'role', type: 'tinyint', default: 2 })
+  @Column({ name: 'role', type: 'tinyint', default: Role.Teacher })
   role: number;
 
   @Column({ name: 'dob', type: 'date', nullable: true })

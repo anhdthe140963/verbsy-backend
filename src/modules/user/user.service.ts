@@ -22,6 +22,8 @@ import { GenerateAccountOption } from 'src/interfaces/generate-account-option.in
 import moment from 'moment';
 import { StudentInfoRepository } from './repository/student-info.repository';
 import { ImportStudentDto } from './dto/import-student.dto';
+import { StudentInfo } from './entity/student-info.entity';
+import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -31,7 +33,7 @@ export class UserService {
     private userRepo: UserRepository,
     private teacherInfoRepository: TeacherInfoRepository,
     private studentInfoRepository: StudentInfoRepository,
-  ) { }
+  ) {}
 
   async getUserDetail(userId: number): Promise<GetUserDto> {
     const user = await this.userRepo.findOne(userId);
@@ -52,14 +54,23 @@ export class UserService {
   async generateStudentAccount(
     genAccDto: GenerateAccountDto,
   ): Promise<Record<string, unknown>> {
-    const { firstName, middleName, lastName } = genAccDto;
+    const { fullName } = genAccDto;
     let user = new User();
     user = await user.save();
-    let username = firstName + lastName.slice(0, 1);
-    if (middleName) {
-      username = username + middleName.slice(0, 1);
-    }
-    username = username + user.id;
+    const nameParts = fullName.split(' ');
+    let username = await this.removeAccents(nameParts.at(-1));
+    nameParts.pop();
+    await Promise.all(
+      nameParts.map(async (element) => {
+        element = await this.removeAccents(element);
+        username = username + element.slice(0, 1);
+      }),
+    );
+    // let username = firstName + lastName.slice(0, 1);
+    // if (middleName) {
+    //   username = username + middleName.slice(0, 1);
+    // }
+    // username = username + user.id;
     const randomPassword = Math.random().toString(36).slice(-8);
 
     user.username = username;
@@ -217,5 +228,58 @@ export class UserService {
       addedStudents: addedStudents,
       duplicatedStudents: duplicatedStudents,
     };
+  }
+
+  async getStudentInfoByUserId(userId: number): Promise<StudentInfo> {
+    try {
+      const user = await this.userRepo.findOne(userId);
+      if (!user) {
+        throw new BadRequestException('User not exist');
+      }
+      if (user.role !== Role.Student) {
+        throw new BadRequestException('User is not a student');
+      }
+      return await this.studentInfoRepository
+        .createQueryBuilder()
+        .where('user_id = :userId', { userId: userId })
+        .getOne();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async updateStudentInfoByUserId(
+    userId: number,
+    updateStudentInfoDto: UpdateStudentInfoDto,
+  ) {
+    try {
+      const user = await this.userRepo.findOne(userId);
+      if (!user) {
+        throw new BadRequestException('User not exist');
+      }
+      if (user.role !== Role.Student) {
+        throw new BadRequestException('User is not a student');
+      }
+      await this.studentInfoRepository.update(
+        { userId: userId },
+        updateStudentInfoDto,
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async getStudentInfoList(
+    options: IPaginationOptions,
+  ): Promise<Pagination<StudentInfo>> {
+    return await paginate<StudentInfo>(this.studentInfoRepository, options);
+  }
+
+  async removeAccents(str): Promise<string> {
+    return await str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
   }
 }
