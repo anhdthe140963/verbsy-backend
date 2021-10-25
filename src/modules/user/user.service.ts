@@ -27,9 +27,6 @@ import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(UserRepository)
-    @InjectRepository(TeacherInfoRepository)
-    @InjectRepository(StudentInfoRepository)
     private userRepo: UserRepository,
     private teacherInfoRepository: TeacherInfoRepository,
     private studentInfoRepository: StudentInfoRepository,
@@ -139,12 +136,15 @@ export class UserService {
     const username =
       usernamePart1 + usernamePart2 + usernamePart3 + usernamePart4;
 
+    //shipper's password gen
     const randomPassword = Math.random().toString(36).slice(-8);
 
+    //insert into db
     user.username = username;
     user.salt = await bcrypt.genSalt();
     user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
 
+    //apply options
     for (const prop in options) {
       user[prop] =
         prop != 'dob'
@@ -281,5 +281,66 @@ export class UserService {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/đ/g, 'd')
       .replace(/Đ/g, 'D');
+  }
+
+  async getUserProfile(id: number) {
+    let result = null;
+    const user = await this.userRepo.findOne(id);
+
+    if (!user) {
+      throw new BadRequestException('User not exist');
+    }
+
+    switch (user.role) {
+      case Role.Teacher:
+        const teacherInfo = await this.teacherInfoRepository.findOne({
+          where: { userId: id },
+        });
+        result = { user, ...{ teacherInfo: teacherInfo } };
+        break;
+      case Role.Student:
+        const studentInfo = await this.studentInfoRepository.findOne({
+          where: { userId: id },
+        });
+        result = { user, ...{ studentInfo: studentInfo } };
+        break;
+      default:
+        break;
+    }
+
+    return result ? result : { user: user };
+  }
+
+  async deleteUserProfile(id: number) {
+    const user = await this.userRepo.findOne(id);
+
+    if (!user) {
+      throw new BadRequestException('User not exist');
+    }
+
+    switch (user.role) {
+      case Role.Teacher:
+        if (
+          await this.teacherInfoRepository.findOne({ where: { userId: id } })
+        ) {
+          await this.teacherInfoRepository.delete({
+            userId: id,
+          });
+        }
+        break;
+      case Role.Student:
+        if (
+          await this.studentInfoRepository.findOne({ where: { userId: id } })
+        ) {
+          await this.studentInfoRepository.delete({
+            userId: id,
+          });
+        }
+        break;
+      default:
+        break;
+    }
+
+    return await this.userRepo.delete({ id: id });
   }
 }
