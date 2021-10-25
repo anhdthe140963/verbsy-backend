@@ -61,6 +61,7 @@ export class ClassesController {
           limit: filter.limit,
         },
         filter.teacherId,
+        filter.grade,
       ),
     };
   }

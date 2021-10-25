@@ -72,16 +72,26 @@ export class ClassesService {
   async getClassList(
     options: IPaginationOptions,
     teacherId: number,
+    grade: string,
   ): Promise<Pagination<Classes>> {
-    if (teacherId) {
-      const teacher = await this.userRepo.findOne(teacherId);
-      //check if user exist
-      if (!teacher) {
-        throw new BadRequestException('Teacher not exist');
+    try {
+      const query = this.classesRepository.createQueryBuilder();
+      if (teacherId) {
+        const teacher = await this.userRepo.findOne(teacherId);
+        //check if user exist
+        if (!teacher) {
+          throw new BadRequestException('Teacher not exist');
+        }
+        query.where('teacher_id = :teacherId', { teacherId: teacherId });
       }
+      if (grade) {
+        query.andWhere('grade = :grade', { grade: grade });
+      }
+      return await paginate<Classes>(query, options);
+    } catch (error) {
+      console.log(error);
+
+      throw new InternalServerErrorException('Error when getting class list');
     }
-    return await paginate<Classes>(this.classesRepository, options, {
-      where: `teacher_id = ${teacherId}`,
-    });
   }
 }
