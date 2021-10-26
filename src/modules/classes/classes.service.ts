@@ -33,7 +33,7 @@ export class ClassesService {
     classes.name = createClassesDto.name;
     classes.teacherId = createClassesDto.teacherId;
     classes.grade = createClassesDto.grade;
-    classes.schoolyear = createClassesDto.schoolYear;
+    classes.schoolYear = createClassesDto.schoolYear;
     return await classes.save();
   }
 
