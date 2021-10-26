@@ -97,7 +97,7 @@ export class ClassesController {
       const schoolyear = rawData[0].name.replace('Năm học: ', '');
       //desirable data is from index 2 onward
       for (let i = 2; i < rawData.length; i++) {
-        classes.push(Object.assign(rawData[i], { schoolyear: schoolyear }));
+        classes.push(Object.assign(rawData[i], { schoolYear: schoolyear }));
       }
     } catch (error) {
       throw new BadRequestException('Invalid Excel File Format');

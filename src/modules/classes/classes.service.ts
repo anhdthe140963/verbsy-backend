@@ -53,7 +53,7 @@ export class ClassesService {
     const addedClasses: addClassDto[] = [];
     for (const cl of classes) {
       const duplicatedClass = await this.classesRepository.findOne({
-        where: { name: cl.name, grade: cl.grade, schoolyear: cl.schoolyear },
+        where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
       });
 
       if (duplicatedClass) {
