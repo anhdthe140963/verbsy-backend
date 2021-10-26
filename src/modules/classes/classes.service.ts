@@ -14,6 +14,7 @@ import { UpdateResult } from 'typeorm';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { addClassDto } from './dto/add-class.dto';
+import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
 import { UpdateClassDto } from './dto/update-classes.dto';
 import { Classes } from './entity/classes.entity';
@@ -66,46 +67,12 @@ export class ClassesService {
         }
       }
     }
-    return await {
+    return {
       addedClasses: addedClasses,
       duplicatedClasses: duplicatedClasses,
     };
   }
-  async getClassList(
-    options: IPaginationOptions,
-    teacherId: number,
-    grade: string,
-  ): Promise<Pagination<Classes>> {
-    try {
-      const query = this.classesRepository
-        .createQueryBuilder('c')
-        .innerJoin(User, 'u', 'c.teacher_id = u.id')
-        .select([
-          'c.id',
-          'c.name',
-          'c.teacher_id',
-          'c.grade',
-          'c.schoolyear',
-          'u.full_name',
-        ]);
-      if (teacherId) {
-        const teacher = await this.userRepo.findOne(teacherId);
-        //check if user exist
-        if (!teacher) {
-          throw new BadRequestException('Teacher not exist');
-        }
-        query.where('c.teacher_id = :teacherId', { teacherId: teacherId });
-      }
-      if (grade) {
-        query.andWhere('c.grade = :grade', { grade: grade });
-      }
-      return await paginateRaw(query, options);
-    } catch (error) {
-      console.log(error);
 
-      throw new InternalServerErrorException('Error when getting class list');
-    }
-  }
   async delete(classId: number) {
     try {
       const data = await this.classesRepository.findOne({ id: classId });
@@ -129,5 +96,20 @@ export class ClassesService {
     } catch (error) {
       throw new InternalServerErrorException('Error when getting grade list');
     }
+  }
+
+  async getClassList(options: IPaginationOptions, filter: ClassFilter) {
+    const rawPagination = await paginate(this.classesRepository, options, {
+      where: filter,
+    });
+    for (let cl of rawPagination.items) {
+      const teacherFullName = await this.userRepo.findOne({
+        where: { id: cl.teacherId },
+        select: ['fullName'],
+      });
+      cl = Object.assign(cl, teacherFullName);
+    }
+
+    return rawPagination;
   }
 }

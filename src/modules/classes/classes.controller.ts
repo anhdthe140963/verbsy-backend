@@ -16,6 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import excelClassesFormat from 'excel-format/classes.format.json';
+import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import { PaginationEnum } from 'src/constant/pagination.enum';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
@@ -23,6 +24,7 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import fileExcelFilter from '../../filter/file.excel.filter';
 import { ClassesService } from './classes.service';
 import { addClassDto } from './dto/add-class.dto';
+import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
 import { GetClassFilter } from './dto/get-class.filter';
 import { UpdateClassDto } from './dto/update-classes.dto';
@@ -41,29 +43,6 @@ export class ClassesController {
       error: null,
       message: 'Class created',
       data: data,
-    };
-  }
-
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
-  @Get('list')
-  async getClassList(
-    @Query() filter: GetClassFilter,
-  ): Promise<{ statusCode; error; message; data }> {
-    filter.page = filter.page ? filter.page : PaginationEnum.DefaultPage;
-    filter.limit = filter.limit ? filter.limit : PaginationEnum.DefaultLimit;
-    return {
-      statusCode: HttpStatus.OK,
-      error: null,
-      message: 'Get class list successfully',
-      data: await this.classesService.getClassList(
-        {
-          page: filter.page,
-          limit: filter.limit,
-        },
-        filter.teacherId,
-        filter.grade,
-      ),
     };
   }
 
@@ -169,6 +148,32 @@ export class ClassesController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Delete class successfully',
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('list')
+  async getClassList2(
+    @Query() filter: ClassFilter,
+  ): Promise<{ statusCode; error; message; data }> {
+    const classFilter: ClassFilter = {};
+    for (const prop in filter) {
+      if (prop != 'page' && prop != 'limit') {
+        classFilter[prop] = filter[prop];
+      }
+    }
+
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getClassList(
+        {
+          page: filter.page ? filter.page : PaginationEnum.DefaultPage,
+          limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
+        },
+        classFilter,
+      ),
     };
   }
 }
