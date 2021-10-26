@@ -105,4 +105,17 @@ export class ClassesService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  async getGradeList(): Promise<string[]> {
+    try {
+      const data = await this.classesRepository
+        .createQueryBuilder('c')
+        .select('c.grade')
+        .distinct()
+        .getRawMany();
+      return data;
+    } catch (error) {
+      throw new InternalServerErrorException('Error when getting grade list');
+    }
+  }
 }
