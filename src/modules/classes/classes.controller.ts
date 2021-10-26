@@ -124,6 +124,33 @@ export class ClassesController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
+  @Get('list')
+  async getClassList(
+    @Query() filter: ClassFilter,
+  ): Promise<{ statusCode; error; message; data }> {
+    const classFilter: ClassFilter = {};
+    for (const prop in filter) {
+      if (prop != 'page' && prop != 'limit') {
+        classFilter[prop] = filter[prop];
+      }
+    }
+
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getClassList(
+        {
+          page: filter.page ? filter.page : PaginationEnum.DefaultPage,
+          limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
+        },
+        classFilter,
+      ),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
   @Get(':classId')
   async getClassDetail(
     @Param('classId') classId: number,
@@ -148,32 +175,6 @@ export class ClassesController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Delete class successfully',
-    };
-  }
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
-  @Get('list')
-  async getClassList2(
-    @Query() filter: ClassFilter,
-  ): Promise<{ statusCode; error; message; data }> {
-    const classFilter: ClassFilter = {};
-    for (const prop in filter) {
-      if (prop != 'page' && prop != 'limit') {
-        classFilter[prop] = filter[prop];
-      }
-    }
-
-    return {
-      statusCode: HttpStatus.OK,
-      error: null,
-      message: 'Get class list successfully',
-      data: await this.classesService.getClassList(
-        {
-          page: filter.page ? filter.page : PaginationEnum.DefaultPage,
-          limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
-        },
-        classFilter,
-      ),
     };
   }
 }
