@@ -7,6 +7,7 @@ import { LectureModule } from './modules/lecture/lecture.module';
 import { QuestionModule } from './modules/question/question.module';
 import { UserModule } from './modules/user/user.module';
 import { TestModule } from './test/test.module';
+import { UserClassModule } from './modules/user-class/user-class.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +22,7 @@ import { TestModule } from './test/test.module';
     ClassesModule,
     AuthModule,
     UserModule,
+    UserClassModule,
   ],
 })
 export class AppModule { }

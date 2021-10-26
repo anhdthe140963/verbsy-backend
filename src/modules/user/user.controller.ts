@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -229,6 +230,34 @@ export class UserController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Update student info successfully',
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('profile/:userId')
+  async getUserProfile(
+    @Param('userId') userId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get user info successfully',
+      data: await this.userService.getUserProfile(userId),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Delete('profile/:userId')
+  async deleteUserProfile(
+    @Param('userId') userId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Deleted user successfully',
+      data: await this.userService.deleteUserProfile(userId),
     };
   }
 }
