@@ -32,7 +32,7 @@ export class ClassesService {
     classes.name = createClassesDto.name;
     classes.teacherId = createClassesDto.teacherId;
     classes.grade = createClassesDto.grade;
-    classes.schoolyear = createClassesDto.schoolYear;
+    classes.schoolYear = createClassesDto.schoolYear;
     return await classes.save();
   }
 
@@ -79,7 +79,7 @@ export class ClassesService {
     try {
       const query = this.classesRepository
         .createQueryBuilder('c')
-        .innerJoin(User, 'u', 'c.teacher_id = u.id')
+        .innerJoin(User, 'u', 'u.id = c.teacher_id')
         .select([
           'c.id',
           'c.name',
@@ -102,7 +102,6 @@ export class ClassesService {
       return await paginateRaw(query, options);
     } catch (error) {
       console.log(error);
-
       throw new InternalServerErrorException('Error when getting class list');
     }
   }
