@@ -94,4 +94,15 @@ export class ClassesService {
       throw new InternalServerErrorException('Error when getting class list');
     }
   }
+  async delete(classId: number) {
+    try {
+      const data = await this.classesRepository.findOne({ id: classId });
+      if (!data) {
+        throw new BadRequestException('Class does not exist');
+      }
+      await this.classesRepository.delete({ id: classId });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 }

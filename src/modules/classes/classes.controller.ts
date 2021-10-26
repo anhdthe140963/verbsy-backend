@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -69,7 +70,7 @@ export class ClassesController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':classId')
-  async updateQuestion(
+  async updateClass(
     @Param('classId') classId: number,
     @Body() updateClassDto: UpdateClassDto,
   ): Promise<{ statusCode; error; message }> {
@@ -133,7 +134,7 @@ export class ClassesController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get(':classId')
-  async getQuestionDetail(
+  async getClassDetail(
     @Param('classId') classId: number,
   ): Promise<{ statusCode; error; message; data }> {
     const data = await this.classesService.getClassesDetail(classId);
@@ -142,6 +143,20 @@ export class ClassesController {
       error: null,
       message: 'Get class detail successfully',
       data: data,
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Delete(':classId')
+  async delete(
+    @Param('classId') classId: number,
+  ): Promise<{ statusCode; error; message }> {
+    await this.classesService.delete(classId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Delete class successfully',
     };
   }
 }
