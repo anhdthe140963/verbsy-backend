@@ -7,9 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
+  paginateRaw,
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { UpdateResult } from 'typeorm';
+import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { addClassDto } from './dto/add-class.dto';
 import { CreateClassDto } from './dto/create-classes.dto';
@@ -75,19 +77,29 @@ export class ClassesService {
     grade: string,
   ): Promise<Pagination<Classes>> {
     try {
-      const query = this.classesRepository.createQueryBuilder();
+      const query = this.classesRepository
+        .createQueryBuilder('c')
+        .innerJoin(User, 'u', 'c.teacher_id = u.id')
+        .select([
+          'c.id',
+          'c.name',
+          'c.teacher_id',
+          'c.grade',
+          'c.schoolyear',
+          'u.full_name',
+        ]);
       if (teacherId) {
         const teacher = await this.userRepo.findOne(teacherId);
         //check if user exist
         if (!teacher) {
           throw new BadRequestException('Teacher not exist');
         }
-        query.where('teacher_id = :teacherId', { teacherId: teacherId });
+        query.where('c.teacher_id = :teacherId', { teacherId: teacherId });
       }
       if (grade) {
-        query.andWhere('grade = :grade', { grade: grade });
+        query.andWhere('c.grade = :grade', { grade: grade });
       }
-      return await paginate<Classes>(query, options);
+      return await paginateRaw(query, options);
     } catch (error) {
       console.log(error);
 
