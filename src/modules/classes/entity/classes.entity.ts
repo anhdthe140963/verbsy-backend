@@ -15,5 +15,5 @@ export class Classes extends BaseEntity {
   grade: string;
 
   @Column({ name: 'schoolyear', type: 'varchar' })
-  schoolYear: string;
+  schoolyear: string;
 }
