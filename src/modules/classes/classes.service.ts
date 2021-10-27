@@ -23,10 +23,8 @@ import { ClassesRepository } from './repository/classes.repository';
 @Injectable()
 export class ClassesService {
   constructor(
-    @InjectRepository(ClassesRepository)
     private classesRepository: ClassesRepository,
-    @InjectRepository(UserRepository)
-    private userRepo: UserRepository,
+    private userRepository: UserRepository,
   ) {}
   async createClasses(createClassesDto: CreateClassDto): Promise<Classes> {
     const classes = new Classes();
@@ -103,7 +101,7 @@ export class ClassesService {
       where: filter,
     });
     for (let cl of rawPagination.items) {
-      const teacherFullName = await this.userRepo.findOne({
+      const teacherFullName = await this.userRepository.findOne({
         where: { id: cl.teacherId },
         select: ['fullName'],
       });

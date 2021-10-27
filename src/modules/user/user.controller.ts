@@ -15,20 +15,20 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import excelStudentsFormat from 'excel-format/students.format.json';
+import excelTeachersFormat from 'excel-format/teachers.format.json';
 import { PaginationEnum } from 'src/constant/pagination.enum';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import fileExcelFilter from 'src/filter/file.excel.filter';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
-import { GetUserFilter } from './dto/get-user.filter';
-import { UserService } from './user.service';
-import excelTeachersFormat from 'excel-format/teachers.format.json';
-import excelStudentsFormat from 'excel-format/students.format.json';
 import { ImportStudentDto } from './dto/import-student.dto';
+import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { UserPaginationFilter } from './dto/user-pagination.filter';
+import { UserService } from './user.service';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -46,26 +46,30 @@ export class UserController {
       data: await this.userService.generateStudentAccount(genAccDto),
     };
   }
+
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Get('users')
-  async getUserByFilter(
-    @Query() filter: GetUserFilter,
+  @Get('profile')
+  async getUserProfiles(
+    @Query() filter: UserPaginationFilter,
   ): Promise<{ statusCode; error; message; data }> {
-    filter.page = filter.page ? filter.page : PaginationEnum.DefaultPage;
-    filter.limit = filter.limit ? filter.limit : PaginationEnum.DefaultLimit;
-    const data = await this.userService.getUserByFilter(
-      {
-        page: filter.page,
-        limit: filter.limit,
-      },
-      filter.roleId,
-    );
+    const userFilter: UserPaginationFilter = {};
+    for (const prop in filter) {
+      if (prop != 'page' && prop != 'limit') {
+        userFilter[prop] = filter[prop];
+      }
+    }
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: 'Get user data successfully',
-      data: data,
+      message: 'Get user list successfully',
+      data: await this.userService.getUserProfiles(
+        {
+          page: filter.page ? filter.page : PaginationEnum.DefaultPage,
+          limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
+        },
+        userFilter,
+      ),
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)
