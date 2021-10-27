@@ -19,6 +19,7 @@ import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { updateUserDto } from './dto/update-user.dto';
 import { UserPaginationFilter } from './dto/user-pagination.filter';
 import { StudentInfo } from './entity/student-info.entity';
 import { User } from './entity/user.entity';
@@ -93,6 +94,18 @@ export class UserService {
       });
     } catch (error) {
       throw new InternalServerErrorException(error);
+    }
+  }
+
+  async updateUser(userId: number, updateUserDto: updateUserDto) {
+    try {
+      const user = await this.userRepository.findOne(userId);
+      if (!user) {
+        throw new BadRequestException('User not exist');
+      }
+      await this.userRepository.update(userId, updateUserDto);
+    } catch (error) {
+      throw new Error(error);
     }
   }
 

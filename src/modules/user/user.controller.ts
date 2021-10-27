@@ -27,6 +27,7 @@ import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { updateUserDto } from './dto/update-user.dto';
 import { UserPaginationFilter } from './dto/user-pagination.filter';
 import { UserService } from './user.service';
 @Controller('user')
@@ -235,6 +236,17 @@ export class UserController {
       error: null,
       message: 'Update student info successfully',
     };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Put(':userId')
+  async updateUserInfo(
+    @Param('userId') userId: number,
+    @Body() updateUserDto: updateUserDto,
+  ): Promise<{ statusCode; error; message }> {
+    await this.userService.updateUser(userId, updateUserDto);
+    return { statusCode: HttpStatus.OK, error: null, message: 'User updated' };
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

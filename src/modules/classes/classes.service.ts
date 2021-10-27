@@ -36,7 +36,12 @@ export class ClassesService {
   }
 
   async getClassesDetail(classId: number): Promise<Classes> {
-    return await this.classesRepository.findOne({ id: classId });
+    const data = await this.classesRepository.findOne({ id: classId });
+    const teacherFullName = await this.userRepository.findOne({
+      where: { id: data.teacherId },
+      select: ['fullName'],
+    });
+    return Object.assign(data, teacherFullName);
   }
 
   async updateClass(
