@@ -14,6 +14,8 @@ import { Default } from 'src/constant/default-pass.enum';
 import { Role } from 'src/constant/role.enum';
 import { GenerateAccountOption } from 'src/interfaces/generate-account-option.interface';
 import { removeVietnameseTones } from 'src/utils/convertVie';
+import { ClassesRepository } from '../classes/repository/classes.repository';
+import { UserClassRepository } from '../user-class/repository/question.repository';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
@@ -32,6 +34,8 @@ export class UserService {
     private userRepository: UserRepository,
     private teacherInfoRepository: TeacherInfoRepository,
     private studentInfoRepository: StudentInfoRepository,
+    private userClassRepository: UserClassRepository,
+    private classesRepository: ClassesRepository,
   ) {}
 
   async getUserDetail(userId: number): Promise<GetUserDto> {
@@ -215,7 +219,10 @@ export class UserService {
     };
   }
 
-  async importStudents(students: ImportStudentDto[]) {
+  async importStudents(students: ImportStudentDto[], classId: number) {
+    if (!(await this.classesRepository.findOne(classId))) {
+      throw new BadRequestException('Class not exist');
+    }
     const duplicatedStudents: ImportStudentDto[] = [];
     const addedStudents: ImportStudentDto[] = [];
     for (const student of students) {
@@ -236,6 +243,20 @@ export class UserService {
           await this.studentInfoRepository.insert(
             Object.assign(student, { userId: user.id }),
           );
+
+          if (
+            !(await this.userClassRepository.findOne({
+              where: {
+                studentId: user.id,
+                classId: classId,
+              },
+            }))
+          ) {
+            await this.userClassRepository.insert({
+              studentId: user.id,
+              classId: classId,
+            });
+          }
 
           addedStudents.push(student);
         } catch (error) {
