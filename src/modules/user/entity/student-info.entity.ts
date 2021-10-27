@@ -22,6 +22,6 @@ export class StudentInfo extends BaseEntity {
   @Column({ name: 'req_exp', type: 'int', default: '0' })
   reqExp: number;
 
-  @Column({ name: 'level', type: 'varchar', default: '0' })
+  @Column({ name: 'level', type: 'int', default: '0' })
   level: number;
 }
