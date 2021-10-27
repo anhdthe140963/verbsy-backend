@@ -29,6 +29,7 @@ import excelTeachersFormat from 'excel-format/teachers.format.json';
 import excelStudentsFormat from 'excel-format/students.format.json';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { UserPaginationFilter } from './dto/user-pagination.filter';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -46,26 +47,30 @@ export class UserController {
       data: await this.userService.generateStudentAccount(genAccDto),
     };
   }
+
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Get('users')
-  async getUserByFilter(
-    @Query() filter: GetUserFilter,
+  @Get('profile')
+  async getUserProfiles(
+    @Query() filter: UserPaginationFilter,
   ): Promise<{ statusCode; error; message; data }> {
-    filter.page = filter.page ? filter.page : PaginationEnum.DefaultPage;
-    filter.limit = filter.limit ? filter.limit : PaginationEnum.DefaultLimit;
-    const data = await this.userService.getUserByFilter(
-      {
-        page: filter.page,
-        limit: filter.limit,
-      },
-      filter.roleId,
-    );
+    const userFilter: UserPaginationFilter = {};
+    for (const prop in filter) {
+      if (prop != 'page' && prop != 'limit') {
+        userFilter[prop] = filter[prop];
+      }
+    }
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: 'Get user data successfully',
-      data: data,
+      message: 'Get user list successfully',
+      data: await this.userService.getUserProfiles(
+        {
+          page: filter.page ? filter.page : PaginationEnum.DefaultPage,
+          limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
+        },
+        userFilter,
+      ),
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)
