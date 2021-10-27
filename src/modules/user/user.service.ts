@@ -24,16 +24,17 @@ import { StudentInfoRepository } from './repository/student-info.repository';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { StudentInfo } from './entity/student-info.entity';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { UserPaginationFilter } from './dto/user-pagination.filter';
 @Injectable()
 export class UserService {
   constructor(
-    private userRepo: UserRepository,
+    private userRepository: UserRepository,
     private teacherInfoRepository: TeacherInfoRepository,
     private studentInfoRepository: StudentInfoRepository,
   ) {}
 
   async getUserDetail(userId: number): Promise<GetUserDto> {
-    const user = await this.userRepo.findOne(userId);
+    const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new BadRequestException('User not exist');
     }
@@ -72,7 +73,10 @@ export class UserService {
 
     user.username = username;
     user.salt = await bcrypt.genSalt();
-    user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
+    user.password = await this.userRepository.hashPassword(
+      randomPassword,
+      user.salt,
+    );
     await user.save();
     return { username: username, password: randomPassword };
   }
@@ -82,7 +86,7 @@ export class UserService {
     roleId: number,
   ): Promise<Pagination<User>> {
     try {
-      return await paginate<User>(this.userRepo, options, {
+      return await paginate<User>(this.userRepository, options, {
         where: `role = ${roleId}`,
       });
     } catch (error) {
@@ -142,7 +146,10 @@ export class UserService {
     //insert into db
     user.username = username;
     user.salt = await bcrypt.genSalt();
-    user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
+    user.password = await this.userRepository.hashPassword(
+      randomPassword,
+      user.salt,
+    );
 
     //apply options
     for (const prop in options) {
@@ -232,7 +239,7 @@ export class UserService {
 
   async getStudentInfoByUserId(userId: number): Promise<StudentInfo> {
     try {
-      const user = await this.userRepo.findOne(userId);
+      const user = await this.userRepository.findOne(userId);
       if (!user) {
         throw new BadRequestException('User not exist');
       }
@@ -253,7 +260,7 @@ export class UserService {
     updateStudentInfoDto: UpdateStudentInfoDto,
   ) {
     try {
-      const user = await this.userRepo.findOne(userId);
+      const user = await this.userRepository.findOne(userId);
       if (!user) {
         throw new BadRequestException('User not exist');
       }
@@ -285,7 +292,7 @@ export class UserService {
 
   async getUserProfile(id: number) {
     let result = null;
-    const user = await this.userRepo.findOne(id);
+    const user = await this.userRepository.findOne(id);
 
     if (!user) {
       throw new BadRequestException('User not exist');
@@ -296,13 +303,13 @@ export class UserService {
         const teacherInfo = await this.teacherInfoRepository.findOne({
           where: { userId: id },
         });
-        result = { user, ...{ teacherInfo: teacherInfo } };
+        result = Object.assign(user, { teacherInfo: teacherInfo });
         break;
       case Role.Student:
         const studentInfo = await this.studentInfoRepository.findOne({
           where: { userId: id },
         });
-        result = { user, ...{ studentInfo: studentInfo } };
+        result = Object.assign(user, { studentInfo: studentInfo });
         break;
       default:
         break;
@@ -312,7 +319,7 @@ export class UserService {
   }
 
   async deleteUserProfile(id: number) {
-    const user = await this.userRepo.findOne(id);
+    const user = await this.userRepository.findOne(id);
 
     if (!user) {
       throw new BadRequestException('User not exist');
@@ -323,9 +330,7 @@ export class UserService {
         if (
           await this.teacherInfoRepository.findOne({ where: { userId: id } })
         ) {
-          await this.teacherInfoRepository.delete({
-            userId: id,
-          });
+          await this.teacherInfoRepository.delete({ userId: id });
         }
         break;
       case Role.Student:
@@ -341,6 +346,37 @@ export class UserService {
         break;
     }
 
-    return await this.userRepo.delete({ id: id });
+    return await this.userRepository.delete({ id: id });
+  }
+
+  async getUserProfiles(
+    options: IPaginationOptions,
+    filter: UserPaginationFilter,
+  ) {
+    const pagination = await paginate(this.userRepository, options, {
+      where: filter,
+    });
+    const transformedPagination = pagination;
+    const role = filter.role ?? 0;
+    switch (role) {
+      case Role.Teacher:
+        for (let item of transformedPagination.items) {
+          const teacherInfo = await this.teacherInfoRepository.findOne({
+            userId: item.id,
+          });
+          item = Object.assign(item, { teacherInfo: teacherInfo });
+        }
+        break;
+      case Role.Student:
+        for (let item of transformedPagination.items) {
+          const studentInfo = await this.studentInfoRepository.findOne({
+            userId: item.id,
+          });
+          item = Object.assign(item, { studentInfo: studentInfo });
+        }
+        break;
+    }
+
+    return transformedPagination;
   }
 }
