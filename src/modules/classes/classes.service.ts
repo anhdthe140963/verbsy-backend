@@ -31,7 +31,7 @@ export class ClassesService {
     classes.name = createClassesDto.name;
     classes.teacherId = createClassesDto.teacherId;
     classes.grade = createClassesDto.grade;
-    classes.schoolYear = createClassesDto.schoolYear;
+    classes.schoolyear = createClassesDto.schoolYear;
     return await classes.save();
   }
 
@@ -83,17 +83,22 @@ export class ClassesService {
     }
   }
 
-  async getGradeList(): Promise<string[]> {
-    try {
-      const data = await this.classesRepository
-        .createQueryBuilder('c')
-        .select('c.grade')
-        .distinct()
-        .getRawMany();
-      return data;
-    } catch (error) {
-      throw new InternalServerErrorException('Error when getting grade list');
+  async getGrades() {
+    const grades = await this.classesRepository
+      .createQueryBuilder()
+      .select('grade')
+      .distinct(true)
+      .getRawMany();
+
+    const result = [];
+    for (const grade of grades) {
+      const classes = await this.classesRepository.find({
+        select: ['id', 'name'],
+        where: { grade: grade['grade'] },
+      });
+      result.push({ name: grade['grade'], classes: classes });
     }
+    return result;
   }
 
   async getClassList(options: IPaginationOptions, filter: ClassFilter) {
