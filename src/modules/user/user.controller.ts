@@ -148,7 +148,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Post('import/students')
+  @Post('import/students/:classId')
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: fileExcelFilter,
@@ -156,6 +156,7 @@ export class UserController {
   )
   async importStudentList(
     @UploadedFile() file: Express.Multer.File,
+    @Param('classId') classId: number,
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const excelToJson = require('convert-excel-to-json');
@@ -203,7 +204,7 @@ export class UserController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Students added succesfully',
-      data: await this.userService.importStudents(students),
+      data: await this.userService.importStudents(students, classId),
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)
