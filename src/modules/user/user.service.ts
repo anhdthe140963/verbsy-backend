@@ -24,6 +24,7 @@ import { StudentInfoRepository } from './repository/student-info.repository';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { StudentInfo } from './entity/student-info.entity';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { Default } from 'src/constant/default-pass.enum';
 @Injectable()
 export class UserService {
   constructor(
@@ -53,6 +54,7 @@ export class UserService {
   ): Promise<Record<string, unknown>> {
     const { fullName } = genAccDto;
     let user = new User();
+    user.fullName = fullName;
     user = await user.save();
     const nameParts = fullName.split(' ');
     let username = await this.removeAccents(nameParts.at(-1));
@@ -63,18 +65,22 @@ export class UserService {
         username = username + element.slice(0, 1);
       }),
     );
+    username = username + user.id;
     // let username = firstName + lastName.slice(0, 1);
     // if (middleName) {
     //   username = username + middleName.slice(0, 1);
     // }
     // username = username + user.id;
-    const randomPassword = Math.random().toString(36).slice(-8);
+    const defaultPassword = Default.Password;
 
     user.username = username;
     user.salt = await bcrypt.genSalt();
-    user.password = await this.userRepo.hashPassword(randomPassword, user.salt);
+    user.password = await this.userRepo.hashPassword(
+      defaultPassword,
+      user.salt,
+    );
     await user.save();
-    return { username: username, password: randomPassword };
+    return { username: username, password: defaultPassword };
   }
 
   async getUserByFilter(
