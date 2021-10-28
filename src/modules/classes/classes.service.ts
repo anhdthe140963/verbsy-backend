@@ -3,8 +3,17 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
+import { Role } from 'src/constant/role.enum';
 import { UpdateResult } from 'typeorm';
+import { UserClass } from '../user-class/entity/user-class.entity';
+import { UserClassRepository } from '../user-class/repository/question.repository';
+import { User } from '../user/entity/user.entity';
+import { StudentInfoRepository } from '../user/repository/student-info.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { addClassDto } from './dto/add-class.dto';
 import { ClassFilter } from './dto/class.filter';
@@ -18,6 +27,8 @@ export class ClassesService {
   constructor(
     private classesRepository: ClassesRepository,
     private userRepository: UserRepository,
+    private userClassRepo: UserClassRepository,
+    private studentInfoRepo: StudentInfoRepository,
   ) {}
   async createClasses(createClassesDto: CreateClassDto): Promise<Classes> {
     const classes = new Classes();
@@ -112,5 +123,26 @@ export class ClassesService {
     }
 
     return rawPagination;
+  }
+
+  async getStudentByClassId(
+    options: IPaginationOptions,
+    classId: number,
+  ): Promise<Pagination<User>> {
+    const query = this.userRepository
+      .createQueryBuilder('u')
+      .leftJoin(UserClass, 'uc', 'u.id = uc.student_id')
+      .where('u.role = :role', { role: Role.Student })
+      .andWhere('uc.class_id = :classId', { classId: classId });
+    const transfromPaginate = await paginate<User>(query, options);
+    await Promise.all(
+      transfromPaginate.items.map(async (item) => {
+        const studentInfo = await this.studentInfoRepo.findOne({
+          userId: item.id,
+        });
+        item = Object.assign(item, { studentInfo: studentInfo });
+      }),
+    );
+    return transfromPaginate;
   }
 }

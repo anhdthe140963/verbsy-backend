@@ -25,6 +25,7 @@ import { ClassesService } from './classes.service';
 import { addClassDto } from './dto/add-class.dto';
 import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
+import { StudentFilter } from './dto/student.filter';
 import { UpdateClassDto } from './dto/update-classes.dto';
 @Controller('class')
 export class ClassesController {
@@ -146,7 +147,33 @@ export class ClassesController {
       ),
     };
   }
-
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('students/:classId')
+  async getStudentsByClassId(
+    @Param('classId') classId: number,
+    @Query() filter: StudentFilter,
+  ): Promise<{ statusCode; error; message; data }> {
+    const studentFilter: StudentFilter = {};
+    for (const prop in filter) {
+      if (prop != 'page' && prop != 'limit') {
+        studentFilter[prop] = filter[prop];
+      }
+    }
+    const data = await this.classesService.getStudentByClassId(
+      {
+        page: filter.page ? filter.page : PaginationEnum.DefaultPage,
+        limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
+      },
+      classId,
+    );
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get student list successfully',
+      data: data,
+    };
+  }
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get(':classId')
