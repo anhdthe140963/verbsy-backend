@@ -3,15 +3,8 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  IPaginationOptions,
-  paginate,
-  paginateRaw,
-  Pagination,
-} from 'nestjs-typeorm-paginate';
+import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { UpdateResult } from 'typeorm';
-import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { addClassDto } from './dto/add-class.dto';
 import { ClassFilter } from './dto/class.filter';
@@ -31,7 +24,7 @@ export class ClassesService {
     classes.name = createClassesDto.name;
     classes.teacherId = createClassesDto.teacherId;
     classes.grade = createClassesDto.grade;
-    classes.schoolyear = createClassesDto.schoolYear;
+    classes.schoolYear = createClassesDto.schoolYear;
     return await classes.save();
   }
 

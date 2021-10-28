@@ -16,7 +16,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import excelClassesFormat from 'excel-format/classes.format.json';
-import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import { PaginationEnum } from 'src/constant/pagination.enum';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
@@ -26,7 +25,6 @@ import { ClassesService } from './classes.service';
 import { addClassDto } from './dto/add-class.dto';
 import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
-import { GetClassFilter } from './dto/get-class.filter';
 import { UpdateClassDto } from './dto/update-classes.dto';
 @Controller('class')
 export class ClassesController {
