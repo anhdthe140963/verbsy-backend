@@ -16,6 +16,7 @@ import { GenerateAccountOption } from 'src/interfaces/generate-account-option.in
 import { removeVietnameseTones } from 'src/utils/convertVie';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
+import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
@@ -180,6 +181,35 @@ export class UserService {
 
     await user.save();
     return user;
+  }
+
+  async createTeacher(
+    createTeacherDto: CreateTeacherDto,
+  ): Promise<CreateTeacherDto> {
+    try {
+      const data = await this.teacherInfoRepository.findOne({
+        where: { teacherCode: createTeacherDto.teacherCode },
+      });
+      if (data) {
+        throw new BadRequestException('Teacher already exist');
+      }
+      const user = await this.generateAccount(
+        createTeacherDto.fullName,
+        Role.Teacher,
+        {
+          dob: createTeacherDto.dob,
+          gender: createTeacherDto.gender,
+          phone: createTeacherDto.phone,
+        },
+      );
+
+      await this.teacherInfoRepository.insert(
+        Object.assign(createTeacherDto, { userId: user.id }),
+      );
+      return createTeacherDto;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async importTeachers(teachers: ImportTeacherDto[]) {

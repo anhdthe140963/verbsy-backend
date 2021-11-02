@@ -22,6 +22,7 @@ import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import fileExcelFilter from 'src/filter/file.excel.filter';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
@@ -73,6 +74,21 @@ export class UserController {
       ),
     };
   }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Post('create-teacher')
+  async createTeacher(
+    @Body() createTeacherDto: CreateTeacherDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: null,
+      data: await this.userService.createTeacher(createTeacherDto),
+    };
+  }
+
   @UseGuards(AuthGuard(), RolesGuard)
   @Get(':userId')
   async getUserDetail(@Param('userId') userId: number): Promise<GetUserDto> {
