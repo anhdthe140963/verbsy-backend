@@ -8,6 +8,8 @@ import { QuestionModule } from './modules/question/question.module';
 import { UserModule } from './modules/user/user.module';
 import { TestModule } from './test/test.module';
 import { UserClassModule } from './modules/user-class/user-class.module';
+import { GradeModule } from './modules/grade/grade.module';
+import { SchoolYearModule } from './modules/school-year/school-year.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +25,8 @@ import { UserClassModule } from './modules/user-class/user-class.module';
     AuthModule,
     UserModule,
     UserClassModule,
+    GradeModule,
+    SchoolYearModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
