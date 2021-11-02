@@ -7,8 +7,4 @@ export class UpdateGradeDto extends PartialType(Grade) {
   @IsNotEmpty()
   @IsOptional()
   name: string;
-
-  @IsNotEmpty()
-  @IsOptional()
-  schoolYearId: number;
 }

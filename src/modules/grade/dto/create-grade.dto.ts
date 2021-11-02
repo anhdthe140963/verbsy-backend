@@ -4,7 +4,4 @@ export class CreateGradeDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @IsNotEmpty()
-  schoolYearId: number;
 }

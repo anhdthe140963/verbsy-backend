@@ -7,7 +7,4 @@ export class Grade extends BaseEntity {
 
   @Column()
   name: string;
-
-  @Column({ name: 'school_year_id' })
-  schoolYearId: number;
 }

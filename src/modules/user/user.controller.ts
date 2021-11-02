@@ -77,7 +77,7 @@ export class UserController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
-  @Post('create-teacher')
+  @Post('teacher')
   async createTeacher(
     @Body() createTeacherDto: CreateTeacherDto,
   ): Promise<{ statusCode; error; message; data }> {

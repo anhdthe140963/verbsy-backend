@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateClassDto {
   @IsString()
@@ -7,13 +7,12 @@ export class CreateClassDto {
 
   @IsNotEmpty()
   @IsNumber()
-  teacherId: number;
+  gradeId: number;
 
   @IsNotEmpty()
-  @IsString()
-  grade: string;
+  @IsNumber()
+  schoolYearId: number;
 
-  @IsNotEmpty()
-  @IsString()
-  schoolYear: string;
+  @IsArray()
+  teacherIds: number[];
 }

@@ -7,6 +7,8 @@ import { PassportModule } from '@nestjs/passport';
 import { UserRepository } from '../user/repository/user.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { StudentInfoRepository } from '../user/repository/student-info.repository';
+import { SchoolYear } from '../school-year/entities/school-year.entity';
+import { Grade } from '../grade/entities/grade.entity';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { StudentInfoRepository } from '../user/repository/student-info.repositor
       UserRepository,
       UserClassRepository,
       StudentInfoRepository,
+      SchoolYear,
+      Grade,
     ]),
   ],
   controllers: [ClassesController],

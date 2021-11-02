@@ -2,14 +2,18 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { UpdateResult } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { Grade } from '../grade/entities/grade.entity';
+import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { UserClass } from '../user-class/entity/user-class.entity';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
@@ -29,30 +33,101 @@ export class ClassesService {
     private userRepository: UserRepository,
     private userClassRepo: UserClassRepository,
     private studentInfoRepo: StudentInfoRepository,
+    @InjectRepository(Grade)
+    private gradeRepo: Repository<Grade>,
+    @InjectRepository(SchoolYear)
+    private schoolYearRepo: Repository<SchoolYear>,
   ) {}
   async createClasses(createClassesDto: CreateClassDto): Promise<Classes> {
-    const classes = new Classes();
-    classes.name = createClassesDto.name;
-    classes.teacherId = createClassesDto.teacherId;
-    classes.grade = createClassesDto.grade;
-    classes.schoolYear = createClassesDto.schoolYear;
-    return await classes.save();
+    try {
+      let classes = new Classes();
+      classes.name = createClassesDto.name;
+      classes.gradeId = createClassesDto.gradeId;
+      classes.schoolYearId = createClassesDto.schoolYearId;
+      classes = await classes.save();
+      //check if teacher exist
+      for (const id of createClassesDto.teacherIds) {
+        const user = await this.userRepository.findOne(id);
+        if (!user) {
+          await classes.remove();
+          throw new NotFoundException('Teacher not exist');
+        }
+      }
+      await Promise.all(
+        createClassesDto.teacherIds.map(async (id: number) => {
+          const userClass = new UserClass();
+          userClass.teacherId = id;
+          userClass.classId = classes.id;
+          await userClass.save();
+        }),
+      );
+      return await classes.save();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getClassesDetail(classId: number): Promise<Classes> {
-    const data = await this.classesRepository.findOne({ id: classId });
-    const teacherFullName = await this.userRepository.findOne({
-      where: { id: data.teacherId },
-      select: ['fullName'],
-    });
-    return Object.assign(data, teacherFullName);
+    try {
+      const data = await this.classesRepository.findOne({ id: classId });
+      if (!data) {
+        throw new NotFoundException('Class does not exist');
+      }
+      const teachers = await this.userClassRepo
+        .createQueryBuilder('u')
+        .where('u.teacher_id IS NOT NULL')
+        .andWhere('u.class_id = :classId', { classId: data.id })
+        .getMany();
+      const ids = new Set();
+      for (const teacher of teachers) {
+        ids.add(teacher.teacherId);
+      }
+      const teacherFullNames = await this.userRepository
+        .createQueryBuilder('u')
+        .select(['u.id', 'u.fullName'])
+        .where('u.id IN (:...ids)', { ids: [...ids] })
+        .getMany();
+
+      return Object.assign(data, { teachers: teacherFullNames });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateClass(
     classId: number,
     updateClassDto: UpdateClassDto,
   ): Promise<UpdateResult> {
-    return await this.classesRepository.update(classId, updateClassDto);
+    try {
+      //check class
+      const data = await this.classesRepository.findOne({ id: classId });
+      if (!data) {
+        throw new NotFoundException('Class not exist');
+      }
+      //check grade
+      if (updateClassDto.gradeId) {
+        const grade = this.gradeRepo.findOne(updateClassDto.gradeId);
+        if (!grade) {
+          throw new NotFoundException('Grade not exist');
+        }
+      }
+      //check school year
+      if (updateClassDto.schoolYearId) {
+        const schoolYear = this.schoolYearRepo.findOne(
+          updateClassDto.schoolYearId,
+        );
+        if (!schoolYear) {
+          throw new NotFoundException('School year not exist');
+        }
+      }
+      const teacherIds = updateClassDto.teacherIds;
+      delete updateClassDto.teacherIds;
+      console.log(teacherIds);
+
+      return await this.classesRepository.update(classId, updateClassDto);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async addClasses(classes: addClassDto[]) {
@@ -86,42 +161,40 @@ export class ClassesService {
       if (!data) {
         throw new BadRequestException('Class does not exist');
       }
+      await this.userClassRepo
+        .createQueryBuilder()
+        .where('class_id = :classId', { classId: data.id })
+        .delete()
+        .execute();
       await this.classesRepository.delete({ id: classId });
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw error;
     }
-  }
-
-  async getGrades() {
-    const grades = await this.classesRepository
-      .createQueryBuilder()
-      .select('grade')
-      .distinct(true)
-      .getRawMany();
-
-    const result = [];
-    for (const grade of grades) {
-      const classes = await this.classesRepository.find({
-        select: ['id', 'name'],
-        where: { grade: grade['grade'] },
-      });
-      result.push({ name: grade['grade'], classes: classes });
-    }
-    return result;
   }
 
   async getClassList(options: IPaginationOptions, filter: ClassFilter) {
     const rawPagination = await paginate(this.classesRepository, options, {
       where: filter,
     });
-    for (let cl of rawPagination.items) {
-      const teacherFullName = await this.userRepository.findOne({
-        where: { id: cl.teacherId },
-        select: ['fullName'],
-      });
-      cl = Object.assign(cl, teacherFullName);
-    }
-
+    await Promise.all(
+      rawPagination.items.map(async (cl: Classes) => {
+        const teachers = await this.userClassRepo
+          .createQueryBuilder('u')
+          .where('u.teacher_id IS NOT NULL')
+          .andWhere('u.class_id = :classId', { classId: cl.id })
+          .getMany();
+        const ids = new Set();
+        for (const teacher of teachers) {
+          ids.add(teacher.teacherId);
+        }
+        const teacherFullNames = await this.userRepository
+          .createQueryBuilder('u')
+          .select(['u.id', 'u.fullName'])
+          .where('u.id IN (:...ids)', { ids: [...ids] })
+          .getMany();
+        cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
+      }),
+    );
     return rawPagination;
   }
 

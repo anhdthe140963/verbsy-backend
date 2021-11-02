@@ -20,15 +20,8 @@ export class GradeService {
   ) {}
   async create(createGrade: CreateGradeDto): Promise<Grade> {
     try {
-      const schoolYear = await this.schoolYearRepo.findOne(
-        createGrade.schoolYearId,
-      );
-      if (!schoolYear) {
-        throw new NotFoundException('School year not exist');
-      }
       const grade = new Grade();
       grade.name = createGrade.name;
-      grade.schoolYearId = createGrade.schoolYearId;
       return await grade.save();
     } catch (error) {
       throw error;
@@ -60,12 +53,6 @@ export class GradeService {
       const data = await this.gradeRepo.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
-      }
-      const schoolYear = await this.schoolYearRepo.findOne(
-        updateGradeDto.schoolYearId,
-      );
-      if (!schoolYear) {
-        throw new NotFoundException('School year not exist');
       }
       await this.gradeRepo.update(id, updateGradeDto);
     } catch (error) {
