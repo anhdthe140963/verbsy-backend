@@ -8,6 +8,9 @@ export class Classes extends BaseEntity {
   @Column({ name: 'name', type: 'text' })
   name: string;
 
-  @Column({ name: 'teacher_id' })
-  teacherId: number;
+  @Column({ name: 'grade_id' })
+  gradeId: number;
+
+  @Column({ name: 'school_year_id' })
+  schoolYearId: number;
 }

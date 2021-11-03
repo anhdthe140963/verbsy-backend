@@ -1,14 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
-import { UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { CreateQuestionDto } from './dto/question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { Answer } from './entity/answer.entity';
 import { Question } from './entity/question.entity';
 import { QuestionRepository } from './repository/question.repository';
 
@@ -19,18 +24,24 @@ export class QuestionService {
     private questionRepo: QuestionRepository,
     @InjectRepository(LectureRepository)
     private lectureRepo: LectureRepository,
+    @InjectRepository(Answer)
+    private answerRepo: Repository<Answer>,
   ) {}
 
   async createQuestion(
     createQuestionDto: CreateQuestionDto,
   ): Promise<Question> {
+    const lecture = await this.lectureRepo.findOne(createQuestionDto.lectureId);
+    //check if user exist
+    if (!lecture) {
+      throw new BadRequestException('Lecture not exist');
+    }
     const question = new Question();
-    question.lectureId = createQuestionDto.lectureId;
-    question.question = createQuestionDto.question;
-    question.answer = createQuestionDto.answer;
-    question.type = createQuestionDto.type;
+    question.answers = createQuestionDto.answers;
     question.duration = createQuestionDto.duration;
     question.imageUrl = createQuestionDto.imageUrl;
+    question.lectureId = createQuestionDto.lectureId;
+    question.question = createQuestionDto.question;
     return await question.save();
   }
 
@@ -41,32 +52,104 @@ export class QuestionService {
   async updateQuestion(
     questionId: number,
     updateQuestionDto: UpdateQuestionDto,
-  ): Promise<UpdateResult> {
-    return await this.questionRepo.update(questionId, updateQuestionDto);
+  ): Promise<Question> {
+    const { lectureId, question, imageUrl, answers, duration } =
+      updateQuestionDto;
+    const questionById = await this.questionRepo.findOne(questionId);
+    //check if question by id exist
+    if (!questionById) {
+      throw new BadRequestException('Question not exist');
+    }
+    //check if lecture id need update
+    if (lectureId) {
+      const lecture = await this.lectureRepo.findOne(lectureId);
+      //check if user exist
+      if (!lecture) {
+        throw new BadRequestException('Lecture not exist');
+      }
+      questionById.lectureId = lectureId;
+    }
+    //check if question need update
+    if (question) {
+      questionById.question = question;
+    }
+    //check if imageUrl need update
+    if (imageUrl) {
+      questionById.imageUrl = imageUrl;
+    }
+    //check if duration need update
+    if (duration) {
+      questionById.duration = duration;
+    }
+    const data = await questionById.save();
+    //check if answers need update
+    if (answers.length != 0) {
+      await Promise.all(
+        answers.map(async (answer) => {
+          //
+          if (!answer.id) {
+            const newAns = new Answer();
+            newAns.question = questionById;
+            newAns.content = answer.content;
+            newAns.isCorrect = answer.isCorrect;
+            await newAns.save();
+          } else {
+            const anwserById = await this.answerRepo.findOne(answer.id);
+            if (!anwserById) {
+              throw new BadRequestException(
+                `Answer with id ${answer.id} not exist`,
+              );
+            }
+            anwserById.content = answer.content;
+            anwserById.isCorrect = answer.isCorrect;
+            await anwserById.save();
+          }
+        }),
+      );
+    }
+    return data;
   }
 
   async getQuestionList(
     options: IPaginationOptions,
     lectureId: number,
   ): Promise<Pagination<Question>> {
-    const query = this.questionRepo.createQueryBuilder().orderBy('id', 'ASC');
-
     if (lectureId) {
-      const user = await this.lectureRepo.findOne(lectureId);
+      const lecture = await this.lectureRepo.findOne(lectureId);
       //check if user exist
-      if (!user) {
+      if (!lecture) {
         throw new BadRequestException('Lecture not exist');
       }
-      query.where('lecture_id = :lectureId', { lectureId: lectureId });
     }
-    return paginate<Question>(query, options);
+    return await paginate<Question>(this.questionRepo, options, {
+      where: `lecture_id = ${lectureId}`,
+    });
   }
 
   async delete(lectureId: number) {
-    const data = await this.questionRepo.findOne({ id: lectureId });
-    if (!data) {
-      throw new BadRequestException('Question does not exist');
+    try {
+      const data = await this.questionRepo.findOne({ id: lectureId });
+      if (!data) {
+        throw new BadRequestException('Question does not exist');
+      }
+      await this.questionRepo.delete({ id: lectureId });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
-    await this.questionRepo.delete({ id: lectureId });
+  }
+
+  async getAnswerList(questionId: number): Promise<Answer[]> {
+    try {
+      const question = await this.questionRepo.findOne(questionId);
+      if (!question) {
+        throw new BadRequestException('question does not exist');
+      }
+      return await this.answerRepo
+        .createQueryBuilder()
+        .where('questionId = :questionId', { questionId: questionId })
+        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

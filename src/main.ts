@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
@@ -11,10 +11,16 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Verbsy')
     .build();
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
   app.enableCors();
-  await app.listen(3001);
-  logger.log('App listening');
+  await app.listen(process.env.PORT || 5000);
+  logger.log(`App listening on ${await app.getUrl()}`);
 }
 bootstrap();

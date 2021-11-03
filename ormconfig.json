@@ -6,5 +6,8 @@
   "password": "anhdeptrai",
   "synchronize": true,
   "database": "verbsy_backend",
-  "entities": ["dist/**/*.entity{.ts,.js}"]
+  "charset": "utf8_unicode_ci",
+  "entities": [
+    "dist/**/*.entity{.ts,.js}"
+  ]
 }

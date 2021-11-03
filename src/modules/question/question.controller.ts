@@ -34,22 +34,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
-      message: null,
-      data: data,
-    };
-  }
-
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
-  @Get(':questionId')
-  async getQuestionDetail(
-    @Param('questionId') questionId: number,
-  ): Promise<{ statusCode; error; message; data }> {
-    const data = await this.questionService.getQuestionDetail(questionId);
-    return {
-      statusCode: HttpStatus.OK,
-      error: null,
-      message: null,
+      message: 'Question created',
       data: data,
     };
   }
@@ -65,7 +50,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Question updated',
     };
   }
 
@@ -84,7 +69,7 @@ export class QuestionController {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: null,
+      message: 'Get question data successfully',
       data: data,
     };
   }
@@ -96,6 +81,39 @@ export class QuestionController {
     @Param('questionId') questionId: number,
   ): Promise<{ statusCode; error; message }> {
     await this.questionService.delete(questionId);
-    return { statusCode: HttpStatus.OK, error: null, message: null };
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Delete question successfully',
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
+  @Get('answers/:questionId')
+  async getAnswerList(
+    @Param('questionId') questionId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get answers successfully',
+      data: await this.questionService.getAnswerList(questionId),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
+  @Get(':questionId')
+  async getQuestionDetail(
+    @Param('questionId') questionId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    const data = await this.questionService.getQuestionDetail(questionId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get question detail succesfully',
+      data: data,
+    };
   }
 }

@@ -1,4 +1,4 @@
 export enum PaginationEnum {
   DefaultPage = 1,
-  DefaultLimit = 0,
+  DefaultLimit = 10,
 }

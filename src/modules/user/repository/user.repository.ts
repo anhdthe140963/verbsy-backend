@@ -26,10 +26,12 @@ export class UserRepository extends Repository<User> {
   }
 
   async validate(logInDto: LogInDto) {
-    const user = await this.createQueryBuilder()
+    const user = await this.createQueryBuilder('u')
       .where('username = :username', {
         username: logInDto.username,
       })
+      .addSelect('u.salt')
+      .addSelect('u.password')
       .getOne();
     if (user && (await user.validatePassword(logInDto.password))) {
       return user;
@@ -37,7 +39,7 @@ export class UserRepository extends Repository<User> {
     return null;
   }
 
-  private async hashPassword(password: string, salt: string): Promise<string> {
+  async hashPassword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);
   }
 }

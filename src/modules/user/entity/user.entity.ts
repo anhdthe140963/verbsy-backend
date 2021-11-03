@@ -1,32 +1,42 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/constant/role.enum';
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity('user')
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
-  @Column({ name: 'username', type: 'text' })
+  @Column({ name: 'username', type: 'text', nullable: true })
   username: string;
 
-  @Column()
+  @Column({ nullable: true, select: false })
   password: string;
 
   @Column({ name: 'full_name', type: 'text', nullable: true })
   fullName: string;
 
-  @Column({ name: 'email', type: 'text' })
+  @Column({ name: 'email', type: 'text', nullable: true })
   email: string;
 
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ name: 'role', type: 'tinyint', default: 2 })
+  @Column({ name: 'gender', type: 'boolean', default: true })
+  gender: boolean;
+
+  @Column({ name: 'role', type: 'tinyint', default: Role.Teacher })
   role: number;
+
+  @Column({ name: 'dob', type: 'date', nullable: true })
+  dob: string;
 
   @Column({ type: 'text', nullable: true })
   avatar: string;
 
-  @Column()
+  @Column({ name: 'last_login', type: 'date', nullable: true })
+  lastLogin: string;
+
+  @Column({ nullable: true, select: false })
   salt: string;
 
   async validatePassword(password: string): Promise<boolean> {

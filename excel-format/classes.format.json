@@ -1,0 +1,12 @@
+{
+  "header": {
+    "rows": 3
+  },
+  "sheets": [
+    "Sheet1"
+  ],
+  "columnToKey": {
+    "B": "name",
+    "C": "grade"
+  }
+}
