@@ -102,6 +102,8 @@ export class ClassesController {
       throw new BadRequestException('Invalid Excel File Format');
     }
 
+    console.log(classes);
+
     return {
       statusCode: HttpStatus.OK,
       error: null,

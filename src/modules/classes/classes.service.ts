@@ -133,22 +133,40 @@ export class ClassesService {
   async addClasses(classes: addClassDto[]) {
     const duplicatedClasses: addClassDto[] = [];
     const addedClasses: addClassDto[] = [];
-    for (const cl of classes) {
-      const duplicatedClass = await this.classesRepository.findOne({
-        where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
-      });
-
-      if (duplicatedClass) {
-        duplicatedClasses.push(cl);
-      } else {
-        try {
-          await this.classesRepository.insert(cl);
-          addedClasses.push(cl);
-        } catch (error) {
-          throw new InternalServerErrorException('Error during insertion');
+    await Promise.all(
+      classes.map(async (cl) => {
+        // const duplicatedClass = await this.classesRepository.findOne({
+        //   where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
+        // });
+        const duplicatedClass = await this.classesRepository
+          .createQueryBuilder('c')
+          .innerJoin(Grade, 'g', 'c.grade_id = g.id')
+          .innerJoin(SchoolYear, 's', 'c.school_year_id = s.id')
+          .where('g.name = :gName', { gName: cl.grade })
+          .andWhere('s.name = :sName', { sName: cl.schoolYear })
+          .andWhere('c.name = :name', { name: cl.name })
+          .getOne();
+        if (duplicatedClass) {
+          duplicatedClasses.push(cl);
+        } else {
+          try {
+            const grade = await this.gradeRepo.findOne({ name: cl.grade });
+            const schoolYear = await this.schoolYearRepo.findOne({
+              name: cl.schoolYear,
+            });
+            // await this.classesRepository.insert(cl);
+            await this.classesRepository.insert({
+              name: cl.name,
+              gradeId: grade.id,
+              schoolYearId: schoolYear.id,
+            });
+            addedClasses.push(cl);
+          } catch (error) {
+            throw new InternalServerErrorException('Error during insertion');
+          }
         }
-      }
-    }
+      }),
+    );
     return {
       addedClasses: addedClasses,
       duplicatedClasses: duplicatedClasses,

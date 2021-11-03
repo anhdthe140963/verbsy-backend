@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ClassesRepository } from '../classes/repository/classes.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
@@ -17,6 +18,7 @@ export class GradeService {
     private gradeRepo: Repository<Grade>,
     @InjectRepository(SchoolYear)
     private schoolYearRepo: Repository<SchoolYear>,
+    private classRepo: ClassesRepository,
   ) {}
   async create(createGrade: CreateGradeDto): Promise<Grade> {
     try {
@@ -30,7 +32,12 @@ export class GradeService {
 
   async findAll(): Promise<Grade[]> {
     try {
-      return await this.gradeRepo.createQueryBuilder().getMany();
+      const grades = await this.gradeRepo.createQueryBuilder().getMany();
+      for (let grade of grades) {
+        const classes = await this.classRepo.find({ gradeId: grade.id });
+        grade = Object.assign(grade, { classes: classes });
+      }
+      return grades;
     } catch (error) {
       throw new InternalServerErrorException('Error while getting grade');
     }
