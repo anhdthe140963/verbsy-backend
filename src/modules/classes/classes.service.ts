@@ -69,7 +69,7 @@ export class ClassesService {
 
   async getClassesDetail(classId: number): Promise<Classes> {
     try {
-      const data = await this.classesRepository.findOne({ id: classId });
+      let data = await this.classesRepository.findOne({ id: classId });
       if (!data) {
         throw new NotFoundException('Class does not exist');
       }
@@ -78,17 +78,20 @@ export class ClassesService {
         .where('u.teacher_id IS NOT NULL')
         .andWhere('u.class_id = :classId', { classId: data.id })
         .getMany();
-      const ids = new Set();
-      for (const teacher of teachers) {
-        ids.add(teacher.teacherId);
-      }
-      const teacherFullNames = await this.userRepository
-        .createQueryBuilder('u')
-        .select(['u.id', 'u.fullName'])
-        .where('u.id IN (:...ids)', { ids: [...ids] })
-        .getMany();
+      if (teachers.length != 0) {
+        const ids = new Set();
+        for (const teacher of teachers) {
+          ids.add(teacher.teacherId);
+        }
+        const teacherFullNames = await this.userRepository
+          .createQueryBuilder('u')
+          .select(['u.id', 'u.fullName'])
+          .where('u.id IN (:...ids)', { ids: [...ids] })
+          .getMany();
 
-      return Object.assign(data, { teachers: teacherFullNames });
+        data = Object.assign(data, { teachers: teacherFullNames });
+      }
+      return data;
     } catch (error) {
       throw error;
     }
@@ -106,14 +109,14 @@ export class ClassesService {
       }
       //check grade
       if (updateClassDto.gradeId) {
-        const grade = this.gradeRepo.findOne(updateClassDto.gradeId);
+        const grade = await this.gradeRepo.findOne(updateClassDto.gradeId);
         if (!grade) {
           throw new NotFoundException('Grade not exist');
         }
       }
       //check school year
       if (updateClassDto.schoolYearId) {
-        const schoolYear = this.schoolYearRepo.findOne(
+        const schoolYear = await this.schoolYearRepo.findOne(
           updateClassDto.schoolYearId,
         );
         if (!schoolYear) {
@@ -122,8 +125,32 @@ export class ClassesService {
       }
       const teacherIds = updateClassDto.teacherIds;
       delete updateClassDto.teacherIds;
-      console.log(teacherIds);
-
+      //check if update teacherIds
+      if (teacherIds) {
+        await this.userClassRepo
+          .createQueryBuilder()
+          .where('class_id = :classId', { classId: data.id })
+          .delete()
+          .execute();
+        //check teacherids
+        if (teacherIds.length != 0) {
+          //check if teacher exist
+          for (const id of teacherIds) {
+            const user = await this.userRepository.findOne(id);
+            if (!user) {
+              throw new NotFoundException('Teacher not exist');
+            }
+          }
+          await Promise.all(
+            teacherIds.map(async (id: number) => {
+              const userClass = new UserClass();
+              userClass.teacherId = id;
+              userClass.classId = data.id;
+              await userClass.save();
+            }),
+          );
+        }
+      }
       return await this.classesRepository.update(classId, updateClassDto);
     } catch (error) {
       throw error;
