@@ -10,6 +10,8 @@ import { TestModule } from './test/test.module';
 import { UserClassModule } from './modules/user-class/user-class.module';
 import { GradeModule } from './modules/grade/grade.module';
 import { SchoolYearModule } from './modules/school-year/school-year.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { LessonMaterialModule } from './modules/lesson-material/lesson-material.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,6 +29,8 @@ import { SchoolYearModule } from './modules/school-year/school-year.module';
     UserClassModule,
     GradeModule,
     SchoolYearModule,
+    UploadModule,
+    LessonMaterialModule,
   ],
 })
 export class AppModule {}

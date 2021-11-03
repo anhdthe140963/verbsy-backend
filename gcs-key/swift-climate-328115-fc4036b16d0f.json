@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "swift-climate-328115",
+  "private_key_id": "fc4036b16d0f75aa8bf5a45b66a9a3d83c86781e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC3IrLiGIgw1Rum\nGT36mTaExOXmyeFTRsPInfPpYXE8OyeKo6hOahjqX6oq3WYFtVa58CgKaICkKh/c\nRjkRkCeiqafDCtvcLTeGk1UVPEDd174pk8PYD1SQvAYXLdvulO+bl7pKNLUDjouk\n812+jOCCm6yM+QxOeF9BrHgRnoABVs9ormmsdkIArxAXC1wPS3QFnp3WewQB8nSa\nep4SgfBgebrLxXyN9WlfTwKHXEjpMx/g7uXsl3upna65YTkvzzZY96FrJTkGDyOW\nCZ7ywSak8BUpuerwTeuLlt6FvoyUFxVG49yNKgB8QtpfSfYnd98RzKdzRBZAqTBD\noRea5gaTAgMBAAECggEAUlaB+eCQvu/ZtgSsVpLzLZ9/RBPpQHFVDkpiA0CB0lRA\nU3eAcP0HxbyMPCh9ubxNyVyeDAvvJqAf4gAaoXhgMaS4nhswPZ6A0/tC6kDEY1mg\nEH50s5w057v5uwst0mdZEWoW4k0vQ3Gf/GJE+CrLuD04x8sjitZY8aSS+Uz7fV3g\nh0ahM0hSQhsfo2go831/q52wVBzaEG2aYQrztXsEtaJrHnU8XCD4rkpuI0z49AcV\nRN5UeiCtQevLTRLa9BR/+NRGeJjvMw3DOKT0yfLfyyIx6U6pbXNNhMoFI50nZlCj\nEq4fw52kKIHc+rbwLK5pxNmfeIle5QY63HfuE5agbQKBgQDr/e8+mkthEGej8Wyd\nqm4x9n5U45UWHYzPkF7LXUDcivn7ISucw/zo5AFum/tnFkkr5dkBjNYwzFWFmMgE\nlIswv1mS0z+fi3e6LixSw7ZX1sptd2QUmuPhZq8lrr9ycmLSpJyXadv6Rddk2n00\nU3Te37Hyf6YFJmP6/kNp0TLTfQKBgQDGqYwpE+r/tU4ViOWP13p+js/47tJllgh1\nH4oXMVleKfbAimd1ZBdCbuDIB2EbFlrq96B0vZyOQeB81q2zVzzzBISwfS+g49Oj\nyVFPjAD2SvBo1E4kUTqYEpX+Umv8ZHjaEun1x0omvVifkZA7df4NpaGb46v5Bj49\nv7SL9Mc/TwKBgG0Cir4PRdybWFSJk9Osw2Q+6ZJK4jYqBj5nAPLNq8V0SQ7w/pVW\njwABOoweb13qFHi7nqcxqEs4SBUDQvmiqD0nVrgU7uHC6dZNt9mvYA5pQG6aZNeD\nyNn4tdUhSHwUTIPi2Ba1JpEQK/QBXS6LkoPVLvzGbCka17o8M2Ww5dp9AoGBALao\nMz+dmacsqzOvn+pmY7EzW9L0uqw+i14s9ommjRXAHakgWEmeEqi5S6F+73C5WDTM\nI1LS97vwpBgERscrQdXrZJjlMUKL1w6zzjgGcOgDNRIdig9oRCiIhjLE05bHRjqz\nwzuA1hPSakakzuls7n7buECdz4Pyko2x0q4QDJaPAoGAC5sHRgMFFHeV204bQT/H\nHtsx7Ot7mgs7HeDmA3YlQ5bEleOjW0vTtXxfPrpWi8+m5kMkUw9ypwJP+6rRbxOs\ntWUl8+lvXkWKJDgfNPFfzst0mMcOvOPWFjJaWpN0NSVyzjIfJzaZ7viIsNecfcKe\nkiXL6YdOEPKN3rbWmqsgr7U=\n-----END PRIVATE KEY-----\n",
+  "client_email": "verbsy-upload@swift-climate-328115.iam.gserviceaccount.com",
+  "client_id": "101233206725676759884",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/verbsy-upload%40swift-climate-328115.iam.gserviceaccount.com"
+}
