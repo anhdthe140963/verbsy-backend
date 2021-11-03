@@ -22,12 +22,14 @@ import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import fileExcelFilter from 'src/filter/file.excel.filter';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { UpdateTeacherInfoDto } from './dto/update-teacher-info.dto';
 import { updateUserDto } from './dto/update-user.dto';
 import { UserPaginationFilter } from './dto/user-pagination.filter';
 import { UserService } from './user.service';
@@ -76,7 +78,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Teacher, Role.Administrator)
+  @Roles(Role.Administrator)
   @Post('teacher')
   async createTeacher(
     @Body() createTeacherDto: CreateTeacherDto,
@@ -84,11 +86,23 @@ export class UserController {
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
-      message: null,
+      message: 'Teacher created',
       data: await this.userService.createTeacher(createTeacherDto),
     };
   }
-
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  @Post('student')
+  async createStudent(
+    @Body() createStudentDto: CreateStudentDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Student created',
+      data: await this.userService.createStudent(createStudentDto),
+    };
+  }
   @UseGuards(AuthGuard(), RolesGuard)
   @Get(':userId')
   async getUserDetail(@Param('userId') userId: number): Promise<GetUserDto> {
@@ -252,6 +266,23 @@ export class UserController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Update student info successfully',
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  @Put('teacher/teacher-info/:userId')
+  async updateTeacherInfoByUserId(
+    @Param('userId') userId: number,
+    @Body() updateTeacherInfoDto: UpdateTeacherInfoDto,
+  ): Promise<{ statusCode; error; message }> {
+    await this.userService.updateTeacherInfoByUserId(
+      userId,
+      updateTeacherInfoDto,
+    );
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Update teacher info successfully',
     };
   }
 
