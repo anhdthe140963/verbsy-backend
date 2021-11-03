@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import moment from 'moment';
@@ -16,12 +17,14 @@ import { GenerateAccountOption } from 'src/interfaces/generate-account-option.in
 import { removeVietnameseTones } from 'src/utils/convertVie';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { GenerateAccountDto } from './dto/generate-account.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { ImportStudentDto } from './dto/import-student.dto';
 import { ImportTeacherDto } from './dto/import-teacher.dto';
 import { UpdateStudentInfoDto } from './dto/update-student-info.dto';
+import { UpdateTeacherInfoDto } from './dto/update-teacher-info.dto';
 import { updateUserDto } from './dto/update-user.dto';
 import { UserPaginationFilter } from './dto/user-pagination.filter';
 import { StudentInfo } from './entity/student-info.entity';
@@ -212,6 +215,44 @@ export class UserService {
     }
   }
 
+  async createStudent(
+    classId: number,
+    createStudentDto: CreateStudentDto,
+  ): Promise<CreateStudentDto> {
+    try {
+      const data = await this.studentInfoRepository.findOne({
+        where: { studentCode: createStudentDto.studentCode },
+      });
+      if (data) {
+        throw new BadRequestException('Student already exist');
+      }
+      const classById = await this.classesRepository.findOne(classId);
+      if (!classById) {
+        throw new NotFoundException('Class not exist');
+      }
+      const user = await this.generateAccount(
+        createStudentDto.fullName,
+        Role.Student,
+        {
+          dob: createStudentDto.dob,
+          gender: createStudentDto.gender,
+          phone: createStudentDto.phone,
+        },
+      );
+
+      await this.studentInfoRepository.insert(
+        Object.assign(createStudentDto, { userId: user.id }),
+      );
+      await this.userClassRepository.insert({
+        classId: classById.id,
+        studentId: user.id,
+      });
+      return createStudentDto;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async importTeachers(teachers: ImportTeacherDto[]) {
     const duplicatedTeachers: ImportTeacherDto[] = [];
     const addedTeachers: ImportTeacherDto[] = [];
@@ -339,6 +380,27 @@ export class UserService {
       );
     } catch (error) {
       throw new InternalServerErrorException(error);
+    }
+  }
+
+  async updateTeacherInfoByUserId(
+    userId: number,
+    updateTeacherInfoDto: UpdateTeacherInfoDto,
+  ) {
+    try {
+      const user = await this.userRepository.findOne(userId);
+      if (!user) {
+        throw new BadRequestException('User not exist');
+      }
+      if (user.role !== Role.Teacher) {
+        throw new BadRequestException('User is not a teacher');
+      }
+      await this.teacherInfoRepository.update(
+        { userId: userId },
+        updateTeacherInfoDto,
+      );
+    } catch (error) {
+      throw error;
     }
   }
 
