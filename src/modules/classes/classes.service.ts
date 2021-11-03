@@ -129,7 +129,8 @@ export class ClassesService {
       if (teacherIds) {
         await this.userClassRepo
           .createQueryBuilder()
-          .where('class_id = :classId', { classId: data.id })
+          .where('teacher_id IS NOT NULL')
+          .andWhere('class_id = :classId', { classId: data.id })
           .delete()
           .execute();
         //check teacherids
