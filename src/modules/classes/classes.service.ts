@@ -211,16 +211,18 @@ export class ClassesService {
           .where('u.teacher_id IS NOT NULL')
           .andWhere('u.class_id = :classId', { classId: cl.id })
           .getMany();
-        const ids = new Set();
-        for (const teacher of teachers) {
-          ids.add(teacher.teacherId);
+        if (teachers.length !== 0) {
+          const ids = new Set();
+          for (const teacher of teachers) {
+            ids.add(teacher.teacherId);
+          }
+          const teacherFullNames = await this.userRepository
+            .createQueryBuilder('u')
+            .select(['u.id', 'u.fullName'])
+            .where('u.id IN (:...ids)', { ids: [...ids] })
+            .getMany();
+          cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
         }
-        const teacherFullNames = await this.userRepository
-          .createQueryBuilder('u')
-          .select(['u.id', 'u.fullName'])
-          .where('u.id IN (:...ids)', { ids: [...ids] })
-          .getMany();
-        cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
       }),
     );
     return rawPagination;
