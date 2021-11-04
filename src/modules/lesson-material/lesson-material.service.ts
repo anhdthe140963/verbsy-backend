@@ -1,12 +1,21 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { Lesson } from '../curriculum/entities/lesson.entity';
 import { CreateLessonMaterialDto } from './dto/create-lesson-material.dto';
 import { LessonMaterialRepository } from './repository/lesson-material.repository';
 
 @Injectable()
 export class LessonMaterialService {
-  constructor(private lessonMaterialRepository: LessonMaterialRepository) {}
+  constructor(
+    private lessonMaterialRepository: LessonMaterialRepository,
+    private lessonRepository: Repository<Lesson>,
+  ) {}
 
   async isLessonExist(lessonId: number) {
+    const lesson = await this.lessonRepository.findOne(lessonId);
+    if (!lesson) {
+      throw new BadRequestException('Lesson not exist');
+    }
     return true;
   }
 
