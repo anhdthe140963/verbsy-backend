@@ -8,6 +8,7 @@ import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
+import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateCurriculumDto } from './dto/create-curriculum.dto';
@@ -29,6 +30,7 @@ export class CurriculumService {
     private gradeRepo: Repository<Grade>,
     @InjectRepository(Lesson)
     private lessonRepo: Repository<Lesson>,
+    private lessonMaterialRepo: LessonMaterialRepository,
   ) {}
   async create(
     user: User,
@@ -126,11 +128,18 @@ export class CurriculumService {
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
-      return await this.lessonRepo
+      const lessons = await this.lessonRepo
         .createQueryBuilder()
         .where('curriculum_id = :id', { id: id })
         .orderBy('position', 'ASC')
         .getMany();
+      for (const lesson of lessons) {
+        const lessonMaterials = await this.lessonMaterialRepo.find({
+          lessonId: lesson.id,
+        });
+        Object.assign(lesson, { lessonMaterials: lessonMaterials });
+      }
+      return lessons;
     } catch (error) {
       throw error;
     }
@@ -182,6 +191,10 @@ export class CurriculumService {
       if (!data) {
         throw new NotFoundException('Lesson not exist');
       }
+      const lessonMaterials = await this.lessonMaterialRepo.find({
+        lessonId: data.id,
+      });
+      Object.assign(data, { lessonMaterials: lessonMaterials });
       return data;
     } catch (error) {
       throw error;

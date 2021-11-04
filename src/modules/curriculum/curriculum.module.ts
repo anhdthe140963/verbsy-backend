@@ -8,6 +8,7 @@ import { UserRepository } from '../user/repository/user.repository';
 import { Curriculum } from './entities/curriculum.entity';
 import { PassportModule } from '@nestjs/passport';
 import { Lesson } from './entities/lesson.entity';
+import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Lesson } from './entities/lesson.entity';
       UserRepository,
       Curriculum,
       Lesson,
+      LessonMaterialRepository,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
