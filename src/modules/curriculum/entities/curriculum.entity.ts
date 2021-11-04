@@ -15,4 +15,7 @@ export class Curriculum extends BaseEntity {
 
   @Column({ name: 'created_by', nullable: true })
   createdBy: number;
+
+  @Column({ name: 'parent_id', nullable: true })
+  parentId: number;
 }

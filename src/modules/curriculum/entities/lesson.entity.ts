@@ -9,4 +9,7 @@ export class Lesson extends BaseEntity {
 
   @Column()
   position: number;
+
+  @Column()
+  name: string;
 }

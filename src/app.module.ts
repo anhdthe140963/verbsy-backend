@@ -12,6 +12,7 @@ import { GradeModule } from './modules/grade/grade.module';
 import { SchoolYearModule } from './modules/school-year/school-year.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { LessonMaterialModule } from './modules/lesson-material/lesson-material.module';
+import { CurriculumModule } from './modules/curriculum/curriculum.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,6 +32,7 @@ import { LessonMaterialModule } from './modules/lesson-material/lesson-material.
     SchoolYearModule,
     UploadModule,
     LessonMaterialModule,
+    CurriculumModule,
   ],
 })
 export class AppModule {}
