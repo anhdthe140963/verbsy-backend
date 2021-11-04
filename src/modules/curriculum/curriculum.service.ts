@@ -106,6 +106,14 @@ export class CurriculumService {
       const rawPagination = await paginate(this.curriculumRepo, options, {
         where: filter,
       });
+      for (const curri of rawPagination.items) {
+        const createrName = await this.userRepo
+          .createQueryBuilder('u')
+          .select('u.fullName')
+          .where('u.id = :id', { id: curri.createdBy })
+          .getOne();
+        Object.assign(curri, { creatorName: createrName['fullName'] });
+      }
       return rawPagination;
     } catch (error) {
       throw error;
@@ -156,6 +164,12 @@ export class CurriculumService {
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
+      const createrName = await this.userRepo
+        .createQueryBuilder('u')
+        .select('u.fullName')
+        .where('u.id = :id', { id: data.createdBy })
+        .getOne();
+      Object.assign(data, { creatorName: createrName['fullName'] });
       return data;
     } catch (error) {
       throw error;
