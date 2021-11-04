@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { Lesson } from '../curriculum/entities/lesson.entity';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { CreateLessonMaterialDto } from './dto/create-lesson-material.dto';
 import { LessonMaterialRepository } from './repository/lesson-material.repository';
 
@@ -8,7 +7,7 @@ import { LessonMaterialRepository } from './repository/lesson-material.repositor
 export class LessonMaterialService {
   constructor(
     private lessonMaterialRepository: LessonMaterialRepository,
-    private lessonRepository: Repository<Lesson>,
+    private lessonRepository: LessonRepository,
   ) {}
 
   async isLessonExist(lessonId: number) {
