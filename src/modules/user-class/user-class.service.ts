@@ -1,6 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserRepository } from '../user/repository/user.repository';
+import { AssignClassToTeacherDto } from './dto/assign-class-teacher.dto';
 import { AssignStudentsClassDto } from './dto/assign-student-class.dto';
 import { AssignTeachersClassDto } from './dto/assign-teacher-class.dto';
 import { UserClassRepository } from './repository/question.repository';
@@ -85,5 +90,46 @@ export class UserClassService {
       alreadyAssignedTeachers: alreadyAssignedTeachers,
       unassignedTeachers: unassignedTeachers,
     };
+  }
+  async assignClassesToTeacher(
+    assignClassesToTeacher: AssignClassToTeacherDto,
+  ) {
+    try {
+      const { classIds, teacherId } = assignClassesToTeacher;
+      for (const id of classIds) {
+        if (!(await this.classRepository.findOne(id))) {
+          throw new NotFoundException(`Class with ${id} not exist`);
+        }
+      }
+      const teacher = await this.userRepository.findOne(teacherId, {
+        select: ['id', 'username', 'fullName'],
+      });
+      if (!teacher) {
+        throw new NotFoundException('Teacher not exist');
+      }
+      const assignedClasses = [];
+      const alreadyAssignedClasses = [];
+      for (const id of assignClassesToTeacher.classIds) {
+        const userCLass = await this.userClassReposiory.findOne({
+          teacherId: teacherId,
+          classId: id,
+        });
+        if (userCLass) {
+          alreadyAssignedClasses.push(id);
+        } else {
+          await this.userClassReposiory.insert({
+            teacherId: teacherId,
+            classId: id,
+          });
+          assignedClasses.push(id);
+        }
+      }
+      return {
+        assignedClasses: assignedClasses,
+        alreadyAssignedClasses: alreadyAssignedClasses,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 }

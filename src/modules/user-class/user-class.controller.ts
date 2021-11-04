@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Role } from 'src/constant/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { AssignClassToTeacherDto } from './dto/assign-class-teacher.dto';
 import { AssignStudentsClassDto } from './dto/assign-student-class.dto';
 import { AssignTeachersClassDto } from './dto/assign-teacher-class.dto';
 import { UserClassService } from './user-class.service';
@@ -36,9 +37,24 @@ export class UserClassController {
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
-      message: 'Students assigned to class',
+      message: 'Teachers assigned to class',
       data: await this.userClassService.assignTeachersToClass(
         assignTeachersToClassDto,
+      ),
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  @Post('assign-classes-to-teacher')
+  async assignClassToTeacher(
+    @Body() assignClassToTeacherDto: AssignClassToTeacherDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Classes assigned to teacher',
+      data: await this.userClassService.assignClassesToTeacher(
+        assignClassToTeacherDto,
       ),
     };
   }
