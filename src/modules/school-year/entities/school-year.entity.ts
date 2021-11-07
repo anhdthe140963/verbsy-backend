@@ -7,10 +7,4 @@ export class SchoolYear extends BaseEntity {
 
   @Column()
   name: string;
-
-  @Column({ name: 'start_date', nullable: true })
-  startDate: Date;
-
-  @Column({ name: 'end_date', nullable: true })
-  endDate: Date;
 }
