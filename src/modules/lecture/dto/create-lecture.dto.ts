@@ -20,4 +20,8 @@ export class CreateLectureDto {
   @IsNotEmpty()
   @IsNumber()
   ownerId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  lessonId: number;
 }

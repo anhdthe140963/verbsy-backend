@@ -1,11 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import { Role } from 'src/constant/role.enum';
 import { UpdateResult } from 'typeorm';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateLectureDto } from './dto/create-lecture.dto';
 import { UpdateLectureDto } from './dto/update-lecture.dto';
@@ -19,14 +25,29 @@ export class LectureService {
     private lectureRepository: LectureRepository,
     @InjectRepository(UserRepository)
     private userRepo: UserRepository,
+    private lessonRepo: LessonRepository,
   ) {}
 
   async createLecture(createLectureDto: CreateLectureDto): Promise<Lecture> {
     const lecture = new Lecture();
+    const user = await this.userRepo.findOne(createLectureDto.ownerId);
+    if (!user) {
+      throw new NotFoundException('Owner not exist');
+    }
+    if (user.role == Role.Student) {
+      throw new BadRequestException('Owner can not be a student');
+    }
+    const lesson = await this.lectureRepository.findOne(
+      createLectureDto.lessonId,
+    );
+    if (!lesson) {
+      throw new NotFoundException('Lesson not exist');
+    }
     lecture.name = createLectureDto.name;
     lecture.publicity = createLectureDto.publicity;
     lecture.content = createLectureDto.content;
     lecture.ownerId = createLectureDto.ownerId;
+    lecture.lessonId = createLectureDto.lessonId;
     return await lecture.save();
   }
 
@@ -42,6 +63,23 @@ export class LectureService {
     lectureId: number,
     updateLectureDto: UpdateLectureDto,
   ): Promise<UpdateResult> {
+    if (updateLectureDto.ownerId) {
+      const user = await this.userRepo.findOne(updateLectureDto.ownerId);
+      if (!user) {
+        throw new NotFoundException('Owner not exist');
+      }
+      if (user.role == Role.Student) {
+        throw new BadRequestException('Owner can not be a student');
+      }
+    }
+    if (updateLectureDto.lessonId) {
+      const lesson = await this.lectureRepository.findOne(
+        updateLectureDto.lessonId,
+      );
+      if (!lesson) {
+        throw new NotFoundException('Lesson not exist');
+      }
+    }
     return await this.lectureRepository.update(lectureId, updateLectureDto);
   }
 

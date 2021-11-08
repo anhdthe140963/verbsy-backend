@@ -8,6 +8,7 @@ import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
+import { LessonMaterial } from '../lesson-material/entities/lesson-material.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
@@ -67,6 +68,34 @@ export class CurriculumService {
           throw new NotFoundException('Curriculum not found');
         }
         curriculum.parentId = parentId;
+        const curri = await curriculum.save();
+        const lessons = await this.lessonRepo
+          .createQueryBuilder()
+          .where('curriculum_id = :id', { id: curri.id })
+          .getMany();
+        //clone curriculum's lessons
+        for (const lesson of lessons) {
+          const ls = new Lesson();
+          ls.name = lesson.name;
+          ls.position = lesson.position;
+          ls.curriculumId = curri.id;
+          await ls.save();
+          //clone lesson's material
+          const lessonMaterials = await this.lessonMaterialRepo
+            .createQueryBuilder()
+            .where('lesson_id = :id', { id: lesson.id })
+            .getMany();
+          await Promise.all(
+            lessonMaterials.map(async (lessonMaterial: LessonMaterial) => {
+              await this.lessonMaterialRepo.insert({
+                displayName: lessonMaterial.displayName,
+                url: lessonMaterial.url,
+                uploaderId: lessonMaterial.uploaderId,
+                lessonId: ls.id,
+              });
+            }),
+          );
+        }
       }
       return await curriculum.save();
     } catch (error) {
@@ -268,6 +297,17 @@ export class CurriculumService {
       if (!curri) {
         throw new NotFoundException('Curriculum not found');
       }
+      const lessons = await this.lessonRepo
+        .createQueryBuilder()
+        .where('curriculum_id = :id', { id: curri.id })
+        .getMany();
+      for (const lesson of lessons) {
+        await this.lessonMaterialRepo
+          .createQueryBuilder()
+          .delete()
+          .where('lesson_id = :id', { id: lesson.id })
+          .execute();
+      }
       await this.curriculumRepo.delete(id);
       await this.lessonRepo
         .createQueryBuilder()
@@ -278,6 +318,7 @@ export class CurriculumService {
       throw error;
     }
   }
+
   async removeLesson(id: number) {
     try {
       //check lesson
@@ -285,6 +326,11 @@ export class CurriculumService {
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
+      await this.lessonMaterialRepo
+        .createQueryBuilder()
+        .delete()
+        .where('lesson_id = :id', { id: lesson.id })
+        .execute();
       await this.lessonRepo.delete(id);
     } catch (error) {
       throw error;
