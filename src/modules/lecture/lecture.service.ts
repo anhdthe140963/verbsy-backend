@@ -37,14 +37,11 @@ export class LectureService {
     if (user.role == Role.Student) {
       throw new BadRequestException('Owner can not be a student');
     }
-    const lesson = await this.lectureRepository.findOne(
-      createLectureDto.lessonId,
-    );
+    const lesson = await this.lessonRepo.findOne(createLectureDto.lessonId);
     if (!lesson) {
       throw new NotFoundException('Lesson not exist');
     }
     lecture.name = createLectureDto.name;
-    lecture.publicity = createLectureDto.publicity;
     lecture.content = createLectureDto.content;
     lecture.ownerId = createLectureDto.ownerId;
     lecture.lessonId = createLectureDto.lessonId;

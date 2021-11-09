@@ -8,7 +8,6 @@ import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
-import { LessonMaterial } from '../lesson-material/entities/lesson-material.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
@@ -85,16 +84,14 @@ export class CurriculumService {
             .createQueryBuilder()
             .where('lesson_id = :id', { id: lesson.id })
             .getMany();
-          await Promise.all(
-            lessonMaterials.map(async (lessonMaterial: LessonMaterial) => {
-              await this.lessonMaterialRepo.insert({
-                displayName: lessonMaterial.displayName,
-                url: lessonMaterial.url,
-                uploaderId: lessonMaterial.uploaderId,
-                lessonId: ls.id,
-              });
-            }),
-          );
+          for (const lessonMaterial of lessonMaterials) {
+            await this.lessonMaterialRepo.insert({
+              displayName: lessonMaterial.displayName,
+              url: lessonMaterial.url,
+              uploaderId: lessonMaterial.uploaderId,
+              lessonId: ls.id,
+            });
+          }
         }
       }
       return await curriculum.save();

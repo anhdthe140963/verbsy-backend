@@ -17,15 +17,12 @@ export class Lecture extends BaseEntity {
   @Column({ name: 'owner_id' })
   ownerId: number;
 
-  @Column()
-  publicity: number;
-
   @Column({ type: 'text' })
   content: string;
 
   @CreateDateColumn()
   createAt: Date;
 
-  @Column({ name: 'lesson_id' })
+  @Column({ name: 'lesson_id', nullable: true })
   lessonId: number;
 }
