@@ -50,6 +50,7 @@ export class LectureController {
     const data = await this.lectureService.getLectureList(
       { page: filter.page, limit: filter.limit },
       filter.ownerId,
+      filter.lessonId,
     );
     return {
       statusCode: HttpStatus.OK,

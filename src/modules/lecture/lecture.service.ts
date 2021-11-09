@@ -29,82 +29,117 @@ export class LectureService {
   ) {}
 
   async createLecture(createLectureDto: CreateLectureDto): Promise<Lecture> {
-    const lecture = new Lecture();
-    const user = await this.userRepo.findOne(createLectureDto.ownerId);
-    if (!user) {
-      throw new NotFoundException('Owner not exist');
-    }
-    if (user.role == Role.Student) {
-      throw new BadRequestException('Owner can not be a student');
-    }
-    if (createLectureDto.lessonId) {
-      const lesson = await this.lessonRepo.findOne(createLectureDto.lessonId);
-      if (!lesson) {
-        throw new NotFoundException('Lesson not exist');
-      }
-      lecture.lessonId = createLectureDto.lessonId;
-    }
-    lecture.name = createLectureDto.name;
-    lecture.content = createLectureDto.content;
-    lecture.ownerId = createLectureDto.ownerId;
-    return await lecture.save();
-  }
-
-  async getLectureDetail(lectureId: number): Promise<Lecture> {
-    const data = await this.lectureRepository.findOne({ id: lectureId });
-    if (!data) {
-      throw new BadRequestException('Lecture does not exist');
-    }
-    return data;
-  }
-
-  async updateLecture(
-    lectureId: number,
-    updateLectureDto: UpdateLectureDto,
-  ): Promise<UpdateResult> {
-    if (updateLectureDto.ownerId) {
-      const user = await this.userRepo.findOne(updateLectureDto.ownerId);
+    try {
+      const lecture = new Lecture();
+      const user = await this.userRepo.findOne(createLectureDto.ownerId);
       if (!user) {
         throw new NotFoundException('Owner not exist');
       }
       if (user.role == Role.Student) {
         throw new BadRequestException('Owner can not be a student');
       }
-    }
-    if (updateLectureDto.lessonId) {
-      const lesson = await this.lessonRepo.findOne(updateLectureDto.lessonId);
-      if (!lesson) {
-        throw new NotFoundException('Lesson not exist');
+      if (createLectureDto.lessonId) {
+        const lesson = await this.lessonRepo.findOne(createLectureDto.lessonId);
+        if (!lesson) {
+          throw new NotFoundException('Lesson not exist');
+        }
+        lecture.lessonId = createLectureDto.lessonId;
       }
+      lecture.name = createLectureDto.name;
+      lecture.content = createLectureDto.content;
+      lecture.ownerId = createLectureDto.ownerId;
+      return await lecture.save();
+    } catch (error) {
+      throw error;
     }
-    return await this.lectureRepository.update(lectureId, updateLectureDto);
+  }
+
+  async getLectureDetail(lectureId: number): Promise<Lecture> {
+    try {
+      const data = await this.lectureRepository.findOne({ id: lectureId });
+      if (!data) {
+        throw new BadRequestException('Lecture does not exist');
+      }
+      const user = await this.userRepo.findOne(data.ownerId);
+      Object.assign(data, { ownerName: user.fullName });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateLecture(
+    lectureId: number,
+    updateLectureDto: UpdateLectureDto,
+  ): Promise<UpdateResult> {
+    try {
+      if (updateLectureDto.ownerId) {
+        const user = await this.userRepo.findOne(updateLectureDto.ownerId);
+        if (!user) {
+          throw new NotFoundException('Owner not exist');
+        }
+        if (user.role == Role.Student) {
+          throw new BadRequestException('Owner can not be a student');
+        }
+      }
+      if (updateLectureDto.lessonId) {
+        const lesson = await this.lessonRepo.findOne(updateLectureDto.lessonId);
+        if (!lesson) {
+          throw new NotFoundException('Lesson not exist');
+        }
+      }
+      return await this.lectureRepository.update(lectureId, updateLectureDto);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getLectureList(
     options: IPaginationOptions,
     ownerId: number,
+    lessonId: number,
   ): Promise<Pagination<Lecture>> {
-    const query = this.lectureRepository
-      .createQueryBuilder()
-      .orderBy('createAt', 'DESC');
+    try {
+      const query = this.lectureRepository
+        .createQueryBuilder()
+        .orderBy('createAt', 'DESC');
 
-    if (ownerId) {
-      const user = await this.userRepo.findOne(ownerId);
-      //check if user exist
-      if (!user) {
-        throw new BadRequestException('Lecture owner not exist');
+      if (ownerId) {
+        const user = await this.userRepo.findOne(ownerId);
+        //check if user exist
+        if (!user) {
+          throw new NotFoundException('Lecture owner not exist');
+        }
+        query.where('owner_id = :ownerId', { ownerId: ownerId });
       }
-      query.where('owner_id = :ownerId', { ownerId: ownerId });
+      if (lessonId) {
+        const lesson = await this.lessonRepo.findOne(lessonId);
+        if (!lesson) {
+          throw new NotFoundException('Lesson not exist');
+        }
+        query.andWhere('lesson_id = :id', { id: lessonId });
+      }
+      const pagiData = await paginate<Lecture>(query, options);
+      for (const lecture of pagiData.items) {
+        const user = await this.userRepo.findOne(lecture.ownerId);
+        Object.assign(lecture, { ownerName: user.fullName });
+      }
+      return pagiData;
+    } catch (error) {
+      throw error;
     }
-    return paginate<Lecture>(query, options);
   }
 
   async delete(lectureId: number) {
-    const data = await this.lectureRepository.findOne({ id: lectureId });
-    //check if lecture exist
-    if (!data) {
-      throw new BadRequestException('Lecture does not exist');
+    try {
+      const data = await this.lectureRepository.findOne({ id: lectureId });
+      //check if lecture exist
+      if (!data) {
+        throw new BadRequestException('Lecture does not exist');
+      }
+      await this.lectureRepository.delete({ id: lectureId });
+    } catch (error) {
+      throw error;
     }
-    await this.lectureRepository.delete({ id: lectureId });
   }
 }
