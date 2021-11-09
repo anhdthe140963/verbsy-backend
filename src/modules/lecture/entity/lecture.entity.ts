@@ -22,7 +22,4 @@ export class Lecture extends BaseEntity {
 
   @CreateDateColumn()
   createAt: Date;
-
-  @Column({ name: 'lesson_id', nullable: true })
-  lessonId: number;
 }

@@ -11,6 +11,7 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
 import { UpdateResult } from 'typeorm';
+import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateLectureDto } from './dto/create-lecture.dto';
@@ -37,13 +38,6 @@ export class LectureService {
       }
       if (user.role == Role.Student) {
         throw new BadRequestException('Owner can not be a student');
-      }
-      if (createLectureDto.lessonId) {
-        const lesson = await this.lessonRepo.findOne(createLectureDto.lessonId);
-        if (!lesson) {
-          throw new NotFoundException('Lesson not exist');
-        }
-        lecture.lessonId = createLectureDto.lessonId;
       }
       lecture.name = createLectureDto.name;
       lecture.content = createLectureDto.content;
@@ -82,12 +76,6 @@ export class LectureService {
           throw new BadRequestException('Owner can not be a student');
         }
       }
-      if (updateLectureDto.lessonId) {
-        const lesson = await this.lessonRepo.findOne(updateLectureDto.lessonId);
-        if (!lesson) {
-          throw new NotFoundException('Lesson not exist');
-        }
-      }
       return await this.lectureRepository.update(lectureId, updateLectureDto);
     } catch (error) {
       throw error;
@@ -101,7 +89,8 @@ export class LectureService {
   ): Promise<Pagination<Lecture>> {
     try {
       const query = this.lectureRepository
-        .createQueryBuilder()
+        .createQueryBuilder('lt')
+        .innerJoin(LessonLecture, 'll', 'lt.id = ll.lecture_id')
         .orderBy('createAt', 'DESC');
 
       if (ownerId) {
@@ -110,14 +99,14 @@ export class LectureService {
         if (!user) {
           throw new NotFoundException('Lecture owner not exist');
         }
-        query.where('owner_id = :ownerId', { ownerId: ownerId });
+        query.where('lt.owner_id = :ownerId', { ownerId: ownerId });
       }
       if (lessonId) {
         const lesson = await this.lessonRepo.findOne(lessonId);
         if (!lesson) {
           throw new NotFoundException('Lesson not exist');
         }
-        query.andWhere('lesson_id = :id', { id: lessonId });
+        query.andWhere('ll.lesson_id = :id', { id: lessonId });
       }
       const pagiData = await paginate<Lecture>(query, options);
       for (const lecture of pagiData.items) {

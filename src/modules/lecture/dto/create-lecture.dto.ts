@@ -12,9 +12,4 @@ export class CreateLectureDto {
   @IsNotEmpty()
   @IsNumber()
   ownerId: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  @IsOptional()
-  lessonId: number;
 }
