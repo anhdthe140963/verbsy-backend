@@ -18,7 +18,7 @@ export class Question extends BaseEntity {
   @Column({ type: 'text' })
   question: string;
 
-  @Column({ name: 'image_url', type: 'text' })
+  @Column({ name: 'image_url', type: 'text', nullable: true })
   imageUrl: string;
 
   @Column()
