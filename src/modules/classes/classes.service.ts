@@ -142,14 +142,12 @@ export class ClassesService {
               throw new NotFoundException('Teacher not exist');
             }
           }
-          await Promise.all(
-            teacherIds.map(async (id: number) => {
-              const userClass = new UserClass();
-              userClass.teacherId = id;
-              userClass.classId = data.id;
-              await userClass.save();
-            }),
-          );
+          for (const id of teacherIds) {
+            const userClass = new UserClass();
+            userClass.teacherId = id;
+            userClass.classId = data.id;
+            await userClass.save();
+          }
         }
       }
       return await this.classesRepository.update(classId, updateClassDto);

@@ -44,7 +44,6 @@ export class LectureService {
       throw new NotFoundException('Lesson not exist');
     }
     lecture.name = createLectureDto.name;
-    lecture.publicity = createLectureDto.publicity;
     lecture.content = createLectureDto.content;
     lecture.ownerId = createLectureDto.ownerId;
     lecture.lessonId = createLectureDto.lessonId;
