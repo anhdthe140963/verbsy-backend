@@ -14,6 +14,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { LessonMaterialModule } from './modules/lesson-material/lesson-material.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { LessonModule } from './modules/lesson/lesson.module';
+import { LessonLectureModule } from './modules/lesson-lecture/lesson-lecture.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,6 +36,7 @@ import { LessonModule } from './modules/lesson/lesson.module';
     LessonMaterialModule,
     CurriculumModule,
     LessonModule,
+    LessonLectureModule,
   ],
 })
 export class AppModule {}
