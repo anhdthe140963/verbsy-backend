@@ -8,7 +8,10 @@ import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateCurriculumDto } from './dto/create-curriculum.dto';
@@ -31,6 +34,9 @@ export class CurriculumService {
     @InjectRepository(Lesson)
     private lessonRepo: Repository<Lesson>,
     private lessonMaterialRepo: LessonMaterialRepository,
+    @InjectRepository(LessonLecture)
+    private lessonLectureRepo: Repository<LessonLecture>,
+    private lectureRepo: LectureRepository,
   ) {}
   async create(
     user: User,
@@ -163,7 +169,19 @@ export class CurriculumService {
         const lessonMaterials = await this.lessonMaterialRepo.find({
           lessonId: lesson.id,
         });
-        Object.assign(lesson, { lessonMaterials: lessonMaterials });
+        const lessonLecture = await this.lessonLectureRepo.find({
+          lessonId: lesson.id,
+        });
+        const lectures = [];
+        await Promise.all(
+          lessonLecture.map(async (ll: LessonLecture) => {
+            lectures.push(await this.lectureRepo.findOne(ll.lectureId));
+          }),
+        );
+        Object.assign(lesson, {
+          lessonMaterials: lessonMaterials,
+          lectures: lectures,
+        });
       }
       return lessons;
     } catch (error) {

@@ -90,8 +90,7 @@ export class LectureService {
     try {
       const query = this.lectureRepository
         .createQueryBuilder('lt')
-        .innerJoin(LessonLecture, 'll', 'lt.id = ll.lecture_id')
-        .orderBy('createAt', 'DESC');
+        .orderBy('createAt', 'ASC');
 
       if (ownerId) {
         const user = await this.userRepo.findOne(ownerId);
@@ -99,13 +98,20 @@ export class LectureService {
         if (!user) {
           throw new NotFoundException('Lecture owner not exist');
         }
-        query.where('lt.owner_id = :ownerId', { ownerId: ownerId });
       }
+
       if (lessonId) {
         const lesson = await this.lessonRepo.findOne(lessonId);
         if (!lesson) {
           throw new NotFoundException('Lesson not exist');
         }
+        query.innerJoin(LessonLecture, 'll', 'lt.id = ll.lecture_id');
+      }
+
+      if (ownerId) {
+        query.where('lt.owner_id = :ownerId', { ownerId: ownerId });
+      }
+      if (lessonId) {
         query.andWhere('ll.lesson_id = :id', { id: lessonId });
       }
       const pagiData = await paginate<Lecture>(query, options);
