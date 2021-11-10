@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { UserClass } from '../user-class/entity/user-class.entity';
+import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
@@ -22,6 +23,7 @@ export class GradeService {
     @InjectRepository(SchoolYear)
     private schoolYearRepo: Repository<SchoolYear>,
     private classRepo: ClassesRepository,
+    private userClassRepo: UserClassRepository,
   ) {}
   async create(createGrade: CreateGradeDto): Promise<Grade> {
     try {
@@ -44,12 +46,15 @@ export class GradeService {
             order: { name: 'ASC' },
           });
         } else {
-          classes = await this.classRepo
-            .createQueryBuilder('c')
-            .innerJoin(UserClass, 'uc', 'c.id = uc.class_id')
-            .where('uc.teacher_id = :id', { id: user.id })
-            .orderBy('c.name', 'ASC')
-            .getMany();
+          const userClasses = await this.userClassRepo.find({
+            teacherId: user.id,
+          });
+          for (const uc of userClasses) {
+            const cl = await this.classRepo.findOne(uc.classId);
+            if (cl.gradeId == grade.id) {
+              classes.push(cl);
+            }
+          }
         }
         grade = Object.assign(grade, { classes: classes });
       }
