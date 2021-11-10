@@ -65,4 +65,19 @@ export class LessonLectureController {
       ),
     };
   }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  @Post('unassign-lecture-to-lesson')
+  async unAssignLectureToLesson(
+    @Body() assignLectureToLessonDto: AssignLectureLessonDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Lectures unassign to lesson',
+      data: await this.lessonLectureService.unAssignLectureToLesson(
+        assignLectureToLessonDto,
+      ),
+    };
+  }
 }

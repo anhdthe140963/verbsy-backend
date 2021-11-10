@@ -49,19 +49,59 @@ export class LessonLectureService {
         if (!lecture) {
           throw new NotFoundException(`Lecture with id ${lectureId} not exist`);
         }
+        const lessonLecture = await this.lectureLessonRepo.findOne({
+          lectureId: lectureId,
+          lessonId: lessonId,
+        });
+        if (lessonLecture) {
+          throw new BadRequestException(
+            `Lecture with id ${lectureId} already assign to lesson`,
+          );
+        }
       }
       //check lesson exist
       const lesson = await this.lessonRepo.findOne(lessonId);
       if (!lesson) {
         throw new NotFoundException(`Lesson with id ${lessonId} not exist`);
       }
-      await this.lectureLessonRepo
-        .createQueryBuilder()
-        .delete()
-        .where('lesson_id = :id', { id: lessonId })
-        .execute();
       for (const lecId of lectureIds) {
         await this.lectureLessonRepo.insert({
+          lectureId: lecId,
+          lessonId: lessonId,
+        });
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+  async unAssignLectureToLesson(
+    assignLectureLessonDto: AssignLectureLessonDto,
+  ) {
+    try {
+      const { lectureIds, lessonId } = assignLectureLessonDto;
+      //check lecture
+      for (const lectureId of lectureIds) {
+        const lecture = await this.lectureRepo.findOne(lectureId);
+        if (!lecture) {
+          throw new NotFoundException(`Lecture with id ${lectureId} not exist`);
+        }
+        const lessonLecture = await this.lectureLessonRepo.findOne({
+          lectureId: lectureId,
+          lessonId: lessonId,
+        });
+        if (!lessonLecture) {
+          throw new BadRequestException(
+            `Lecture with id ${lectureId} already unassign to lesson`,
+          );
+        }
+      }
+      //check lesson exist
+      const lesson = await this.lessonRepo.findOne(lessonId);
+      if (!lesson) {
+        throw new NotFoundException(`Lesson with id ${lessonId} not exist`);
+      }
+      for (const lecId of lectureIds) {
+        await this.lectureLessonRepo.delete({
           lectureId: lecId,
           lessonId: lessonId,
         });
