@@ -51,7 +51,7 @@ export class LessonLectureController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator)
+  @Roles(Role.Administrator, Role.Teacher)
   @Post('assign-lecture-to-lesson')
   async assignLectureToLesson(
     @Body() assignLectureToLessonDto: AssignLectureLessonDto,
@@ -66,7 +66,7 @@ export class LessonLectureController {
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator)
+  @Roles(Role.Administrator, Role.Teacher)
   @Post('unassign-lecture-to-lesson')
   async unAssignLectureToLesson(
     @Body() assignLectureToLessonDto: AssignLectureLessonDto,
