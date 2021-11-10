@@ -49,21 +49,17 @@ export class LessonLectureService {
         if (!lecture) {
           throw new NotFoundException(`Lecture with id ${lectureId} not exist`);
         }
-        const lessonLecture = await this.lectureLessonRepo.findOne({
-          lectureId: lectureId,
-          lessonId: lessonId,
-        });
-        if (lessonLecture) {
-          throw new BadRequestException(
-            `Lecture with id ${lectureId} already assign to lesson`,
-          );
-        }
       }
       //check lesson exist
       const lesson = await this.lessonRepo.findOne(lessonId);
       if (!lesson) {
         throw new NotFoundException(`Lesson with id ${lessonId} not exist`);
       }
+      await this.lectureLessonRepo
+        .createQueryBuilder()
+        .delete()
+        .where('lesson_id = :id', { id: lessonId })
+        .execute();
       for (const lecId of lectureIds) {
         await this.lectureLessonRepo.insert({
           lectureId: lecId,
