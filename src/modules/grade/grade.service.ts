@@ -4,9 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from 'src/constant/role.enum';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
+import { UserClass } from '../user-class/entity/user-class.entity';
+import { User } from '../user/entity/user.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { Grade } from './entities/grade.entity';
@@ -30,16 +33,29 @@ export class GradeService {
     }
   }
 
-  async findAll(): Promise<Grade[]> {
+  async getGradesForUser(user: User): Promise<Grade[]> {
     try {
-      const grades = await this.gradeRepo.createQueryBuilder().getMany();
+      const grades = await this.gradeRepo.find({ order: { name: 'ASC' } });
       for (let grade of grades) {
-        const classes = await this.classRepo.find({ gradeId: grade.id });
+        let classes = [];
+        if (user.role == Role.Administrator) {
+          classes = await this.classRepo.find({
+            where: { gradeId: grade.id },
+            order: { name: 'ASC' },
+          });
+        } else {
+          classes = await this.classRepo
+            .createQueryBuilder('c')
+            .innerJoin(UserClass, 'uc', 'c.id = uc.class_id')
+            .where('uc.teacher_id = :id', { id: user.id })
+            .orderBy('c.name', 'ASC')
+            .getMany();
+        }
         grade = Object.assign(grade, { classes: classes });
       }
       return grades;
     } catch (error) {
-      throw new InternalServerErrorException('Error while getting grade');
+      throw error;
     }
   }
 
