@@ -15,6 +15,7 @@ import { LessonMaterialModule } from './modules/lesson-material/lesson-material.
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { LessonModule } from './modules/lesson/lesson.module';
 import { LessonLectureModule } from './modules/lesson-lecture/lesson-lecture.module';
+import { GameServerModule } from './modules/game-server/game-server.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,6 +38,7 @@ import { LessonLectureModule } from './modules/lesson-lecture/lesson-lecture.mod
     CurriculumModule,
     LessonModule,
     LessonLectureModule,
+    GameServerModule,
   ],
 })
 export class AppModule {}
