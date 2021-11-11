@@ -59,6 +59,7 @@ export class CurriculumController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator, Role.Teacher, Role.Student)
   async findAll(
+    @GetUser() user,
     @Query() filter: CurriculumFilter,
   ): Promise<{ statusCode; error; message; data }> {
     const curriFilter: CurriculumFilter = {};
@@ -77,6 +78,7 @@ export class CurriculumController {
           limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
         },
         curriFilter,
+        user,
       ),
     };
   }
