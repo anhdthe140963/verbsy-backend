@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import { Role } from 'src/constant/role.enum';
 import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
@@ -12,6 +13,7 @@ import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
+import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateCurriculumDto } from './dto/create-curriculum.dto';
@@ -37,6 +39,7 @@ export class CurriculumService {
     @InjectRepository(LessonLecture)
     private lessonLectureRepo: Repository<LessonLecture>,
     private lectureRepo: LectureRepository,
+    private userClassRepo: UserClassRepository,
   ) {}
   async create(
     user: User,
@@ -135,11 +138,36 @@ export class CurriculumService {
     }
   }
 
-  async findAll(options: IPaginationOptions, filter: CurriculumFilter) {
+  async findAll(
+    options: IPaginationOptions,
+    filter: CurriculumFilter,
+    user: User,
+  ) {
     try {
-      const rawPagination = await paginate(this.curriculumRepo, options, {
-        where: filter,
-      });
+      let rawPagination;
+      if (user.role == Role.Administrator) {
+        rawPagination = await paginate(this.curriculumRepo, options, {
+          where: filter,
+        });
+      } else if (user.role == Role.Teacher) {
+        const query = await this.curriculumRepo
+          .createQueryBuilder()
+          .where('created_by = :id', { id: user.id })
+          .orWhere('parent_id IS NULL');
+        rawPagination = await paginate(query, options);
+      } else {
+        const userClasses = await this.userClassRepo.find({
+          studentId: user.id,
+        });
+        const classIds = [];
+        for (const uc of userClasses) {
+          classIds.push(uc.classId);
+        }
+        const query = await this.curriculumRepo
+          .createQueryBuilder()
+          .where('class_id IN (...:ids)', { ids: classIds });
+        rawPagination = await paginate(query, options);
+      }
       for (const curri of rawPagination.items) {
         const createrName = await this.userRepo
           .createQueryBuilder('u')
