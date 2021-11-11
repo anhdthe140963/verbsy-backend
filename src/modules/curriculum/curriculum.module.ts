@@ -6,6 +6,8 @@ import { Grade } from '../grade/entities/grade.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
+import { Answer } from '../question/entity/answer.entity';
+import { QuestionRepository } from '../question/repository/question.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { CurriculumController } from './curriculum.controller';
@@ -25,6 +27,8 @@ import { Lesson } from './entities/lesson.entity';
       LessonLecture,
       LectureRepository,
       UserClassRepository,
+      QuestionRepository,
+      Answer,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
