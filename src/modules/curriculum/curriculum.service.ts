@@ -12,7 +12,6 @@ import { Grade } from '../grade/entities/grade.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
-import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
@@ -79,8 +78,10 @@ export class CurriculumService {
         const curri = await curriculum.save();
         const lessons = await this.lessonRepo
           .createQueryBuilder()
-          .where('curriculum_id = :id', { id: curri.id })
+          .where('curriculum_id = :id', { id: curriculumById.id })
           .getMany();
+        console.log(lessons);
+
         //clone curriculum's lessons
         for (const lesson of lessons) {
           const ls = new Lesson();
@@ -99,6 +100,17 @@ export class CurriculumService {
               url: lessonMaterial.url,
               uploaderId: lessonMaterial.uploaderId,
               lessonId: ls.id,
+            });
+          }
+          //clone lectures
+          const lessonLectures = await this.lessonLectureRepo
+            .createQueryBuilder()
+            .where('lesson_id = :id', { id: lesson.id })
+            .getMany();
+          for (const ll of lessonLectures) {
+            await this.lessonLectureRepo.insert({
+              lessonId: ls.id,
+              lectureId: ll.lectureId,
             });
           }
         }
@@ -144,34 +156,30 @@ export class CurriculumService {
     user: User,
   ) {
     try {
-      let rawPagination;
-      if (user.role == Role.Administrator) {
-        rawPagination = await paginate(this.curriculumRepo, options, {
-          where: filter,
-        });
-      } else if (user.role == Role.Teacher) {
-        const query = await this.curriculumRepo
-          .createQueryBuilder()
-          .where('created_by = :id', { id: user.id })
-          .orWhere('parent_id IS NULL');
-        rawPagination = await paginate(query, options);
-      } else {
-        const userClasses = await this.userClassRepo.find({
-          studentId: user.id,
-        });
-        const classIds = [];
-        for (const uc of userClasses) {
-          classIds.push(uc.classId);
-        }
-        const query = await this.curriculumRepo
-          .createQueryBuilder()
-<<<<<<< HEAD
-          .where('class_id IN (:...ids)', { ids: classIds });
-=======
-          .where('class_id IN (...:ids)', { ids: classIds });
->>>>>>> 7a161f00bc9c907fdc6f594a2f72be3c24528237
-        rawPagination = await paginate(query, options);
-      }
+      // let rawPagination;
+      // if (user.role == Role.Administrator) {
+      const rawPagination = await paginate(this.curriculumRepo, options, {
+        where: filter,
+      });
+      // } else if (user.role == Role.Teacher) {
+      //   const query = await this.curriculumRepo
+      //     .createQueryBuilder()
+      //     .where('created_by = :id', { id: user.id })
+      //     .orWhere('parent_id IS NULL');
+      //   rawPagination = await paginate(query, options);
+      // } else {
+      //   const userClasses = await this.userClassRepo.find({
+      //     studentId: user.id,
+      //   });
+      //   const classIds = [];
+      //   for (const uc of userClasses) {
+      //     classIds.push(uc.classId);
+      //   }
+      //   const query = await this.curriculumRepo
+      //     .createQueryBuilder()
+      //     .where('class_id IN (:...ids)', { ids: classIds });
+      //   rawPagination = await paginate(query, options);
+      // }
       for (const curri of rawPagination.items) {
         const createrName = await this.userRepo
           .createQueryBuilder('u')
