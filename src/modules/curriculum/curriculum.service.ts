@@ -165,11 +165,7 @@ export class CurriculumService {
         }
         const query = await this.curriculumRepo
           .createQueryBuilder()
-<<<<<<< HEAD
-          .where('class_id IN (:...ids)', { ids: classIds });
-=======
           .where('class_id IN (...:ids)', { ids: classIds });
->>>>>>> 7a161f00bc9c907fdc6f594a2f72be3c24528237
         rawPagination = await paginate(query, options);
       }
       for (const curri of rawPagination.items) {

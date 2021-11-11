@@ -14,7 +14,6 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { AuthService } from './auth.service';
 import { LogInDto } from './dto/log-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
-import { readXlsxFile } from 'read-excel-file/node';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
