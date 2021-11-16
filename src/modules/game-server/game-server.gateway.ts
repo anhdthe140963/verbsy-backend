@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,9 +9,10 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { HostGameDto } from './dto/host-game.dto';
 import { GameServerService } from './game-server.service';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class GameServerGateway implements OnGatewayConnection {
   @WebSocketServer()
   server: Server;
@@ -43,5 +45,11 @@ export class GameServerGateway implements OnGatewayConnection {
   async submitAnswer(@MessageBody() data: any): Promise<boolean> {
     const isCorrect = await this.gameServerService.checkAnswer(data.answerId);
     return this.server.emit('check_answer', isCorrect);
+  }
+
+  @SubscribeMessage('hostNewGame')
+  async hostNewGame(@MessageBody() hostGameDto: HostGameDto) {
+    const game = await this.gameServerService.hostNewGame(hostGameDto);
+    this.server.emit('newGameHosted', game);
   }
 }
