@@ -1,4 +1,10 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('game')
 export class Game extends BaseEntity {
@@ -22,4 +28,7 @@ export class Game extends BaseEntity {
 
   @Column({ name: 'config_id', nullable: true })
   configId: number;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 }

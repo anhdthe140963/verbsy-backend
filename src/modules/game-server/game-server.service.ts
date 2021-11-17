@@ -33,4 +33,14 @@ export class GameServerService {
       throw error;
     }
   }
+
+  async startGame(gameId: number): Promise<Game> {
+    try {
+      const game = await this.gameRepo.findOne(gameId);
+      game.isGameLive = true;
+      return await game.save();
+    } catch (error) {
+      throw error;
+    }
+  }
 }

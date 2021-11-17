@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -51,5 +50,13 @@ export class GameServerGateway implements OnGatewayConnection {
   async hostNewGame(@MessageBody() hostGameDto: HostGameDto) {
     const game = await this.gameServerService.hostNewGame(hostGameDto);
     this.server.emit('newGameHosted', game);
+  }
+
+  @SubscribeMessage('startGame')
+  async startGame(@MessageBody() gameId: number) {
+    this.server.emit(
+      'gameStarted',
+      await this.gameServerService.startGame(gameId),
+    );
   }
 }

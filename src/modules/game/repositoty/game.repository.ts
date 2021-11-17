@@ -11,4 +11,8 @@ export class GameRepository extends Repository<Game> {
     game.classId = hostGameDto.classId;
     return await game.save();
   }
+
+  async findActiveGames(classId: number): Promise<Game[]> {
+    return await this.find({ isGameLive: true, classId });
+  }
 }

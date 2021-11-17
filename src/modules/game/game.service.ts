@@ -1,26 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { CreateGameDto } from './dto/create-game.dto';
-import { UpdateGameDto } from './dto/update-game.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ClassesRepository } from '../classes/repository/classes.repository';
+import { Game } from './entities/game.entity';
+import { GameRepository } from './repositoty/game.repository';
 
 @Injectable()
 export class GameService {
-  create(createGameDto: CreateGameDto) {
-    return 'This action adds a new game';
-  }
-
-  findAll() {
-    return `This action returns all game`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} game`;
-  }
-
-  update(id: number, updateGameDto: UpdateGameDto) {
-    return `This action updates a #${id} game`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} game`;
+  constructor(
+    private gameRepo: GameRepository,
+    private classRepo: ClassesRepository,
+  ) {}
+  async findActiveGames(classId: number): Promise<Game[]> {
+    try {
+      if (!(await this.classRepo.isClassExist(classId))) {
+        throw new NotFoundException('Class Not Exist');
+      }
+      return await this.gameRepo.findActiveGames(classId);
+    } catch (error) {
+      throw error;
+    }
   }
 }
