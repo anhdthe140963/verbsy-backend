@@ -9,5 +9,7 @@ export class HostGameDto {
   @IsInt()
   hostId: number;
 
+  @IsNotEmpty()
+  @IsInt()
   classId: number;
 }

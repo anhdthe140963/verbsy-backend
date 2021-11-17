@@ -42,4 +42,11 @@ export class UserRepository extends Repository<User> {
   async hashPassword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);
   }
+
+  async isUserExist(userId: number): Promise<boolean> {
+    if (await this.findOne(userId)) {
+      return true;
+    }
+    return false;
+  }
 }

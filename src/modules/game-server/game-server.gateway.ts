@@ -46,17 +46,27 @@ export class GameServerGateway implements OnGatewayConnection {
     return this.server.emit('check_answer', isCorrect);
   }
 
-  @SubscribeMessage('hostNewGame')
+  @SubscribeMessage('host_new_game')
   async hostNewGame(@MessageBody() hostGameDto: HostGameDto) {
     const game = await this.gameServerService.hostNewGame(hostGameDto);
-    this.server.emit('newGameHosted', game);
+    this.server.emit('host_new_game', game);
   }
 
-  @SubscribeMessage('startGame')
-  async startGame(@MessageBody() gameId: number) {
+  @SubscribeMessage('join_game')
+  async joinGame(
+    @MessageBody() joinGameDto: { gameId: number; studentId: number },
+  ) {
     this.server.emit(
-      'gameStarted',
-      await this.gameServerService.startGame(gameId),
+      'join_game',
+      await this.gameServerService.joinGame(
+        joinGameDto.gameId,
+        joinGameDto.studentId,
+      ),
     );
+  }
+
+  @SubscribeMessage('start_game')
+  async startGame(@MessageBody() gameId: number) {
+    this.server.emit('start_game', this.server.fetchSockets.length);
   }
 }
