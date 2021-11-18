@@ -3,6 +3,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -16,7 +17,9 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
 
 @WebSocketGateway({ cors: true })
-export class GameServerGateway implements OnGatewayConnection {
+export class GameServerGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -24,6 +27,17 @@ export class GameServerGateway implements OnGatewayConnection {
     private readonly jwtService: JwtService,
     private readonly gameServerService: GameServerService,
   ) {}
+  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+    try {
+      socket.emit(
+        'socket_disconnected',
+        'username ' + socket.data.user.username + ' has connected',
+      );
+    } catch (error) {
+      socket.emit('error', error);
+      return socket.disconnect(true);
+    }
+  }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     try {
@@ -172,6 +186,8 @@ export class GameServerGateway implements OnGatewayConnection {
   ) {
     const room = data.gameId.toString();
     try {
+      console.log(socc.data);
+
       if (!socc.data.isHost) {
         throw new WsException('Only Host can start game');
       }
