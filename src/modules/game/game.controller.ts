@@ -1,5 +1,6 @@
-import { Body, Controller, Get, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from 'src/decorator/get-user-decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { GameService } from './game.service';
 
@@ -9,13 +10,13 @@ export class GameController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Get('active-games')
   async findActiveGames(
-    @Body() dto: { classId: number },
+    @GetUser() user,
   ): Promise<{ statusCode; error; message; data }> {
     return {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Get active games successfully',
-      data: await this.gameService.findActiveGames(dto.classId),
+      data: await this.gameService.findActiveGames(user),
     };
   }
 }
