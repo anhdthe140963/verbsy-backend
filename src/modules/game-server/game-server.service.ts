@@ -161,6 +161,13 @@ export class GameServerService {
     }
   }
 
+  async kickPlayerFromGame(gameId: number, studentId: number) {
+    return await this.playerRepository.delete({
+      gameId: gameId,
+      studentId: studentId,
+    });
+  }
+
   async startGame(gameId: number): Promise<Game> {
     try {
       const game = await this.gameRepository.findOne(gameId);

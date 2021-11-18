@@ -148,11 +148,14 @@ export class GameServerGateway implements OnGatewayConnection {
         if (user.id == data.userId) {
           s.leave(room);
           s.disconnect(true);
+
+          await this.gameServerService.kickPlayerFromGame(data.gameId, user.id);
           console.log('kicked');
 
           break;
         }
       }
+
       this.server.to(room).emit('kicked_from_game', data.userId);
       return this.server
         .to(room)
