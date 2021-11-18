@@ -12,6 +12,7 @@ import { QuestionRecordRepository } from '../question-record/repository/question
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -111,9 +112,20 @@ export class GameServerService {
     });
   }
 
-  // async getLeaderboard(gameId: number) {
-  //   return await
-  // }
+  async getLeaderboard(gameId: number) {
+    const records = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .leftJoinAndSelect(Player, 'pl', 'pd.player_id = pl.id')
+      .leftJoinAndSelect(User, 'u', 'pl.student_id = u.id')
+      .select('SUM(pd.score)', 'score')
+      .addSelect('u.full_name', 'fullName')
+      .where('pl.game_id = :gameId', { gameId: gameId })
+      .groupBy('pd.player_id')
+      .orderBy('score', 'DESC')
+      .getRawMany();
+
+    return records;
+  }
 
   async hostNewGame(hostGameDto: HostGameDto): Promise<Game> {
     try {

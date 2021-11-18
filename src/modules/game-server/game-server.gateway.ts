@@ -7,11 +7,8 @@ import {
   WebSocketGateway,
   WebSocketServer,
   WsException,
-  WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Role } from 'src/constant/role.enum';
-import { Roles } from 'src/decorator/roles.decorator';
 import { User } from '../user/entity/user.entity';
 import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -49,10 +46,10 @@ export class GameServerGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('test')
-  test(@MessageBody() data: any): WsResponse {
+  async test(@MessageBody() data: { gameId: number }) {
     console.log(data);
-
-    return { event: 'test', data: `echo: ${data}` };
+    const h = await this.gameServerService.getLeaderboard(data.gameId);
+    return this.server.emit('test', h);
   }
 
   @SubscribeMessage('get_question')
@@ -154,9 +151,13 @@ export class GameServerGateway implements OnGatewayConnection {
     const roomStudents = (await this.server.to(room).allSockets()).size - 1;
 
     if (questionRecord.answeredPlayers == roomStudents) {
-      return this.server
-        .to(room)
-        .emit('question_done', { questionId: data.questionId });
+      const leaderboard = await this.gameServerService.getLeaderboard(
+        data.gameId,
+      );
+      return this.server.to(room).emit('question_done', {
+        questionId: data.questionId,
+        leaderboard: leaderboard,
+      });
     }
   }
 
@@ -165,9 +166,13 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: { gameId: number; questionId: number },
   ) {
     const room = data.gameId.toString();
-    return this.server
-      .to(room)
-      .emit('question_done', { questionId: data.questionId });
+    const leaderboard = await this.gameServerService.getLeaderboard(
+      data.gameId,
+    );
+    return this.server.to(room).emit('question_done', {
+      questionId: data.questionId,
+      leaderboard: leaderboard,
+    });
   }
 
   @SubscribeMessage('end_game')
