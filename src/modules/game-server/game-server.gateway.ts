@@ -41,7 +41,8 @@ export class GameServerGateway implements OnGatewayConnection {
       );
     } catch (error) {
       socket.disconnect(true);
-      throw new WsException(error);
+      console.log(error);
+      return;
     }
   }
 
