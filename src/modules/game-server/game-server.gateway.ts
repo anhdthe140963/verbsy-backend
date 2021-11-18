@@ -9,6 +9,7 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { Role } from 'src/constant/role.enum';
 import { User } from '../user/entity/user.entity';
 import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -47,16 +48,32 @@ export class GameServerGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('test')
-  async test(@MessageBody() data: { gameId: number }) {
-    console.log(data);
-    const h = await this.gameServerService.getLeaderboard(data.gameId);
-    return this.server.emit('test', h);
+  async test(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      console.log(data);
+      const h = await this.gameServerService.getLeaderboard(data.gameId);
+      return this.server.emit('test', h);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
   }
 
   @SubscribeMessage('get_question')
-  async getQuestion(@MessageBody() data: any): Promise<boolean> {
-    const question = await this.gameServerService.getQuestion(data.questionId);
-    return this.server.emit('receive_question', question);
+  async getQuestion(
+    @MessageBody() data: any,
+    @ConnectedSocket() socc: Socket,
+  ): Promise<boolean> {
+    try {
+      const question = await this.gameServerService.getQuestion(
+        data.questionId,
+      );
+      return this.server.emit('receive_question', question);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
   }
 
   @SubscribeMessage('host_game')
@@ -64,12 +81,16 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() hostGameDto: HostGameDto,
     @ConnectedSocket() socc: Socket,
   ) {
-    const game = await this.gameServerService.hostNewGame(hostGameDto);
-    const room = game.id.toString();
-    socc.data.isHost = true;
-    socc.join(room);
+    try {
+      const game = await this.gameServerService.hostNewGame(hostGameDto);
+      const room = game.id.toString();
+      socc.data.isHost = true;
+      socc.join(room);
 
-    return this.server.emit('game_hosted', game);
+      return socc.emit('game_hosted', game);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
   }
 
   @SubscribeMessage('join_game')
@@ -77,16 +98,20 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
-    const user: User = socc.data.user;
-    await this.gameServerService.joinGame(data.gameId, socc.data.user.id);
-    const room = data.gameId.toString();
+    try {
+      const user: User = socc.data.user;
+      await this.gameServerService.joinGame(data.gameId, socc.data.user.id);
+      const room = data.gameId.toString();
 
-    if (socc.rooms.has(room)) {
-      throw new WsException('User already in room');
+      if (socc.rooms.has(room)) {
+        throw new WsException('User already in room');
+      }
+      socc.join(room);
+
+      return this.server.to(room).emit('game_joined', user);
+    } catch (error) {
+      return socc.emit('error', error);
     }
-    socc.join(room);
-
-    return this.server.to(room).emit('game_joined', user);
   }
 
   @SubscribeMessage('kick_from_game')
@@ -94,25 +119,29 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: { gameId: number; userId: number },
     @ConnectedSocket() socc: Socket,
   ) {
-    if (!socc.data.isHost) {
-      throw new WsException('Only Host can kick people');
-    }
-
-    const room = data.gameId.toString();
-    const sockets = await this.server.to(room).fetchSockets();
-    console.log(sockets.length);
-    for (const s of sockets) {
-      const user: User = s.data.user;
-
-      if (user.id == data.userId) {
-        s.leave(room);
-        s.disconnect(true);
-        console.log('kicked');
-
-        break;
+    try {
+      if (!socc.data.isHost) {
+        throw new WsException('Only Host can kick people');
       }
+
+      const room = data.gameId.toString();
+      const sockets = await this.server.to(room).fetchSockets();
+      console.log(sockets.length);
+      for (const s of sockets) {
+        const user: User = s.data.user;
+
+        if (user.id == data.userId) {
+          s.leave(room);
+          s.disconnect(true);
+          console.log('kicked');
+
+          break;
+        }
+      }
+      return this.server.to(room).emit('kicked_from_game', data.userId);
+    } catch (error) {
+      return socc.emit('error', error);
     }
-    return this.server.to(room).emit('kicked_from_game', data.userId);
   }
 
   @SubscribeMessage('start_game')
@@ -120,19 +149,21 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
-    if (!socc.data.isHost) {
-      throw new WsException('Only Host can start game');
-    }
-
     const room = data.gameId.toString();
-    const questions = await this.gameServerService.getQuestionsForGame(
-      data.gameId,
-    );
-    socc.emit('receive_questions', questions);
-    const sockets = await this.server.to(room).fetchSockets();
-    console.log(sockets.length);
+    try {
+      if (!socc.data.isHost) {
+        throw new WsException('Only Host can start game');
+      }
 
-    return this.server.to(room).emit('game_started', 'Game Started');
+      const questions = await this.gameServerService.getQuestionsForGame(
+        data.gameId,
+      );
+      socc.emit('receive_questions', questions);
+
+      return this.server.to(room).emit('game_started', 'Game Started');
+    } catch (error) {
+      return socc.emit('error', error);
+    }
   }
 
   @SubscribeMessage('submit_answer')
@@ -140,18 +171,39 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: SubmitAnswerDto,
     @ConnectedSocket() socc: Socket,
   ) {
-    const room = data.gameId.toString();
-    const user: User = socc.data.user;
-    await this.gameServerService.submitAnswer(user.id, data);
-    socc.emit('answer_submitted');
-    const questionRecord = await this.gameServerService.getAnsweredPlayers(
-      data.gameId,
-      data.questionId,
-    );
+    try {
+      const room = data.gameId.toString();
+      const user: User = socc.data.user;
+      await this.gameServerService.submitAnswer(user.id, data);
+      socc.emit('answer_submitted');
+      const questionRecord = await this.gameServerService.getAnsweredPlayers(
+        data.gameId,
+        data.questionId,
+      );
 
-    const roomStudents = (await this.server.to(room).allSockets()).size - 1;
+      const roomStudents = (await this.server.to(room).allSockets()).size - 1;
 
-    if (questionRecord.answeredPlayers == roomStudents) {
+      if (questionRecord.answeredPlayers == roomStudents) {
+        const leaderboard = await this.gameServerService.getLeaderboard(
+          data.gameId,
+        );
+        return this.server.to(room).emit('question_done', {
+          questionId: data.questionId,
+          leaderboard: leaderboard,
+        });
+      }
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('answer_timeout')
+  async answerTimeout(
+    @MessageBody() data: { gameId: number; questionId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = data.gameId.toString();
       const leaderboard = await this.gameServerService.getLeaderboard(
         data.gameId,
       );
@@ -159,21 +211,9 @@ export class GameServerGateway implements OnGatewayConnection {
         questionId: data.questionId,
         leaderboard: leaderboard,
       });
+    } catch (error) {
+      return socc.emit('error', error);
     }
-  }
-
-  @SubscribeMessage('answer_timeout')
-  async answerTimeout(
-    @MessageBody() data: { gameId: number; questionId: number },
-  ) {
-    const room = data.gameId.toString();
-    const leaderboard = await this.gameServerService.getLeaderboard(
-      data.gameId,
-    );
-    return this.server.to(room).emit('question_done', {
-      questionId: data.questionId,
-      leaderboard: leaderboard,
-    });
   }
 
   @SubscribeMessage('end_game')
@@ -181,12 +221,16 @@ export class GameServerGateway implements OnGatewayConnection {
     @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
-    if (!socc.data.isHost) {
-      throw new WsException('Only Host can end game');
+    try {
+      if (!socc.data.isHost) {
+        throw new WsException('Only Host can end game');
+      }
+      const room = data.gameId.toString();
+      const game = await this.gameServerService.endGame(data.gameId);
+      this.server.to(room).emit('game_ended', game);
+      return this.server.to(room).disconnectSockets(true);
+    } catch (error) {
+      return socc.emit('error', error);
     }
-    const room = data.gameId.toString();
-    const game = await this.gameServerService.endGame(data.gameId);
-    this.server.to(room).emit('game_ended', game);
-    return this.server.to(room).disconnectSockets(true);
   }
 }
