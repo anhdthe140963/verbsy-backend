@@ -11,7 +11,9 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
 import { UpdateResult } from 'typeorm';
+import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateLectureDto } from './dto/create-lecture.dto';
@@ -27,6 +29,8 @@ export class LectureService {
     @InjectRepository(UserRepository)
     private userRepo: UserRepository,
     private lessonRepo: LessonRepository,
+    private curriRepo: CurriculumRepository,
+    private lessonLectureRepo: LessonLectureRepository,
   ) {}
 
   async createLecture(createLectureDto: CreateLectureDto): Promise<Lecture> {
@@ -136,5 +140,29 @@ export class LectureService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getLectureByClassId(classId: number): Promise<Lecture[]> {
+    const curriculumsByClassId = await this.curriRepo.getCurriculumByClassId(
+      classId,
+    );
+    const lessonIds = new Set();
+    for (const curriculum of curriculumsByClassId) {
+      const lessons = await this.lessonRepo.getLessonByCurriculumId(
+        curriculum.id,
+      );
+      for (const lesson of lessons) {
+        lessonIds.add(lesson.id);
+      }
+    }
+    const lectureIds = [];
+    for (const id of lessonIds) {
+      const lessonLectures =
+        await this.lessonLectureRepo.getLessonLectureByLessonId(id);
+      for (const ll of lessonLectures) {
+        lectureIds.push(ll.lectureId);
+      }
+    }
+    return await this.lectureRepository.getLecturesByLectureIds(lectureIds);
   }
 }

@@ -61,6 +61,20 @@ export class LectureController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
+  @Get('lectures/:classId')
+  async getLecturesByClassId(
+    @Param('classId') classId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get lectures by class id successfully',
+      data: await this.lectureService.getLectureByClassId(classId),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':lectureId')
   async update(

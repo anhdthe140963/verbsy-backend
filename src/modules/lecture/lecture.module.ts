@@ -6,6 +6,8 @@ import { LectureRepository } from './repository/lecture.repository';
 import { PassportModule } from '@nestjs/passport';
 import { UserRepository } from '../user/repository/user.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
+import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { LessonRepository } from '../lesson/repository/lesson.repository';
       LectureRepository,
       UserRepository,
       LessonRepository,
+      CurriculumRepository,
+      LessonLectureRepository,
     ]),
   ],
   controllers: [LectureController],
