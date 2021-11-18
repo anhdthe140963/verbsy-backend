@@ -185,7 +185,8 @@ export class GameServerGateway implements OnGatewayConnection {
       throw new WsException('Only Host can end game');
     }
     const room = data.gameId.toString();
-    this.server.to(room).emit('game_ended', 'Game Ended');
+    const game = await this.gameServerService.endGame(data.gameId);
+    this.server.to(room).emit('game_ended', game);
     return this.server.to(room).disconnectSockets(true);
   }
 }

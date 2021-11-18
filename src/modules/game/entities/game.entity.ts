@@ -31,4 +31,7 @@ export class Game extends BaseEntity {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  @Column({ name: 'ended_at', nullable: true, default: null })
+  endedAt: Date;
 }

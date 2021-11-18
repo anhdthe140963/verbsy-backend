@@ -127,6 +127,15 @@ export class GameServerService {
     return records;
   }
 
+  async endGame(gameId: number) {
+    console.log(new Date().toLocaleString());
+
+    return await this.gameRepository.update(
+      { id: gameId },
+      { isGameLive: false, endedAt: new Date().toLocaleString() },
+    );
+  }
+
   async hostNewGame(hostGameDto: HostGameDto): Promise<Game> {
     try {
       return this.gameRepository.hostNewGame(hostGameDto);
