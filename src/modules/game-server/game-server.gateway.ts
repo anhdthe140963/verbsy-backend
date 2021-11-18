@@ -93,6 +93,19 @@ export class GameServerGateway implements OnGatewayConnection {
     }
   }
 
+  async getStudentList(gameId: number) {
+    const room = gameId.toString();
+    const sockets = await this.server.to(room).fetchSockets();
+    const students = [];
+    for (const s of sockets) {
+      const user: User = s.data.user;
+      if (user.role == Role.Student) {
+        students.push(user);
+      }
+    }
+    return students;
+  }
+
   @SubscribeMessage('join_game')
   async joinGame(
     @MessageBody() data: { gameId: number },
@@ -107,8 +120,10 @@ export class GameServerGateway implements OnGatewayConnection {
         throw new WsException('User already in room');
       }
       socc.join(room);
-
-      return this.server.to(room).emit('game_joined', user);
+      this.server.to(room).emit('game_joined', user);
+      return this.server
+        .to(room)
+        .emit('lobby_updated', await this.getStudentList(data.gameId));
     } catch (error) {
       return socc.emit('error', error);
     }
@@ -138,7 +153,10 @@ export class GameServerGateway implements OnGatewayConnection {
           break;
         }
       }
-      return this.server.to(room).emit('kicked_from_game', data.userId);
+      this.server.to(room).emit('kicked_from_game', data.userId);
+      return this.server
+        .to(room)
+        .emit('lobby_updated', await this.getStudentList(data.gameId));
     } catch (error) {
       return socc.emit('error', error);
     }
