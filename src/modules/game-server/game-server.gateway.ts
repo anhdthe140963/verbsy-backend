@@ -50,7 +50,7 @@ export class GameServerGateway
         throw new WsException('User not exist');
       }
       socket.data.user = user;
-      console.log((await this.server.fetchSockets()).length);
+      console.log(socket + ' connected');
 
       socket.emit(
         'socket_connected',
@@ -100,8 +100,7 @@ export class GameServerGateway
     try {
       const game = await this.gameServerService.hostNewGame(hostGameDto);
       const room = game.id.toString();
-      socc.data.isHost = new Object({ isHost: true });
-      console.log(socc.data.isHost);
+      socc.data.isHost = true;
 
       socc.join(room);
 
