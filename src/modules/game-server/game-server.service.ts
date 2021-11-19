@@ -143,9 +143,11 @@ export class GameServerService {
   async getLeaderboard(gameId: number) {
     const records = await this.playerDataRepository
       .createQueryBuilder('pd')
-      .leftJoinAndSelect(Player, 'pl', 'pd.player_id = pl.id')
-      .leftJoinAndSelect(User, 'u', 'pl.student_id = u.id')
-      .select('SUM(pd.score)', 'score')
+      .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+      .leftJoin(User, 'u', 'pl.student_id = u.id')
+      .addSelect('u.id', 'id')
+      .addSelect('u.username', 'username')
+      .addSelect('SUM(pd.score)', 'score')
       .addSelect('u.full_name', 'fullName')
       .where('pl.game_id = :gameId', { gameId: gameId })
       .groupBy('pd.player_id')
@@ -156,8 +158,6 @@ export class GameServerService {
   }
 
   async endGame(gameId: number) {
-    console.log(new Date().toLocaleString());
-
     return await this.gameRepository.update(
       { id: gameId },
       { isGameLive: false, endedAt: new Date().toLocaleString() },

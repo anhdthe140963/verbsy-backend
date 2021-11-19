@@ -241,8 +241,20 @@ export class GameServerGateway
     }
   }
 
-  async questionDone() {
-    return;
+  async questionDone(gameId: number, questionId: number) {
+    const room = this.getRoom(gameId);
+
+    const leaderboard = await this.gameServerService.getLeaderboard(gameId);
+    const answerStatistics = await this.gameServerService.getAnswerStatistics(
+      gameId,
+      questionId,
+    );
+
+    return this.server.to(room).emit('question_done', {
+      questionId: questionId,
+      leaderboard: leaderboard,
+      answerStatistics: answerStatistics,
+    });
   }
 
   @SubscribeMessage('submit_answer')
@@ -251,7 +263,6 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const room = this.getRoom(data.gameId);
       const user: User = socc.data.user;
       await this.gameServerService.submitAnswer(user.id, data);
       socc.emit('answer_submitted');
@@ -263,19 +274,7 @@ export class GameServerGateway
       const roomStudents = (await this.getStudentList(data.gameId)).length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
-        const leaderboard = await this.gameServerService.getLeaderboard(
-          data.gameId,
-        );
-        const answerStatistics =
-          await this.gameServerService.getAnswerStatistics(
-            data.gameId,
-            data.questionId,
-          );
-        return this.server.to(room).emit('question_done', {
-          questionId: data.questionId,
-          leaderboard: leaderboard,
-          answerStatistics: answerStatistics,
-        });
+        return await this.questionDone(data.gameId, data.questionId);
       }
     } catch (error) {
       return socc.emit('error', error);
@@ -288,19 +287,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const room = this.getRoom(data.gameId);
-      const leaderboard = await this.gameServerService.getLeaderboard(
-        data.gameId,
-      );
-      const answerStatistics = await this.gameServerService.getAnswerStatistics(
-        data.gameId,
-        data.questionId,
-      );
-      return this.server.to(room).emit('question_done', {
-        questionId: data.questionId,
-        leaderboard: leaderboard,
-        answerStatistics: answerStatistics,
-      });
+      return await this.questionDone(data.gameId, data.questionId);
     } catch (error) {
       return socc.emit('error', error);
     }
