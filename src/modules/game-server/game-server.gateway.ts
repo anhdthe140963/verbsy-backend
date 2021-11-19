@@ -190,8 +190,6 @@ export class GameServerGateway
   ) {
     const room = data.gameId.toString();
     try {
-      console.log(socc.data);
-
       if (!socc.data.isHost) {
         throw new WsException('Only Host can start game');
       }

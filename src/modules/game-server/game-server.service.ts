@@ -193,7 +193,9 @@ export class GameServerService {
       where: { gameId: gameId },
     });
 
-    const lectureId = await this.gameRepository.findOne(gameId);
+    const lectureId = await (
+      await this.gameRepository.findOne(gameId)
+    ).lectureId;
 
     const answered = [];
     for (const a of answeredQuestions) {
