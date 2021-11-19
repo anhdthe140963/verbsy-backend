@@ -70,7 +70,7 @@ export class GameServerGateway
   ) {
     try {
       console.log(data);
-      const h = await this.gameServerService.getNextQuestion(data.gameId, true);
+      const h = await this.gameServerService.getAnswerStatistics(12, 1);
       return this.server.emit('test', h);
     } catch (error) {
       return socc.emit('error', error);
@@ -223,6 +223,10 @@ export class GameServerGateway
     }
   }
 
+  async questionDone() {
+    return;
+  }
+
   @SubscribeMessage('submit_answer')
   async submitAnswer(
     @MessageBody() data: SubmitAnswerDto,
@@ -238,17 +242,21 @@ export class GameServerGateway
         data.questionId,
       );
 
-      const roomStudents = await (
-        await this.getStudentList(data.gameId)
-      ).length;
+      const roomStudents = (await this.getStudentList(data.gameId)).length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
         const leaderboard = await this.gameServerService.getLeaderboard(
           data.gameId,
         );
+        const answerStatistics =
+          await this.gameServerService.getAnswerStatistics(
+            data.gameId,
+            data.questionId,
+          );
         return this.server.to(room).emit('question_done', {
           questionId: data.questionId,
           leaderboard: leaderboard,
+          answerStatistics: answerStatistics,
         });
       }
     } catch (error) {
@@ -266,9 +274,14 @@ export class GameServerGateway
       const leaderboard = await this.gameServerService.getLeaderboard(
         data.gameId,
       );
+      const answerStatistics = await this.gameServerService.getAnswerStatistics(
+        data.gameId,
+        data.questionId,
+      );
       return this.server.to(room).emit('question_done', {
         questionId: data.questionId,
         leaderboard: leaderboard,
+        answerStatistics: answerStatistics,
       });
     } catch (error) {
       return socc.emit('error', error);

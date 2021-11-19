@@ -12,6 +12,7 @@ import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
+import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
@@ -103,6 +104,7 @@ export class GameServerService {
 
     const playerData = await this.playerDataRepository.save({
       answerId: submitAnswerDto.answerId,
+      questionId: submitAnswerDto.questionId,
       isCorrect: isCorrect,
       playerId: player.id,
       score: score,
@@ -114,6 +116,24 @@ export class GameServerService {
     return await this.questionRecordRepository.findOne({
       where: { gameId, questionId },
     });
+  }
+
+  async getAnswerStatistics(gameId: number, questionId: number) {
+    const statistics = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+      .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
+      .select('a.id', 'id')
+      .addSelect('a.content', 'content')
+      .addSelect('COUNT(pd.answerId)', 'count')
+      .where('pl.game_id = :gameId', { gameId: gameId })
+      .andWhere('pd.question_id = :questionId', { questionId: questionId })
+      .groupBy('pd.answerId')
+      .getRawMany();
+
+    console.log(statistics);
+
+    return statistics;
   }
 
   async getLeaderboard(gameId: number) {
