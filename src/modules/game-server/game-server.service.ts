@@ -244,7 +244,10 @@ export class GameServerService {
         for (const q of nextQuestion.answers) {
           delete q.isCorrect;
         }
-        return nextQuestions[index];
+        return {
+          nextQuestion: nextQuestions[index],
+          remainQuestions: nextQuestions.length - 1,
+        };
     }
   }
 
