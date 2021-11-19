@@ -30,6 +30,7 @@ export class GameService {
         .addSelect('g.created_at', 'createdAt')
         .where('g.classId = :classId', { classId: classId })
         .andWhere('g.is_game_live =:isLive', { isLive: true })
+        .orderBy('g.created_at')
         .getRawMany();
       return games;
     } catch (error) {
