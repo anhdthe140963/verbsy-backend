@@ -25,7 +25,7 @@ export class GameService {
         .leftJoinAndSelect(Classes, 'cl', 'g.class_id = cl.id')
         .leftJoinAndSelect(Lecture, 'l', 'g.lecture_id = l.id')
         .select('g.id', 'id')
-        .addSelect('lecture.name', 'lectureName')
+        .addSelect('l.name', 'lectureName')
         .addSelect('cl.name', 'className')
         .addSelect('g.created_at', 'createdAt')
         .where('g.classId = :classId', { classId: classId })
