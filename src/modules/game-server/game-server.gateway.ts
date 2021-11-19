@@ -23,12 +23,26 @@ export class GameServerGateway
   @WebSocketServer()
   server: Server;
 
+  GAME_ROOM_PREFIX = 'gameRoom:';
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly gameServerService: GameServerService,
   ) {}
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     try {
+      console.log(socket.data);
+
+      if (socket.data.room) {
+        const room: string = socket.data.room;
+        const gameId = room.replace(this.GAME_ROOM_PREFIX, '');
+        const socketsInGameRoom = (await this.server.to(room).allSockets())
+          .size;
+        if (socketsInGameRoom == 0) {
+          await this.gameServerService.endGame(parseInt(gameId));
+        }
+      }
+
       socket.emit(
         'socket_disconnected',
         'username ' + socket.data.user.username + ' has connected',
@@ -50,7 +64,7 @@ export class GameServerGateway
         throw new WsException('User not exist');
       }
       socket.data.user = user;
-      console.log(socket + ' connected');
+      console.log(user.username + ' connected');
 
       socket.emit(
         'socket_connected',
@@ -92,6 +106,10 @@ export class GameServerGateway
     }
   }
 
+  getRoom(gameId: number): string {
+    return this.GAME_ROOM_PREFIX + gameId;
+  }
+
   @SubscribeMessage('host_game')
   async hostGame(
     @MessageBody() hostGameDto: HostGameDto,
@@ -99,10 +117,11 @@ export class GameServerGateway
   ) {
     try {
       const game = await this.gameServerService.hostNewGame(hostGameDto);
-      const room = game.id.toString();
+      const room = this.getRoom(game.id);
       socc.data.isHost = true;
 
       socc.join(room);
+      socc.data.room = room;
 
       return socc.emit('game_hosted', game);
     } catch (error) {
@@ -111,7 +130,7 @@ export class GameServerGateway
   }
 
   async getStudentList(gameId: number): Promise<User[]> {
-    const room = gameId.toString();
+    const room = this.getRoom(gameId);
     const sockets = await this.server.to(room).fetchSockets();
     const students = [];
     for (const s of sockets) {
@@ -131,12 +150,12 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       await this.gameServerService.joinGame(data.gameId, socc.data.user.id);
-      const room = data.gameId.toString();
-
+      const room = this.getRoom(data.gameId);
       if (socc.rooms.has(room)) {
         throw new WsException('User already in room');
       }
       socc.join(room);
+      socc.data.room = room;
       this.server.to(room).emit('game_joined', user);
       return this.server
         .to(room)
@@ -156,7 +175,7 @@ export class GameServerGateway
         throw new WsException('Only Host can kick people');
       }
 
-      const room = data.gameId.toString();
+      const room = this.getRoom(data.gameId);
       const sockets = await this.server.to(room).fetchSockets();
       console.log(sockets.length);
       for (const s of sockets) {
@@ -187,7 +206,7 @@ export class GameServerGateway
     @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
-    const room = data.gameId.toString();
+    const room = this.getRoom(data.gameId);
     try {
       if (!socc.data.isHost) {
         throw new WsException('Only Host can start game');
@@ -210,7 +229,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const room = data.gameId.toString();
+      const room = this.getRoom(data.gameId);
 
       const nextQuestion = await this.gameServerService.getNextQuestion(
         data.gameId,
@@ -232,7 +251,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const room = data.gameId.toString();
+      const room = this.getRoom(data.gameId);
       const user: User = socc.data.user;
       await this.gameServerService.submitAnswer(user.id, data);
       socc.emit('answer_submitted');
@@ -269,7 +288,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const room = data.gameId.toString();
+      const room = this.getRoom(data.gameId);
       const leaderboard = await this.gameServerService.getLeaderboard(
         data.gameId,
       );
@@ -296,7 +315,7 @@ export class GameServerGateway
       if (!socc.data.isHost) {
         throw new WsException('Only Host can end game');
       }
-      const room = data.gameId.toString();
+      const room = this.getRoom(data.gameId);
       const game = await this.gameServerService.endGame(data.gameId);
       this.server.to(room).emit('game_ended', game);
       return this.server.to(room).disconnectSockets(true);
