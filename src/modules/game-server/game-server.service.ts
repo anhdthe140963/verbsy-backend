@@ -3,11 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { QuestionType } from 'src/constant/question-type.enum';
+import { In, Not } from 'typeorm';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
+import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
@@ -93,8 +96,9 @@ export class GameServerService {
       submitAnswerDto.questionId,
     );
 
+    //Score Calculation
     const score = isCorrect
-      ? question.duration - submitAnswerDto.answerTime
+      ? question.duration * 1000 - submitAnswerDto.answerTime
       : 0;
 
     const playerData = await this.playerDataRepository.save({
@@ -175,6 +179,48 @@ export class GameServerService {
       return await game.save();
     } catch (error) {
       throw error;
+    }
+  }
+
+  //Should be optimized by using a single query instead
+  async getNextQuestion(
+    gameId: number,
+    isRandom = false,
+    questionType: QuestionType = QuestionType.MultipleChoice,
+  ) {
+    const answeredQuestions = await this.questionRecordRepository.find({
+      select: ['questionId'],
+      where: { gameId: gameId },
+    });
+
+    const answered = [];
+    for (const a of answeredQuestions) {
+      answered.push(a.questionId);
+    }
+
+    const nextQuestions = await this.questionRepository.find({
+      where: { id: Not(In(answered)) },
+    });
+
+    const index = isRandom
+      ? Math.floor(Math.random() * nextQuestions.length)
+      : 0;
+
+    const nextQuestion = nextQuestions[index];
+
+    switch (questionType) {
+      case QuestionType.Scramble:
+        for (const q of nextQuestion.answers) {
+          if (q.isCorrect) {
+            const content = q.content;
+          }
+        }
+      case QuestionType.Writting:
+      default:
+        for (const q of nextQuestion.answers) {
+          delete q.isCorrect;
+        }
+        return nextQuestions[index];
     }
   }
 }

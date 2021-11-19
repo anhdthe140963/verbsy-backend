@@ -50,6 +50,8 @@ export class GameServerGateway
         throw new WsException('User not exist');
       }
       socket.data.user = user;
+      console.log((await this.server.fetchSockets()).length);
+
       socket.emit(
         'socket_connected',
         'username ' + socket.data.user.username + ' has connected',
@@ -68,7 +70,7 @@ export class GameServerGateway
   ) {
     try {
       console.log(data);
-      const h = await this.gameServerService.getLeaderboard(data.gameId);
+      const h = await this.gameServerService.getNextQuestion(data.gameId, true);
       return this.server.emit('test', h);
     } catch (error) {
       return socc.emit('error', error);
@@ -98,7 +100,9 @@ export class GameServerGateway
     try {
       const game = await this.gameServerService.hostNewGame(hostGameDto);
       const room = game.id.toString();
-      socc.data.isHost = true;
+      socc.data.isHost = new Object({ isHost: true });
+      console.log(socc.data.isHost);
+
       socc.join(room);
 
       return socc.emit('game_hosted', game);
@@ -107,7 +111,7 @@ export class GameServerGateway
     }
   }
 
-  async getStudentList(gameId: number) {
+  async getStudentList(gameId: number): Promise<User[]> {
     const room = gameId.toString();
     const sockets = await this.server.to(room).fetchSockets();
     const students = [];
@@ -203,6 +207,24 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_next_question')
+  async getNextQuestion(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = data.gameId.toString();
+
+      const nextQuestion = await this.gameServerService.getNextQuestion(
+        data.gameId,
+      );
+
+      return this.server.to(room).emit('receive_next_question', nextQuestion);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('submit_answer')
   async submitAnswer(
     @MessageBody() data: SubmitAnswerDto,
@@ -218,7 +240,9 @@ export class GameServerGateway
         data.questionId,
       );
 
-      const roomStudents = (await this.server.to(room).allSockets()).size - 1;
+      const roomStudents = await (
+        await this.getStudentList(data.gameId)
+      ).length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
         const leaderboard = await this.gameServerService.getLeaderboard(

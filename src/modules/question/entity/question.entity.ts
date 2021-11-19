@@ -1,6 +1,7 @@
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -21,8 +22,11 @@ export class Question extends BaseEntity {
   @Column({ name: 'image_url', type: 'text', nullable: true })
   imageUrl: string;
 
-  @Column()
+  @Column({ default: 20 })
   duration: number;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @OneToMany(() => Answer, (answer) => answer.question, {
     eager: true,
