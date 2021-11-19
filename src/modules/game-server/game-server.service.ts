@@ -193,13 +193,15 @@ export class GameServerService {
       where: { gameId: gameId },
     });
 
+    const lectureId = await this.gameRepository.findOne(gameId);
+
     const answered = [];
     for (const a of answeredQuestions) {
       answered.push(a.questionId);
     }
 
     const nextQuestions = await this.questionRepository.find({
-      where: { id: Not(In(answered)) },
+      where: { id: Not(In(answered)), lectureId: lectureId },
     });
 
     const index = isRandom
@@ -210,17 +212,24 @@ export class GameServerService {
 
     switch (questionType) {
       case QuestionType.Scramble:
-        for (const q of nextQuestion.answers) {
-          if (q.isCorrect) {
-            const content = q.content;
-          }
-        }
+
       case QuestionType.Writting:
       default:
         for (const q of nextQuestion.answers) {
           delete q.isCorrect;
         }
         return nextQuestions[index];
+    }
+  }
+
+  private generateScrambleQuestion(question: Question) {
+    const correctAnswers = 'h';
+    for (const q of question.answers) {
+      if (q.isCorrect) {
+        const content = q.content.trim();
+        if (content.includes(' ')) {
+        }
+      }
     }
   }
 }
