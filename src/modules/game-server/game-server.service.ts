@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Integer } from 'read-excel-file/types';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { In, Not } from 'typeorm';
 import { Game } from '../game/entities/game.entity';
@@ -125,14 +126,17 @@ export class GameServerService {
       .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
       .select('a.id', 'id')
       .addSelect('a.content', 'content')
+      .addSelect('a.is_correct', 'isCorrect')
       .addSelect('COUNT(pd.answerId)', 'count')
       .where('pl.game_id = :gameId', { gameId: gameId })
       .andWhere('pd.question_id = :questionId', { questionId: questionId })
       .groupBy('pd.answerId')
       .getRawMany();
 
-    console.log(statistics);
-
+    for (const s of statistics) {
+      s.isCorrect = new Boolean(s.isCorrect);
+      s.count = parseInt(s.count);
+    }
     return statistics;
   }
 
