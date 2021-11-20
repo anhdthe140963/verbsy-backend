@@ -29,7 +29,11 @@ export class Game extends BaseEntity {
   @Column({ name: 'config_id', nullable: true })
   configId: number;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @Column({
+    name: 'created_at',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
   @Column({ name: 'ended_at', nullable: true, default: null })

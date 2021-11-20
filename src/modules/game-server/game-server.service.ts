@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { Integer } from 'read-excel-file/types';
 import { QuestionType } from 'src/constant/question-type.enum';
-import { In, Not } from 'typeorm';
+import { shuffleArray } from 'src/utils/shuffle-array.util';
+import { In, Like, Not } from 'typeorm';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
@@ -20,6 +21,7 @@ import { QuestionRepository } from '../question/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { HostGameDto } from './dto/host-game.dto';
+import { NextQuestion } from './dto/next-question.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 
 @Injectable()
@@ -63,14 +65,28 @@ export class GameServerService {
   }
 
   async submitAnswer(userId: number, submitAnswerDto: SubmitAnswerDto) {
+    //Get Player for later record
     const player = await this.playerRepository.findOne({
       where: { studentId: userId, gameId: submitAnswerDto.gameId },
     });
 
-    const answer = await this.answerRepository.findOne(
-      submitAnswerDto.answerId,
-    );
-    const isCorrect = answer.isCorrect;
+    //Get Answer
+    let answer: Answer;
+    switch (submitAnswerDto.questionType) {
+      case QuestionType.Scramble || QuestionType.Writting:
+        answer = await this.answerRepository.findOne({
+          where: { content: Like(submitAnswerDto.answer) },
+        });
+        break;
+      default:
+        //Multiple Choice
+        answer = await this.answerRepository.findOne(submitAnswerDto.answerId);
+    }
+
+    //Check Answer
+    const isCorrect = answer ? answer.isCorrect : false;
+
+    //Record Question
     let questionRecord = await this.questionRecordRepository.findOne({
       where: {
         gameId: submitAnswerDto.gameId,
@@ -81,6 +97,7 @@ export class GameServerService {
       questionRecord = await this.questionRecordRepository.save({
         gameId: submitAnswerDto.gameId,
         questionId: submitAnswerDto.questionId,
+        questionType: submitAnswerDto.questionType,
         answeredPlayers: 1,
       });
     } else {
@@ -90,6 +107,7 @@ export class GameServerService {
         id: questionRecordId,
         gameId: submitAnswerDto.gameId,
         questionId: submitAnswerDto.questionId,
+        questionType: submitAnswerDto.questionType,
         answeredPlayers: answeredPlayers,
       });
     }
@@ -104,12 +122,13 @@ export class GameServerService {
       : 0;
 
     const playerData = await this.playerDataRepository.save({
-      answerId: submitAnswerDto.answerId,
-      questionId: submitAnswerDto.questionId,
-      isCorrect: isCorrect,
       playerId: player.id,
-      score: score,
+      questionId: submitAnswerDto.questionId,
+      answerId: answer.id,
+      answer: submitAnswerDto.answer,
+      isCorrect: isCorrect,
       answerTime: submitAnswerDto.answerTime,
+      score: score,
     });
   }
 
@@ -172,37 +191,12 @@ export class GameServerService {
     }
   }
 
-  async joinGame(gameId: number, studentId: number): Promise<Player> {
-    try {
-      if (!(await this.userRepository.isUserExist(studentId))) {
-        throw new NotFoundException('Student not exist');
-      }
-      if (!(await this.gameRepository.isGameExist(gameId))) {
-        throw new NotFoundException('Game not exist');
-      }
-      if (await this.playerRepository.isStudentAlreadyJoin(gameId, studentId)) {
-        throw new BadRequestException('Student already join game');
-      }
-      return await this.playerRepository.playerJoin(gameId, studentId);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async kickPlayerFromGame(gameId: number, studentId: number) {
-    return await this.playerRepository.delete({
-      gameId: gameId,
-      studentId: studentId,
-    });
-  }
-
-  async startGame(gameId: number): Promise<Game> {
-    try {
-      const game = await this.gameRepository.findOne(gameId);
-      game.isGameLive = true;
-      return await game.save();
-    } catch (error) {
-      throw error;
+  async startGame(gameId: number, students: User[]) {
+    for (const student of students) {
+      await this.playerRepository.save({
+        gameId: gameId,
+        studentId: student.id,
+      });
     }
   }
 
@@ -217,9 +211,7 @@ export class GameServerService {
       where: { gameId: gameId },
     });
 
-    const lectureId = await (
-      await this.gameRepository.findOne(gameId)
-    ).lectureId;
+    const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
 
     const answered = [];
     for (const a of answeredQuestions) {
@@ -236,29 +228,37 @@ export class GameServerService {
 
     const nextQuestion = nextQuestions[index];
 
+    const next = new NextQuestion();
+    next.questionType = questionType;
+    next.remainQuestions = nextQuestions.length - 1;
+
     switch (questionType) {
       case QuestionType.Scramble:
-
-      case QuestionType.Writting:
+        next.nextQuestion = await this.generateScrambleQuestion(
+          nextQuestions[index],
+        );
+        break;
       default:
-        for (const q of nextQuestion.answers) {
+        //Multiple Choice
+        next.nextQuestion = nextQuestion;
+        for (const q of next.nextQuestion.answers) {
           delete q.isCorrect;
         }
-        return {
-          nextQuestion: nextQuestions[index],
-          remainQuestions: nextQuestions.length - 1,
-        };
     }
+    return next;
   }
 
-  private generateScrambleQuestion(question: Question) {
-    const correctAnswers = 'h';
-    for (const q of question.answers) {
-      if (q.isCorrect) {
-        const content = q.content.trim();
-        if (content.includes(' ')) {
-        }
-      }
+  private async generateScrambleQuestion(question: Question) {
+    const correctAnswers = await this.answerRepository.find({
+      where: { question: question, isCorrect: true },
+    });
+    const answerIndex = Math.floor(Math.random() * correctAnswers.length);
+    const answerContent = correctAnswers[answerIndex].content.trim();
+
+    if (answerContent.includes(' ')) {
+      return shuffleArray(answerContent.split(' '));
     }
+
+    return shuffleArray(answerContent.split(''));
   }
 }
