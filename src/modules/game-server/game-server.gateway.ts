@@ -34,13 +34,19 @@ export class GameServerGateway
     try {
       if (socket.data.room) {
         const room: string = socket.data.room;
-        const gameId = room.replace(this.GAME_ROOM_PREFIX, '');
+        const gameId = parseInt(room.replace(this.GAME_ROOM_PREFIX, ''));
+
+        //Leave room and emit to room
         socket.leave(room);
-        socket.disconnect(true);
+        this.server
+          .to(room)
+          .emit('lobby_updated', await this.getStudentList(gameId));
+
+        //Check if anyone left in room
         const socketsInGameRoom = (await this.server.to(room).allSockets())
           .size;
         if (socketsInGameRoom == 0) {
-          await this.gameServerService.endGame(parseInt(gameId));
+          await this.gameServerService.endGame(gameId);
         }
       }
 
