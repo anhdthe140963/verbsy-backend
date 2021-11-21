@@ -17,9 +17,14 @@ export class GameService {
   ) {}
   async findActiveGames(user: User): Promise<Game[]> {
     try {
-      const classId = await this.userClassRepository.getClassIdByStudentId(
-        user.id,
-      );
+      const classes = await this.userClassRepository.find({
+        where: { studentId: user.id },
+      });
+      const classesIds = [];
+      for (const c of classes) {
+        classesIds.push(c.classId);
+      }
+
       const games = await this.gameRepository
         .createQueryBuilder('g')
         .leftJoinAndSelect(Classes, 'cl', 'g.class_id = cl.id')
@@ -28,7 +33,7 @@ export class GameService {
         .addSelect('l.name', 'lectureName')
         .addSelect('cl.name', 'className')
         .addSelect('g.created_at', 'createdAt')
-        .where('g.classId = :classId', { classId: classId })
+        .where('g.classId IN(:classesIds)', { classesIds: classesIds })
         .andWhere('g.is_game_live =:isLive', { isLive: true })
         .orderBy('g.created_at')
         .getRawMany();
