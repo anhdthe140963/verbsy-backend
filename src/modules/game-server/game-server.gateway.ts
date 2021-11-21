@@ -35,6 +35,8 @@ export class GameServerGateway
       if (socket.data.room) {
         const room: string = socket.data.room;
         const gameId = room.replace(this.GAME_ROOM_PREFIX, '');
+        socket.leave(room);
+        socket.disconnect(true);
         const socketsInGameRoom = (await this.server.to(room).allSockets())
           .size;
         if (socketsInGameRoom == 0) {
