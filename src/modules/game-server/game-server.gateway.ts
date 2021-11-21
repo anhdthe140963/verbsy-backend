@@ -118,15 +118,20 @@ export class GameServerGateway
 
   @SubscribeMessage('host_game')
   async hostGame(
-    @MessageBody() hostGameDto: HostGameDto,
+    @MessageBody() data: { lectureId: number; classId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const game = await this.gameServerService.hostNewGame(hostGameDto);
+      const user: User = socc.data.user;
+      const game = await this.gameServerService.hostGame(
+        data.lectureId,
+        data.classId,
+        user.id,
+      );
       const room = this.getRoom(game.id);
-      socc.data.isHost = true;
 
       socc.join(room);
+      socc.data.isHost = true;
       socc.data.room = room;
 
       return socc.emit('game_hosted', game);

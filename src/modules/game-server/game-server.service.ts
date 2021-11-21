@@ -183,6 +183,19 @@ export class GameServerService {
     );
   }
 
+  async hostGame(
+    lectureId: number,
+    classId: number,
+    hostId: number,
+  ): Promise<Game> {
+    return await this.gameRepository.save({
+      lectureId: lectureId,
+      classId: classId,
+      hostId: hostId,
+      isGameLive: true,
+    });
+  }
+
   async hostNewGame(hostGameDto: HostGameDto): Promise<Game> {
     try {
       return this.gameRepository.hostNewGame(hostGameDto);
