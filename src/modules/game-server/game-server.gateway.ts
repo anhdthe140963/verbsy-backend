@@ -148,9 +148,11 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
-      if (socc.rooms.has(room)) {
+
+      if ((await this.getStudentList(data.gameId)).includes(user)) {
         throw new WsException('User already in room');
       }
+
       socc.join(room);
       socc.data.room = room;
       this.server.to(room).emit('game_joined', user);

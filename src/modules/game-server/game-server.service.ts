@@ -255,10 +255,10 @@ export class GameServerService {
     const answerIndex = Math.floor(Math.random() * correctAnswers.length);
     const answerContent = correctAnswers[answerIndex].content.trim();
 
-    if (answerContent.includes(' ')) {
-      return shuffleArray(answerContent.split(' '));
-    }
+    const shuffledArray = answerContent.includes(' ')
+      ? shuffleArray(answerContent.split(' '))
+      : shuffleArray(answerContent.split(''));
 
-    return shuffleArray(answerContent.split(''));
+    return shuffledArray;
   }
 }
