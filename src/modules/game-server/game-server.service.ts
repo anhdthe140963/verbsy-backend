@@ -150,7 +150,15 @@ export class GameServerService {
       .where('pl.game_id = :gameId', { gameId: gameId })
       .andWhere('pd.question_id = :questionId', { questionId: questionId })
       .groupBy('pd.answerId')
+      .printSql()
       .getRawMany();
+
+    const answers = await this.questionRepository.find({
+      select: ['answers'],
+      where: { id: questionId },
+    });
+
+    console.log(answers);
 
     for (const s of statistics) {
       s.isCorrect = new Boolean(s.isCorrect);
@@ -248,6 +256,7 @@ export class GameServerService {
     switch (questionType) {
       case QuestionType.Scramble:
         next.nextQuestion = {
+          id: nextQuestion.id,
           question: nextQuestion.question,
           scrambled: await this.generateScrambleQuestion(nextQuestions[index]),
           duration: nextQuestion.duration,
