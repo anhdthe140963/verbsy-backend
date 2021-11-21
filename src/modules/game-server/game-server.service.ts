@@ -59,7 +59,7 @@ export class GameServerService {
     return questions;
   }
 
-  async checkAnswer(userId: number, answerId: number) {
+  async checkAnswer(answerId: number) {
     const answer = await this.answerRepository.findOne(answerId);
     return answer.isCorrect;
   }
@@ -234,9 +234,10 @@ export class GameServerService {
 
     switch (questionType) {
       case QuestionType.Scramble:
-        next.nextQuestion = await this.generateScrambleQuestion(
-          nextQuestions[index],
-        );
+        next.nextQuestion = {
+          question: nextQuestion.question,
+          scrambled: await this.generateScrambleQuestion(nextQuestions[index]),
+        };
         break;
       default:
         //Multiple Choice

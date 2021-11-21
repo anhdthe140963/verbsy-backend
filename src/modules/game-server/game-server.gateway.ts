@@ -219,12 +219,7 @@ export class GameServerGateway
         data.gameId,
         await this.getStudentList(data.gameId),
       );
-      this.server.to(room).emit('game_started', 'Game Started');
-
-      const questions = await this.gameServerService.getQuestionsForGame(
-        data.gameId,
-      );
-      return socc.emit('receive_questions', questions);
+      return this.server.to(room).emit('game_started', 'Game Started');
     } catch (error) {
       return socc.emit('error', error);
     }
