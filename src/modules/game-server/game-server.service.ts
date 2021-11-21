@@ -237,6 +237,7 @@ export class GameServerService {
         next.nextQuestion = {
           question: nextQuestion.question,
           scrambled: await this.generateScrambleQuestion(nextQuestions[index]),
+          duration: nextQuestion.duration,
         };
         break;
       default:
