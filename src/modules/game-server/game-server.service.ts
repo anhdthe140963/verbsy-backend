@@ -154,7 +154,7 @@ export class GameServerService {
 
     const answeredPlayersIds = [];
     for (const player of answeredPlayers) {
-      answeredPlayersIds.push(player.id);
+      answeredPlayersIds.push(player.playerId);
     }
 
     const unansweredPlayers = await this.playerRepository.find({
@@ -192,18 +192,22 @@ export class GameServerService {
       .groupBy('pd.answerId')
       .getRawMany();
 
-    const answers = await this.questionRepository.find({
-      select: ['answers'],
-      where: { id: questionId },
-    });
+    const appearedAnswersIds = [];
+    for (const s of statistics) {
+      console.log(s);
+      appearedAnswersIds.push(s.id);
+    }
 
-    console.log(answers);
+    const answers = await this.answerRepository.find({
+      where: { question: { id: questionId }, id: Not(In(appearedAnswersIds)) },
+    });
 
     for (const s of statistics) {
       s.isCorrect = new Boolean(s.isCorrect);
       s.count = parseInt(s.count);
     }
-    return statistics;
+
+    return answers.concat(statistics);
   }
 
   async getLeaderboard(gameId: number) {
