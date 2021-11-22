@@ -147,16 +147,18 @@ export class GameServerService {
     for (const player of playersInGame) {
       playersIds.push(player.id);
     }
-    const anweredPlayers = await this.playerDataRepository.find({
+
+    const answeredPlayers = await this.playerDataRepository.find({
       where: { playerId: In(playersIds), questionId: questionId },
     });
+
     const answeredPlayersIds = [];
-    for (const player of anweredPlayers) {
+    for (const player of answeredPlayers) {
       answeredPlayersIds.push(player.id);
     }
 
     const unansweredPlayers = await this.playerRepository.find({
-      where: { id: Not(In(answeredPlayersIds)) },
+      where: { id: Not(In(answeredPlayersIds)), gameId: gameId },
     });
 
     for (const player of unansweredPlayers) {
@@ -188,7 +190,6 @@ export class GameServerService {
       .where('pl.game_id = :gameId', { gameId: gameId })
       .andWhere('pd.question_id = :questionId', { questionId: questionId })
       .groupBy('pd.answerId')
-      .printSql()
       .getRawMany();
 
     const answers = await this.questionRepository.find({
