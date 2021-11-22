@@ -35,21 +35,39 @@ export class GameServerGateway
     return this.GAME_ROOM_PREFIX + gameId;
   }
 
-  async finishQuestion(gameId: number, questionId: number) {
+  async getStudentList(gameId: number): Promise<User[]> {
     const room = this.getRoom(gameId);
+    const sockets = await this.server.to(room).fetchSockets();
+    const students = [];
+    for (const s of sockets) {
+      const user: User = s.data.user;
+      if (user.role == Role.Student) {
+        students.push(user);
+      }
+    }
+    return students;
+  }
 
-    await this.gameServerService.finishQuestion(gameId, questionId);
-    const leaderboard = await this.gameServerService.getLeaderboard(gameId);
-    const answerStatistics = await this.gameServerService.getAnswerStatistics(
-      gameId,
-      questionId,
-    );
+  async finishQuestion(gameId: number, questionId: number) {
+    try {
+      const room = this.getRoom(gameId);
 
-    return this.server.to(room).emit('question_done', {
-      questionId: questionId,
-      leaderboard: leaderboard,
-      answerStatistics: answerStatistics,
-    });
+      await this.gameServerService.finishQuestion(gameId, questionId);
+      const leaderboard = await this.gameServerService.getLeaderboard(gameId);
+      const answerStatistics = await this.gameServerService.getAnswerStatistics(
+        gameId,
+        questionId,
+      );
+
+      return this.server.to(room).emit('question_done', {
+        questionId: questionId,
+        leaderboard: leaderboard,
+        answerStatistics: answerStatistics,
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   //Implement Interfaces
@@ -160,19 +178,6 @@ export class GameServerGateway
     }
   }
 
-  async getStudentList(gameId: number): Promise<User[]> {
-    const room = this.getRoom(gameId);
-    const sockets = await this.server.to(room).fetchSockets();
-    const students = [];
-    for (const s of sockets) {
-      const user: User = s.data.user;
-      if (user.role == Role.Student) {
-        students.push(user);
-      }
-    }
-    return students;
-  }
-
   @SubscribeMessage('join_game')
   async joinGame(
     @MessageBody() data: { gameId: number },
@@ -276,26 +281,28 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
+      const room = this.getRoom(data.gameId);
       const user: User = socc.data.user;
-      await this.gameServerService.submitAnswer(user.id, data);
+      const submittedAnswer = await this.gameServerService.submitAnswer(
+        user.id,
+        data,
+      );
 
       const questionRecord = await this.gameServerService.getAnsweredPlayers(
         data.gameId,
         data.questionId,
       );
 
-      socc.emit('answer_submitted', data);
+      socc.emit('answer_submitted', submittedAnswer);
 
-      this.server
-        .to(this.getRoom(data.gameId))
-        .emit('answered_players_changed', {
-          answeredPlayers: questionRecord.answeredPlayers,
-        });
+      this.server.to(room).emit('answered_players_changed', {
+        answeredPlayers: questionRecord.answeredPlayers,
+      });
 
       const roomStudents = (await this.getStudentList(data.gameId)).length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
-        return await this.finishQuestion(data.gameId, data.questionId);
+        await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
       return socc.emit('error', error);
@@ -308,7 +315,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      return await this.finishQuestion(data.gameId, data.questionId);
+      await this.finishQuestion(data.gameId, data.questionId);
     } catch (error) {
       return socc.emit('error', error);
     }

@@ -1,14 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Integer } from 'read-excel-file/types';
+import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
 import { In, Like, Not } from 'typeorm';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { PlayerData } from '../player-data/entities/player-data.entity';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
@@ -20,7 +16,6 @@ import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
-import { HostGameDto } from './dto/host-game.dto';
 import { NextQuestion } from './dto/next-question.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 
@@ -64,78 +59,96 @@ export class GameServerService {
     return answer.isCorrect;
   }
 
-  async submitAnswer(userId: number, submitAnswerDto: SubmitAnswerDto) {
-    //Get Player for later record
-    const player = await this.playerRepository.findOne({
-      where: { studentId: userId, gameId: submitAnswerDto.gameId },
-    });
+  async submitAnswer(
+    userId: number,
+    submitAnswerDto: SubmitAnswerDto,
+  ): Promise<PlayerData> {
+    try {
+      //Get Player for later record
+      const player = await this.playerRepository.findOne({
+        where: { studentId: userId, gameId: submitAnswerDto.gameId },
+      });
 
-    //Get Answer
-    let answer: Answer;
-    switch (submitAnswerDto.questionType) {
-      case QuestionType.Scramble || QuestionType.Writting:
-        answer = await this.answerRepository.findOne({
-          where: { content: Like(submitAnswerDto.answer) },
+      //Get Answer
+      let answer: Answer;
+      switch (submitAnswerDto.questionType) {
+        case QuestionType.Scramble || QuestionType.Writting:
+          answer = await this.answerRepository.findOne({
+            where: { content: Like(submitAnswerDto.answer) },
+          });
+          break;
+        default:
+          //Multiple Choice
+          answer = await this.answerRepository.findOne(
+            submitAnswerDto.answerId,
+          );
+      }
+
+      //Check Answer
+      const isCorrect = answer ? answer.isCorrect : false;
+
+      //Record Question
+      let questionRecord = await this.questionRecordRepository.findOne({
+        where: {
+          gameId: submitAnswerDto.gameId,
+          questionId: submitAnswerDto.questionId,
+        },
+      });
+      if (!questionRecord) {
+        questionRecord = await this.questionRecordRepository.save({
+          gameId: submitAnswerDto.gameId,
+          questionId: submitAnswerDto.questionId,
+          questionType: submitAnswerDto.questionType,
+          answeredPlayers: 1,
         });
-        break;
-      default:
-        //Multiple Choice
-        answer = await this.answerRepository.findOne(submitAnswerDto.answerId);
-    }
+      } else {
+        const questionRecordId = questionRecord.id;
+        const answeredPlayers = questionRecord.answeredPlayers + 1;
+        questionRecord = await this.questionRecordRepository.save({
+          id: questionRecordId,
+          answeredPlayers: answeredPlayers,
+        });
+      }
 
-    //Check Answer
-    const isCorrect = answer ? answer.isCorrect : false;
+      //Get question
+      const question = await this.questionRepository.findOne(
+        questionRecord.questionId,
+      );
 
-    //Record Question
-    let questionRecord = await this.questionRecordRepository.findOne({
-      where: {
-        gameId: submitAnswerDto.gameId,
+      //Score Calculation
+      const score = isCorrect
+        ? question.duration * 1000 - submitAnswerDto.answerTime
+        : 0;
+
+      //Store player data
+      return await this.playerDataRepository.save({
+        playerId: player.id,
         questionId: submitAnswerDto.questionId,
-      },
-    });
-    if (!questionRecord) {
-      questionRecord = await this.questionRecordRepository.save({
-        gameId: submitAnswerDto.gameId,
-        questionId: submitAnswerDto.questionId,
-        questionType: submitAnswerDto.questionType,
-        answeredPlayers: 1,
+        answerId: answer ? answer.id : null,
+        answer: submitAnswerDto.answer ?? null,
+        isCorrect: isCorrect,
+        answerTime: submitAnswerDto.answerTime,
+        score: score,
       });
-    } else {
-      const questionRecordId = questionRecord.id;
-      const answeredPlayers = questionRecord.answeredPlayers + 1;
-      questionRecord = await this.questionRecordRepository.save({
-        id: questionRecordId,
-        answeredPlayers: answeredPlayers,
-      });
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    //Get question
-    const question = await this.questionRepository.findOne(
-      questionRecord.questionId,
-    );
-
-    //Score Calculation
-    const score = isCorrect
-      ? question.duration * 1000 - submitAnswerDto.answerTime
-      : 0;
-
-    //Store player data
-    const playerData = await this.playerDataRepository.save({
-      playerId: player.id,
-      questionId: submitAnswerDto.questionId,
-      answerId: answer ? answer.id : null,
-      answer: submitAnswerDto.answer ?? null,
-      isCorrect: isCorrect,
-      answerTime: submitAnswerDto.answerTime,
-      score: score,
-    });
   }
 
   //Handle when a question duration ran out
   //Should be optimized by using a single query instead
   async finishQuestion(gameId: number, questionId: number): Promise<void> {
+    const playersInGame = await this.playerRepository.find({
+      where: { gameId: gameId },
+    });
+
+    const playersIds = [];
+    for (const player of playersInGame) {
+      playersIds.push(player.id);
+    }
     const anweredPlayers = await this.playerDataRepository.find({
-      where: { gameId: gameId, questionId: questionId },
+      where: { playerId: In(playersIds), questionId: questionId },
     });
     const answeredPlayersIds = [];
     for (const player of anweredPlayers) {
@@ -152,8 +165,6 @@ export class GameServerService {
         questionId: questionId,
       });
     }
-
-    return;
   }
 
   async getAnsweredPlayers(
