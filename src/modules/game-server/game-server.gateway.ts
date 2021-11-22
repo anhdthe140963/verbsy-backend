@@ -13,7 +13,6 @@ import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
 import { User } from '../user/entity/user.entity';
-import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
 
@@ -30,6 +29,30 @@ export class GameServerGateway
     private readonly jwtService: JwtService,
     private readonly gameServerService: GameServerService,
   ) {}
+
+  //Utils
+  getRoom(gameId: number): string {
+    return this.GAME_ROOM_PREFIX + gameId;
+  }
+
+  async finishQuestion(gameId: number, questionId: number) {
+    const room = this.getRoom(gameId);
+
+    await this.gameServerService.finishQuestion(gameId, questionId);
+    const leaderboard = await this.gameServerService.getLeaderboard(gameId);
+    const answerStatistics = await this.gameServerService.getAnswerStatistics(
+      gameId,
+      questionId,
+    );
+
+    return this.server.to(room).emit('question_done', {
+      questionId: questionId,
+      leaderboard: leaderboard,
+      answerStatistics: answerStatistics,
+    });
+  }
+
+  //Implement Interfaces
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     try {
       if (socket.data.room) {
@@ -83,6 +106,7 @@ export class GameServerGateway
     }
   }
 
+  //Messages Handling
   @SubscribeMessage('test')
   async test(
     @MessageBody() data: { gameId: number },
@@ -110,10 +134,6 @@ export class GameServerGateway
     } catch (error) {
       return socc.emit('error', error);
     }
-  }
-
-  getRoom(gameId: number): string {
-    return this.GAME_ROOM_PREFIX + gameId;
   }
 
   @SubscribeMessage('host_game')
@@ -250,22 +270,6 @@ export class GameServerGateway
     }
   }
 
-  async questionDone(gameId: number, questionId: number) {
-    const room = this.getRoom(gameId);
-
-    const leaderboard = await this.gameServerService.getLeaderboard(gameId);
-    const answerStatistics = await this.gameServerService.getAnswerStatistics(
-      gameId,
-      questionId,
-    );
-
-    return this.server.to(room).emit('question_done', {
-      questionId: questionId,
-      leaderboard: leaderboard,
-      answerStatistics: answerStatistics,
-    });
-  }
-
   @SubscribeMessage('submit_answer')
   async submitAnswer(
     @MessageBody() data: SubmitAnswerDto,
@@ -291,7 +295,7 @@ export class GameServerGateway
       const roomStudents = (await this.getStudentList(data.gameId)).length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
-        return await this.questionDone(data.gameId, data.questionId);
+        return await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
       return socc.emit('error', error);
@@ -304,7 +308,7 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      return await this.questionDone(data.gameId, data.questionId);
+      return await this.finishQuestion(data.gameId, data.questionId);
     } catch (error) {
       return socc.emit('error', error);
     }

@@ -17,12 +17,12 @@ export class PlayerData extends BaseEntity {
   @Column({ name: 'answer', nullable: true })
   answer: string;
 
-  @Column({ name: 'is_correct' })
+  @Column({ name: 'is_correct', default: false })
   isCorrect: boolean;
 
-  @Column({ name: 'answer_time' })
+  @Column({ name: 'answer_time', default: 0 })
   answerTime: number;
 
-  @Column({ name: 'score' })
+  @Column({ name: 'score', default: 0 })
   score: number;
 }

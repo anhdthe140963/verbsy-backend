@@ -36,7 +36,7 @@ export class GameServerService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async getUser(username: string) {
+  async getUser(username: string): Promise<User> {
     return await this.userRepository.findOne({
       where: { username: username },
     });
@@ -59,7 +59,7 @@ export class GameServerService {
     return questions;
   }
 
-  async checkAnswer(answerId: number) {
+  async checkAnswer(answerId: number): Promise<boolean> {
     const answer = await this.answerRepository.findOne(answerId);
     return answer.isCorrect;
   }
@@ -105,15 +105,13 @@ export class GameServerService {
       const answeredPlayers = questionRecord.answeredPlayers + 1;
       questionRecord = await this.questionRecordRepository.save({
         id: questionRecordId,
-        gameId: submitAnswerDto.gameId,
-        questionId: submitAnswerDto.questionId,
-        questionType: submitAnswerDto.questionType,
         answeredPlayers: answeredPlayers,
       });
     }
 
+    //Get question
     const question = await this.questionRepository.findOne(
-      submitAnswerDto.questionId,
+      questionRecord.questionId,
     );
 
     //Score Calculation
@@ -121,18 +119,47 @@ export class GameServerService {
       ? question.duration * 1000 - submitAnswerDto.answerTime
       : 0;
 
+    //Store player data
     const playerData = await this.playerDataRepository.save({
       playerId: player.id,
       questionId: submitAnswerDto.questionId,
-      answerId: answer.id,
-      answer: submitAnswerDto.answer,
+      answerId: answer ? answer.id : null,
+      answer: submitAnswerDto.answer ?? null,
       isCorrect: isCorrect,
       answerTime: submitAnswerDto.answerTime,
       score: score,
     });
   }
 
-  async getAnsweredPlayers(gameId: number, questionId: number) {
+  //Handle when a question duration ran out
+  //Should be optimized by using a single query instead
+  async finishQuestion(gameId: number, questionId: number): Promise<void> {
+    const anweredPlayers = await this.playerDataRepository.find({
+      where: { gameId: gameId, questionId: questionId },
+    });
+    const answeredPlayersIds = [];
+    for (const player of anweredPlayers) {
+      answeredPlayersIds.push(player.id);
+    }
+
+    const unansweredPlayers = await this.playerRepository.find({
+      where: { id: Not(In(answeredPlayersIds)) },
+    });
+
+    for (const player of unansweredPlayers) {
+      const playerData = await this.playerDataRepository.save({
+        playerId: player.id,
+        questionId: questionId,
+      });
+    }
+
+    return;
+  }
+
+  async getAnsweredPlayers(
+    gameId: number,
+    questionId: number,
+  ): Promise<QuestionRecord> {
     return await this.questionRecordRepository.findOne({
       where: { gameId, questionId },
     });
@@ -204,14 +231,6 @@ export class GameServerService {
     });
   }
 
-  async hostNewGame(hostGameDto: HostGameDto): Promise<Game> {
-    try {
-      return this.gameRepository.hostNewGame(hostGameDto);
-    } catch (error) {
-      throw error;
-    }
-  }
-
   async startGame(gameId: number, students: User[]) {
     for (const student of students) {
       await this.playerRepository.save({
@@ -226,41 +245,42 @@ export class GameServerService {
     gameId: number,
     isRandom = false,
     questionType: QuestionType = QuestionType.MultipleChoice,
-  ) {
+  ): Promise<NextQuestion> {
+    //Answered questions are questions that has been recorded in the current game
     const answeredQuestions = await this.questionRecordRepository.find({
       select: ['questionId'],
       where: { gameId: gameId },
     });
-
-    const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
 
     const answered = [];
     for (const a of answeredQuestions) {
       answered.push(a.questionId);
     }
 
-    const nextQuestions = await this.questionRepository.find({
+    //Remain questions are questions those aren't answered in the current game
+    const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
+    const remainQuestions = await this.questionRepository.find({
       where: { id: Not(In(answered)), lectureId: lectureId },
     });
 
+    //Next question is a random question in remain questions (if specfified)
     const index = isRandom
-      ? Math.floor(Math.random() * nextQuestions.length)
+      ? Math.floor(Math.random() * remainQuestions.length)
       : 0;
 
-    const nextQuestion = nextQuestions[index];
+    const nextQuestion = remainQuestions[index];
 
+    //Prepare data for frontend
     const next = new NextQuestion();
     next.questionType = questionType;
-    next.remainQuestions = nextQuestions.length - 1;
+    next.remainQuestions = remainQuestions.length - 1;
 
     switch (questionType) {
       case QuestionType.Scramble:
-        next.nextQuestion = {
-          id: nextQuestion.id,
-          question: nextQuestion.question,
-          scrambled: await this.generateScrambleQuestion(nextQuestions[index]),
-          duration: nextQuestion.duration,
-        };
+        delete nextQuestion.answers;
+        next.nextQuestion = Object.assign(nextQuestion, {
+          scrambled: await this.generateScrambleQuestion(nextQuestion),
+        });
         break;
       default:
         //Multiple Choice
@@ -272,7 +292,9 @@ export class GameServerService {
     return next;
   }
 
-  private async generateScrambleQuestion(question: Question) {
+  private async generateScrambleQuestion(
+    question: Question,
+  ): Promise<string[]> {
     const correctAnswers = await this.answerRepository.find({
       where: { question: question, isCorrect: true },
     });

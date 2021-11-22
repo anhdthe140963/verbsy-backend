@@ -1,3 +1,4 @@
+import { QuestionType } from 'src/constant/question-type.enum';
 import {
   BaseEntity,
   Column,
@@ -28,6 +29,13 @@ export class Game extends BaseEntity {
 
   @Column({ name: 'config_id', nullable: true })
   configId: number;
+
+  @Column({
+    name: 'questions_config',
+    type: 'json',
+    nullable: true,
+  })
+  questionsConfig: { shuflle: boolean; questionTypes: QuestionType[] };
 
   @Column({
     name: 'created_at',
