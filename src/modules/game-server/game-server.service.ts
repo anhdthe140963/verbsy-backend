@@ -317,6 +317,9 @@ export class GameServerService {
     const next = new NextQuestion();
     next.questionType = questionType;
     next.remainQuestions = remainQuestions.length - 1;
+    next.totalQuestions = await this.questionRepository.count({
+      where: { lectureId: lectureId },
+    });
 
     switch (questionType) {
       case QuestionType.Scramble:

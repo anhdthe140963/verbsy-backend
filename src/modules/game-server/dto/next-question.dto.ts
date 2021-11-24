@@ -4,4 +4,5 @@ export class NextQuestion {
   nextQuestion: any;
   questionType: QuestionType;
   remainQuestions: number;
+  totalQuestions: number;
 }
