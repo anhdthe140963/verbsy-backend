@@ -260,7 +260,13 @@ export class GameServerService {
 
   //Blacklist
   async getBlacklist(gameId: number) {
-    return await this.blacklistRepository.find({ gameId: gameId });
+    return await this.blacklistRepository
+      .createQueryBuilder('b')
+      .leftJoin(User, 'u', 'b.user_id = u.id')
+      .where('b.game_id = :gameId', { gameId: gameId })
+      .select('u.id', 'id')
+      .addSelect('u.full_name', 'fullName')
+      .getRawMany();
   }
 
   async addToBlacklist(gameId: number, userId: number) {
