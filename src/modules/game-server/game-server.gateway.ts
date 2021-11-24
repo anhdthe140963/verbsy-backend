@@ -9,7 +9,6 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-import { binary } from 'joi';
 import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
@@ -188,9 +187,14 @@ export class GameServerGateway
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
+      console.log(blacklist);
 
       for (const bl of blacklist) {
-        if (bl.userId == user.id) {
+        console.log(bl);
+
+        if (bl.id == user.id) {
+          console.log('blocced');
+
           throw new WsException('User is blacklisted');
         }
       }
@@ -252,7 +256,14 @@ export class GameServerGateway
         throw new WsException('Only Host can blacklist people');
       }
 
-      await this.gameServerService.addToBlacklist(data.gameId, data.userId);
+      const bl = await this.gameServerService.addToBlacklist(
+        data.gameId,
+        data.userId,
+      );
+
+      if (!bl) {
+        throw new WsException('User already in blacklist');
+      }
 
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
 

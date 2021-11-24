@@ -259,7 +259,9 @@ export class GameServerService {
   }
 
   //Blacklist
-  async getBlacklist(gameId: number) {
+  async getBlacklist(
+    gameId: number,
+  ): Promise<{ id: number; fullName: string }[]> {
     return await this.blacklistRepository
       .createQueryBuilder('b')
       .leftJoin(User, 'u', 'b.user_id = u.id')
@@ -270,6 +272,13 @@ export class GameServerService {
   }
 
   async addToBlacklist(gameId: number, userId: number) {
+    const bl = await this.blacklistRepository.findOne({
+      where: { gameId: gameId, userId: userId },
+    });
+
+    if (bl) {
+      return null;
+    }
     return await this.blacklistRepository.save({
       gameId: gameId,
       userId: userId,
