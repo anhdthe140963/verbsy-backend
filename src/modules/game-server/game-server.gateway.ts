@@ -9,6 +9,7 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
+import { binary } from 'joi';
 import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
@@ -186,6 +187,13 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
+      const blacklist = await this.gameServerService.getBlacklist(data.gameId);
+
+      for (const bl of blacklist) {
+        if (bl.userId == user.id) {
+          throw new WsException('User is blacklisted');
+        }
+      }
 
       if ((await this.getStudentList(data.gameId)).includes(user)) {
         throw new WsException('User already in room');
@@ -229,6 +237,49 @@ export class GameServerGateway
       return this.server
         .to(room)
         .emit('lobby_updated', await this.getStudentList(data.gameId));
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('add_to_blacklist')
+  async addToBlacklist(
+    @MessageBody() data: { gameId: number; userId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      if (!socc.data.isHost) {
+        throw new WsException('Only Host can blacklist people');
+      }
+
+      await this.gameServerService.addToBlacklist(data.gameId, data.userId);
+
+      const blacklist = await this.gameServerService.getBlacklist(data.gameId);
+
+      return socc.emit('blacklist_changed', blacklist);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('remove_from_blacklist')
+  async removedFromBlacklist(
+    @MessageBody() data: { gameId: number; userId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      if (!socc.data.isHost) {
+        throw new WsException('Only Host can remove people from blacklist');
+      }
+
+      await this.gameServerService.removeFromBlacklist(
+        data.gameId,
+        data.userId,
+      );
+
+      const blacklist = await this.gameServerService.getBlacklist(data.gameId);
+
+      return socc.emit('blacklist_changed', blacklist);
     } catch (error) {
       return socc.emit('error', error);
     }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
 import { In, Like, Not } from 'typeorm';
+import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { PlayerData } from '../player-data/entities/player-data.entity';
@@ -29,6 +30,7 @@ export class GameServerService {
     private readonly playerRepository: PlayerRepository,
     private readonly playerDataRepository: PlayerDataRepository,
     private readonly userRepository: UserRepository,
+    private readonly blacklistRepository: BlacklistRepository,
   ) {}
 
   async getUser(username: string): Promise<User> {
@@ -254,6 +256,25 @@ export class GameServerService {
         studentId: student.id,
       });
     }
+  }
+
+  //Blacklist
+  async getBlacklist(gameId: number) {
+    return await this.blacklistRepository.find({ gameId: gameId });
+  }
+
+  async addToBlacklist(gameId: number, userId: number) {
+    return await this.blacklistRepository.save({
+      gameId: gameId,
+      userId: userId,
+    });
+  }
+
+  async removeFromBlacklist(gameId: number, userId: number) {
+    return await this.blacklistRepository.delete({
+      gameId: gameId,
+      userId: userId,
+    });
   }
 
   //Should be optimized by using a single query instead
