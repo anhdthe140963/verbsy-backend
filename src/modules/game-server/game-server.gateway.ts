@@ -45,9 +45,6 @@ export class GameServerGateway
         students.push(user);
       }
     }
-    Object.assign(students, {
-      gameInfo: await this.gameServerService.getGameInfo(gameId),
-    });
     return students;
   }
 
