@@ -225,7 +225,11 @@ export class CurriculumService {
           .select('u.fullName')
           .where('u.id = :id', { id: curri.createdBy })
           .getOne();
-        Object.assign(curri, { creatorName: createrName['fullName'] });
+        const className = await this.classRepo.findOne(curri.classId);
+        Object.assign(curri, {
+          creatorName: createrName['fullName'],
+          className: className.name,
+        });
       }
       return rawPagination;
     } catch (error) {
@@ -296,12 +300,16 @@ export class CurriculumService {
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
+      const classById = await this.classRepo.findOne(data.classId);
       const createrName = await this.userRepo
         .createQueryBuilder('u')
         .select('u.fullName')
         .where('u.id = :id', { id: data.createdBy })
         .getOne();
-      Object.assign(data, { creatorName: createrName['fullName'] });
+      Object.assign(data, {
+        creatorName: createrName['fullName'],
+        className: classById.name,
+      });
       return data;
     } catch (error) {
       throw error;
