@@ -5,6 +5,9 @@ import { In, Like, Not } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerData } from '../player-data/entities/player-data.entity';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
@@ -31,6 +34,9 @@ export class GameServerService {
     private readonly playerDataRepository: PlayerDataRepository,
     private readonly userRepository: UserRepository,
     private readonly blacklistRepository: BlacklistRepository,
+    private readonly lectureRepository: LectureRepository,
+    private readonly lessonLectureRepository: LessonLectureRepository,
+    private readonly lessonRepository: LessonRepository,
   ) {}
 
   async getUser(username: string): Promise<User> {
@@ -241,12 +247,30 @@ export class GameServerService {
     classId: number,
     hostId: number,
   ): Promise<Game> {
-    return await this.gameRepository.save({
+    const game = await this.gameRepository.save({
       lectureId: lectureId,
       classId: classId,
       hostId: hostId,
       isGameLive: true,
     });
+    const lecture = await this.lectureRepository.findOne(lectureId);
+    if (lecture) {
+      Object.assign(game, { lectureName: lecture.name });
+    }
+    const questions = await this.questionRepository.find({
+      lectureId: lectureId,
+    });
+    if (questions) {
+      Object.assign(game, { totalQuestion: questions.length });
+    }
+    const lessonLecture = await this.lessonLectureRepository.findOne({
+      lectureId: lectureId,
+    });
+    const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
+    if (lesson) {
+      Object.assign(game, { lessonName: lesson.name });
+    }
+    return game;
   }
 
   async startGame(gameId: number, students: User[]) {
