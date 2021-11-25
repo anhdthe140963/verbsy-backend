@@ -386,4 +386,24 @@ export class GameServerService {
 
     return shuffledArray;
   }
+  async getGameInfo(gameId: number) {
+    const game = await this.gameRepository.findOne(gameId);
+    const lecture = await this.lectureRepository.findOne(game.lectureId);
+    if (lecture) {
+      Object.assign(game, { lectureName: lecture.name });
+    }
+    const questions = await this.questionRepository.find({
+      lectureId: game.lectureId,
+    });
+    if (questions) {
+      Object.assign(game, { totalQuestion: questions.length });
+    }
+    const lessonLecture = await this.lessonLectureRepository.findOne({
+      lectureId: game.lectureId,
+    });
+    const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
+    if (lesson) {
+      Object.assign(game, { lessonName: lesson.name });
+    }
+  }
 }
