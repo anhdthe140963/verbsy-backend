@@ -18,6 +18,7 @@ import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { NextQuestion } from './dto/next-question.dto';
@@ -33,6 +34,7 @@ export class GameServerService {
     private readonly playerRepository: PlayerRepository,
     private readonly playerDataRepository: PlayerDataRepository,
     private readonly userRepository: UserRepository,
+    private readonly userClassRepository: UserClassRepository,
     private readonly blacklistRepository: BlacklistRepository,
     private readonly lectureRepository: LectureRepository,
     private readonly lessonLectureRepository: LessonLectureRepository,
@@ -65,6 +67,21 @@ export class GameServerService {
   async checkAnswer(answerId: number): Promise<boolean> {
     const answer = await this.answerRepository.findOne(answerId);
     return answer.isCorrect;
+  }
+
+  async getStudentsFromClass(classId: number) {
+    const students = await this.userClassRepository
+      .createQueryBuilder('uc')
+      .innerJoin(User, 'u', 'uc.student_id = u.id')
+      .select('u.id', 'id')
+      .addSelect('u.full_name', 'fullName')
+      .addSelect('u.username', 'username')
+      .where('uc.class_id = :classId', { classId })
+      .andWhere('uc.student_id IS NOT NULL')
+      .orderBy('uc.id')
+      .getRawMany();
+
+    return { students: students, count: students.length + 1 };
   }
 
   async submitAnswer(

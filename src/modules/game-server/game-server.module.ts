@@ -12,6 +12,7 @@ import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { UserClassRepository } from '../user-class/repository/question.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { GameServerGateway } from './game-server.gateway';
 import { GameServerService } from './game-server.service';
@@ -24,6 +25,7 @@ import { GameServerService } from './game-server.service';
       GameRepository,
       PlayerRepository,
       UserRepository,
+      UserClassRepository,
       QuestionRecordRepository,
       PlayerDataRepository,
       BlacklistRepository,

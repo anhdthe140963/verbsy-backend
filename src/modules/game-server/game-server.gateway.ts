@@ -172,6 +172,10 @@ export class GameServerGateway
       socc.data.isHost = true;
       socc.data.room = room;
 
+      const students = await this.gameServerService.getStudentsFromClass(
+        data.classId,
+      );
+      socc.emit('receive_students_list', students);
       return socc.emit('game_hosted', game);
     } catch (error) {
       return socc.emit('error', error);
@@ -187,14 +191,9 @@ export class GameServerGateway
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
-      console.log(blacklist);
 
       for (const bl of blacklist) {
-        console.log(bl);
-
         if (bl.id == user.id) {
-          console.log('blocced');
-
           throw new WsException('User is blacklisted');
         }
       }
@@ -366,6 +365,23 @@ export class GameServerGateway
       if (questionRecord.answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
       }
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('get_leaderboard')
+  async getLeaderBoard(
+    @MessageBody() data: { gameId: number; questionId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      const leaderboard = await this.gameServerService.getLeaderboard(
+        data.gameId,
+      );
+
+      return this.server.to(room).emit('receive_leaderboard', leaderboard);
     } catch (error) {
       return socc.emit('error', error);
     }
