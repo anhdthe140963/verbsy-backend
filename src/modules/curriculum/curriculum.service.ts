@@ -206,7 +206,27 @@ export class CurriculumService {
         //     .where('created_by = :id', { id: user.id })
         //     .orWhere('parent_id IS NULL');
         //   rawPagination = await paginate(query, options);
-      } else {
+      }
+      //  else if (user.role == Role.Teacher) {
+      //   const userClasses = await this.userClassRepo.find({
+      //     teacherId: user.id,
+      //   });
+      //   const classIds = [];
+      //   for (const uc of userClasses) {
+      //     classIds.push(uc.classId);
+      //   }
+      //   const adminIds = [];
+      //   const admins = await this.userRepo.find({ role: Role.Administrator });
+      //   for (const admin of admins) {
+      //     adminIds.push(admin.id);
+      //   }
+      //   const query = await this.curriculumRepo
+      //     .createQueryBuilder()
+      //     .where('class_id IN (:...ids)', { ids: classIds })
+      //     .orWhere('created_by IN (:...ids)', { ids: adminIds });
+      //   rawPagination = await paginate(query, options);
+      // }
+      else {
         const userClasses = await this.userClassRepo.find({
           studentId: user.id,
         });
@@ -220,15 +240,17 @@ export class CurriculumService {
         rawPagination = await paginate(query, options);
       }
       for (const curri of rawPagination.items) {
-        const createrName = await this.userRepo
-          .createQueryBuilder('u')
-          .select('u.fullName')
-          .where('u.id = :id', { id: curri.createdBy })
-          .getOne();
-        const className = await this.classRepo.findOne(curri.classId);
+        const createrName = (
+          await this.userRepo
+            .createQueryBuilder('u')
+            .select('u.fullName')
+            .where('u.id = :id', { id: curri.createdBy })
+            .getOne()
+        ).fullName;
+        const className = (await this.classRepo.findOne(curri.classId)).name;
         Object.assign(curri, {
-          creatorName: createrName['fullName'],
-          className: className.name,
+          creatorName: createrName,
+          className: className,
         });
       }
       return rawPagination;
@@ -261,6 +283,7 @@ export class CurriculumService {
             lectures.push(await this.lectureRepo.findOne(ll.lectureId));
           }),
         );
+        lectures.sort((a, b) => (a.id > b.id ? 1 : b.id > a.id ? -1 : 0));
         Object.assign(lesson, {
           lessonMaterials: lessonMaterials,
           lectures: lectures,

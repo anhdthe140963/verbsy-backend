@@ -226,10 +226,29 @@ export class ClassesService {
     }
   }
 
-  async getClassList(options: IPaginationOptions, filter: ClassFilter) {
-    const rawPagination = await paginate(this.classesRepository, options, {
-      where: filter,
-    });
+  async getClassList(
+    options: IPaginationOptions,
+    filter: ClassFilter,
+    user: User,
+  ) {
+    let rawPagination;
+    if (user.role == Role.Administrator) {
+      rawPagination = await paginate(this.classesRepository, options, {
+        where: filter,
+      });
+    } else {
+      const userClasses = await this.userClassRepo.find({
+        teacherId: user.id,
+      });
+      const classIds = [];
+      for (const uc of userClasses) {
+        classIds.push(uc.classId);
+      }
+      const query = await this.classesRepository
+        .createQueryBuilder()
+        .where('id IN (:...ids)', { ids: classIds });
+      rawPagination = await paginate(query, options);
+    }
     await Promise.all(
       rawPagination.items.map(async (cl: Classes) => {
         const teachers = await this.userClassRepo
