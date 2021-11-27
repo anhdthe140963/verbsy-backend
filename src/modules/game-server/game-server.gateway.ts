@@ -181,6 +181,22 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_game_info')
+  async getGameInfo(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
+
+      return socc.emit('receive_game_info', gameInfo);
+    } catch (error) {
+      console.log(error);
+
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('get_students_list')
   async getStudentsList(
     @MessageBody() data: { gameId: number; classId: number },
@@ -268,6 +284,20 @@ export class GameServerGateway
       return this.server
         .to(room)
         .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('get_blacklist')
+  async getBlacklist(
+    @MessageBody() data: { gameId: number; userId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const blacklist = await this.gameServerService.getBlacklist(data.gameId);
+
+      return socc.emit('blacklist_changed', blacklist);
     } catch (error) {
       return socc.emit('error', error);
     }

@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
-import { weightedRandom } from 'src/utils/weigthed-random';
 import { In, Like, Not } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
+import { Classes } from '../classes/entity/classes.entity';
 import { GameState } from '../game-state/entities/game-state.entity';
 import { GameStateRepository } from '../game-state/repository/game-state.repository';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
@@ -370,6 +371,28 @@ export class GameServerService {
     //   Object.assign(game, { lessonName: lesson.name });
     // }
     return game;
+  }
+
+  async getGameInfo(gameId: number): Promise<{
+    id: number;
+    lectureId: number;
+    lectureName: string;
+    classId: number;
+    className: string;
+  }> {
+    const gameInfo = await this.gameRepository
+      .createQueryBuilder('g')
+      .leftJoin(Lecture, 'l', 'g.lecture_id = l.id')
+      .leftJoin(Classes, 'cl', 'g.class_id = cl.id')
+      .select('g.id', 'id')
+      .addSelect('l.id', 'lectureId')
+      .addSelect('l.name', 'lectureName')
+      .addSelect('cl.id', 'classId')
+      .addSelect('cl.name', 'className')
+      .where('g.id = :gameId', { gameId })
+      .getRawOne();
+
+    return gameInfo;
   }
 
   async startGame(gameId: number, students: User[]) {
