@@ -508,7 +508,7 @@ export class GameServerGateway
       socc.data.room = room;
       this.server.to(room).emit('host_reconnected');
       const gameState = await this.gameServerService.getGameState(data.gameId);
-      socc.emit('send_game_state', gameState);
+      socc.emit('receive_game_state', gameState);
     } catch (error) {
       return socc.emit('error', error);
     }

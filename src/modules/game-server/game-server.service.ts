@@ -389,7 +389,7 @@ export class GameServerService {
       .addSelect('l.name', 'lectureName')
       .addSelect('cl.id', 'classId')
       .addSelect('cl.name', 'className')
-      .where('g.id = :gameId', { gameId })
+      .where('g.id = :gameId', { gameId: gameId })
       .getRawOne();
 
     return gameInfo;
