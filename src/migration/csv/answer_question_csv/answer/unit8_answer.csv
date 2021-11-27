@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+congratulation,0,141
+athlete,0,141
+career,1,141
+achievement.,0,141
+regarded,1,142
+looked,0,142
+become,0,142
+thought.,0,142
+Thank you,0,143
+Never mind,0,143
+Congratulations,1,143
+You're welcome,0,143
+exhausted,1,144
+fantastic,0,144
+exciting,0,144
+stressful,0,144
+tired,0,145
+fat,0,145
+fit,1,145
+bored,0,145
+sporty,1,146
+strange,0,146
+crazy,0,146
+helpless,0,146
+Square,0,147
+House,0,147
+Building,0,147
+Stadium,1,147
+bat,0,148
+sport shoes,1,148
+sandals,0,148
+goggles,0,148
+court,0,149
+pool,0,149
+playground,1,149
+roof,0,149
+elected,1,150
+spent,0,150
+brought,0,150
+thought,0,150
+Stand up,1,151
+Standing up,0,151
+Sit down,0,151
+Sitting down,0,151
+being,0,152
+be,1,152
+been,0,152
+All are correct.,0,152
+talk,0,153
+do talk,0,153
+Both A and B are correct.,1,153
+None are correct.,0,153
+raising,0,154
+raised,0,154
+raise,1,154
+put down,0,154
+Turn on,0,155
+Turn off,0,155
+Turn up,0,155
+Turn down,1,155
+Travel,0,156
+Do travel,0,156
+Don't travel,1,156
+Don't travelling,0,156
+open,0,157
+opening,0,157
+close,1,157
+closing,0,157
+Smoke,0,158
+Smoked,0,158
+Do smoke,0,158
+Don't smoke,1,158
+boxing,1,159
+fishing,0,159
+driving,0,159
+hiking,0,159
+tennis,0,160
+skiing,1,160
+football,0,160
+diving,0,160

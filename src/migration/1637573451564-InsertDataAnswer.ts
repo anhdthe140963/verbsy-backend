@@ -5,10 +5,10 @@ import { convertCsvToJson } from "./convert/convert-csv-to-json";
 export class InsertDataAnswer1637573451564 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const answerJson = await convertCsvToJson('src/migration/csv/answer.csv');
-        for(const j of answerJson){
-           await queryRunner.query(`insert into answer(content, is_correct,questionId) values('${j['content']}','${j['isCorrect']}','${j['questionId']}')`); 
-        }
+        // const answerJson = await convertCsvToJson('src/migration/csv/answer.csv');
+        // for(const j of answerJson){
+        //    await queryRunner.query(`insert into answer(content, is_correct,questionId) values('${j['content']}','${j['isCorrect']}','${j['questionId']}')`); 
+        // }
         
     }
 

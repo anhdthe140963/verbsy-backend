@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+cathedral,0,61
+countryside,1,61
+memorial,0,61
+city,0,61
+front yard,0,62
+backyard,0,62
+square,1,62
+D backyard,0,62
+cathedral,0,63
+traffic lights,1,63
+temple,0,63
+rules,0,63
+memorial,0,64
+art gallery,1,64
+pagoda,0,64
+temple,0,64
+railway station,1,65
+palace,0,65
+statue,0,65
+city,0,65
+near,1,66
+next,0,66
+from,0,66
+behind,0,66
+talk,0,67
+show,1,67
+speak,0,67
+give,0,67
+for,1,68
+at,0,68
+on,0,68
+D in,0,68
+across,0,69
+between,1,69
+at,0,69
+on,0,69
+near,0,70
+on the left,1,70
+out,0,70
+in front of,0,70
+out,0,71
+near,0,71
+in front,1,71
+behind,0,71
+between - and,0,72
+from - to,0,72
+from - with,0,72
+from - and,0,72
+across,0,73
+along,1,73
+away,0,73
+through,0,73
+historic,0,74
+modern,1,74
+sandy,0,74
+old,0,74
+comfortable,0,75
+crowded,0,75
+convenient,1,75
+easy,0,75
+narrow,0,76
+peaceful,1,76
+noisy,0,76
+quiet,0,76
+modern,0,77
+polluted,1,77
+incredibly,0,77
+clean,0,77
+terrible,1,78
+fantastic,0,78
+exciting,0,78
+enjoyable,0,78
+"No, this movie isn’t interesting at all.",0,79
+"Yes, there is.",1,79
+"Yes, I like this movie.",0,79
+Just follow the map.,0,79
+No. You’re so beautiful.,0,80
+Sure. Go straight on this roaIt’s at the corner of this street.,1,80
+Yeah. That bakery is very famous.,0,80
+"Yes, there is one down the street",0,80

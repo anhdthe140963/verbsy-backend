@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+cupboard,0,21
+dishwasher,0,21
+air conditioner,1,21
+lamp,0,21
+share – apartment,1,22
+move – attic,0,22
+share – furniture,0,22
+move – country house,0,22
+wall,0,23
+hall,0,23
+kitchen,0,23
+chest of drawers,1,23
+crazy,1,24
+attic,0,24
+interesting,0,24
+briefly,0,24
+a hall,0,25
+a living room,0,25
+a department store,1,25
+a stilt house,0,25
+dishwasher,1,26
+kitchen,0,26
+wardrobe,0,26
+sink,0,26
+furniture,0,27
+hall,1,27
+messy,0,27
+armchair,0,27
+sofa,0,28
+sink,0,28
+wardrobe,1,28
+vase,0,28
+fridge,1,29
+dishwasher,0,29
+microwave,0,29
+cooker,0,29
+upstairs,0,30
+attic,0,30
+bathroom,1,30
+apartment,0,30
+wall,0,31
+cupboard,1,31
+fridge,0,31
+lamp,0,31
+things,0,32
+picture,0,32
+desk,0,32
+furniture,1,32
+fridge,0,33
+air conditioner,1,33
+television,0,33
+lamp,0,33
+pillow,1,34
+bed,0,34
+ceiling fan,0,34
+stool,0,34
+cupboard,0,35
+microwave,1,35
+dishwasher,0,35
+sink,0,35
+talk,0,36
+move,1,36
+make,0,36
+eat,0,36
+cookers,0,37
+dishwashers,0,37
+dishes,0,37
+chopsticks,1,37
+town,0,38
+country,0,38
+villa,0,38
+big,1,38
+"tủ ly, chén",1,39
+tủ quần áo,0,39
+bồn rửa tay,0,39
+gác mái,0,39
+hành lang,0,40
+lò vi sóng,1,40
+tủ lạnh,0,40
+máy rửa chén,0,40
