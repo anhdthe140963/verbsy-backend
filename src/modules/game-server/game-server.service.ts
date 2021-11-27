@@ -497,4 +497,28 @@ export class GameServerService {
       where: { gameId, studentId },
     });
   }
+
+  async getStudentsStatistics(gameId: number) {
+    const players = await this.playerRepository.find({ where: { gameId } });
+
+    const playersStats = [];
+    for (const player of players) {
+      const user = await this.userRepository.findOne(player.studentId);
+      const playerStats = await this.playerDataRepository.find({
+        select: ['id', 'questionId', 'isCorrect'],
+        where: { playerId: player.id },
+      });
+      const h = Object.assign(
+        {
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+        },
+        { stats: playerStats },
+      );
+      playersStats.push(h);
+    }
+
+    return playersStats;
+  }
 }

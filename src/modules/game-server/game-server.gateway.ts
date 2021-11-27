@@ -132,7 +132,7 @@ export class GameServerGateway
   ) {
     try {
       console.log(data);
-      const h = await this.gameServerService.prepareQuestionType(82);
+      const h = await this.gameServerService.getStudentsStatistics(68);
       return this.server.emit('test', h);
     } catch (error) {
       return socc.emit('error', error);
@@ -459,7 +459,7 @@ export class GameServerGateway
       socc.data.room = room;
       this.server.to(room).emit('host_reconnected');
       const gameState = await this.gameServerService.getGameState(data.gameId);
-      socc.emit('receive_game_state', gameState);
+      socc.emit('send_game_state', gameState);
     } catch (error) {
       return socc.emit('error', error);
     }
@@ -482,7 +482,11 @@ export class GameServerGateway
   @SubscribeMessage('transfer_question_to_player')
   async handlePlayerReconnect(
     @MessageBody()
-    data: { gameId: number; userId: number; info: any },
+    data: {
+      gameId: number;
+      userId: number;
+      info: { questionId: number; timeLeft: number };
+    },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
