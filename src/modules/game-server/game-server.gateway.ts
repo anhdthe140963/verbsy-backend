@@ -77,6 +77,14 @@ export class GameServerGateway
         const room: string = socket.data.room;
         const gameId = parseInt(room.replace(this.GAME_ROOM_PREFIX, ''));
 
+        if (socket.data.isHost) {
+          this.server.to(room).emit('host_disconnected');
+          await this.gameServerService.handleHostLeft(
+            gameId,
+            socket.data.currentQuestionId,
+            socket.data.timeLeft,
+          );
+        }
         //Leave room and emit to room
         socket.leave(room);
         this.server
