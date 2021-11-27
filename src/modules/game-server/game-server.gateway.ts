@@ -79,11 +79,6 @@ export class GameServerGateway
 
         if (socket.data.isHost) {
           this.server.to(room).emit('host_disconnected');
-          await this.gameServerService.handleHostLeft(
-            gameId,
-            socket.data.currentQuestionId,
-            socket.data.timeLeft,
-          );
         }
         //Leave room and emit to room
         socket.leave(room);
@@ -261,6 +256,26 @@ export class GameServerGateway
         .to(room)
         .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
     } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('save_game_state')
+  async saveGameState(
+    @MessageBody()
+    data: { gameId: number; nextQuestionId: number; timeLeft: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const gameState = await this.gameServerService.saveGameState(
+        data.gameId,
+        data.nextQuestionId,
+        data.timeLeft,
+      );
+
+      return socc.emit('saved_game_state', gameState);
+    } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }
@@ -479,25 +494,6 @@ export class GameServerGateway
       const game = await this.gameServerService.endGame(data.gameId);
       this.server.to(room).emit('game_ended', game);
       return this.server.to(room).disconnectSockets(true);
-    } catch (error) {
-      return socc.emit('error', error);
-    }
-  }
-
-  @SubscribeMessage('host_left')
-  async handleHostLeft(
-    @MessageBody()
-    data: { gameId: number; currentQuestionId: number; timeLeft: number },
-    @ConnectedSocket() socc: Socket,
-  ) {
-    try {
-      const room = this.getRoom(data.gameId);
-      this.server.to(room).emit('host_disconnected');
-      await this.gameServerService.handleHostLeft(
-        data.gameId,
-        data.currentQuestionId,
-        data.timeLeft,
-      );
     } catch (error) {
       return socc.emit('error', error);
     }

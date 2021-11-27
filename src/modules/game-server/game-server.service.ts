@@ -560,7 +560,7 @@ export class GameServerService {
     }
   }
 
-  async handleHostLeft(
+  async saveGameState(
     gameId: number,
     currentQuestionId: number,
     timeLeft: number,
