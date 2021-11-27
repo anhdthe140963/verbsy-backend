@@ -75,7 +75,10 @@ export class GameServerService {
     return answer.isCorrect;
   }
 
-  async getStudentsFromClass(classId: number) {
+  async getStudentsFromClass(classId: number): Promise<{
+    students: { id: number; fullName: string; username: string }[];
+    count: number;
+  }> {
     const students = await this.userClassRepository
       .createQueryBuilder('uc')
       .innerJoin(User, 'u', 'uc.student_id = u.id')
@@ -88,6 +91,79 @@ export class GameServerService {
       .getRawMany();
 
     return { students: students, count: students.length + 1 };
+  }
+
+  async getGameStudentsList(
+    classId: number,
+    inGameStudents: User[],
+  ): Promise<{
+    students: {
+      id: number;
+      fullName: string;
+      username: string;
+      inGame: boolean;
+    }[];
+    inGame: number;
+    total: number;
+  }> {
+    const inGameStudentsIds: number[] = [];
+    const transformedInGameStudents: {
+      id: number;
+      fullName: string;
+      username: string;
+      inGame: boolean;
+    }[] = [];
+    for (const s of inGameStudents) {
+      inGameStudentsIds.push(s.id);
+      transformedInGameStudents.push({
+        id: s.id,
+        fullName: s.fullName,
+        username: s.username,
+        inGame: true,
+      });
+    }
+
+    const notInGameStudents: {
+      id: number;
+      fullName: string;
+      username: string;
+    }[] = await this.userClassRepository
+      .createQueryBuilder('uc')
+      .innerJoin(User, 'u', 'uc.student_id = u.id')
+      .select('u.id', 'id')
+      .addSelect('u.full_name', 'fullName')
+      .addSelect('u.username', 'username')
+      .where('uc.class_id = :classId', { classId })
+      .andWhere('uc.student_id IS NOT NULL')
+      .andWhere('u.id NOT IN(:inGameStudentsIds)', {
+        inGameStudentsIds: inGameStudentsIds.toString(),
+      })
+      .orderBy('uc.id')
+      .getRawMany();
+
+    const transformedNotInGameStudents: {
+      id: number;
+      fullName: string;
+      username: string;
+      inGame: boolean;
+    }[] = [];
+    for (const s of notInGameStudents) {
+      transformedNotInGameStudents.push({
+        id: s.id,
+        fullName: s.fullName,
+        username: s.username,
+        inGame: false,
+      });
+    }
+
+    const students = transformedInGameStudents.concat(
+      transformedNotInGameStudents,
+    );
+    return {
+      students: students,
+      inGame: transformedInGameStudents.length,
+      total: students.length,
+    };
   }
 
   async submitAnswer(
@@ -276,23 +352,23 @@ export class GameServerService {
       hostId: hostId,
       isGameLive: true,
     });
-    const lecture = await this.lectureRepository.findOne(lectureId);
-    if (lecture) {
-      Object.assign(game, { lectureName: lecture.name });
-    }
-    const questions = await this.questionRepository.find({
-      lectureId: lectureId,
-    });
-    if (questions) {
-      Object.assign(game, { totalQuestion: questions.length });
-    }
-    const lessonLecture = await this.lessonLectureRepository.findOne({
-      lectureId: lectureId,
-    });
-    const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
-    if (lesson) {
-      Object.assign(game, { lessonName: lesson.name });
-    }
+    // const lecture = await this.lectureRepository.findOne(lectureId);
+    // if (lecture) {
+    //   Object.assign(game, { lectureName: lecture.name });
+    // }
+    // const questions = await this.questionRepository.find({
+    //   lectureId: lectureId,
+    // });
+    // if (questions) {
+    //   Object.assign(game, { totalQuestion: questions.length });
+    // }
+    // const lessonLecture = await this.lessonLectureRepository.findOne({
+    //   lectureId: lectureId,
+    // });
+    // const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
+    // if (lesson) {
+    //   Object.assign(game, { lessonName: lesson.name });
+    // }
     return game;
   }
 

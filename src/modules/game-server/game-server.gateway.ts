@@ -35,7 +35,7 @@ export class GameServerGateway
     return this.GAME_ROOM_PREFIX + gameId;
   }
 
-  async getStudentList(gameId: number): Promise<User[]> {
+  async getInGameStudentList(gameId: number): Promise<User[]> {
     const room = this.getRoom(gameId);
     const sockets = await this.server.to(room).fetchSockets();
     const students = [];
@@ -81,7 +81,7 @@ export class GameServerGateway
         socket.leave(room);
         this.server
           .to(room)
-          .emit('lobby_updated', await this.getStudentList(gameId));
+          .emit('lobby_updated', await this.getInGameStudentList(gameId));
 
         //Check if anyone left in room
         const socketsInGameRoom = (await this.server.to(room).allSockets())
@@ -132,7 +132,8 @@ export class GameServerGateway
   ) {
     try {
       console.log(data);
-      const h = await this.gameServerService.getStudentsStatistics(68);
+      const students = await this.getInGameStudentList(data.gameId);
+      const h = await this.gameServerService.getGameStudentsList(21, students);
       return this.server.emit('test', h);
     } catch (error) {
       return socc.emit('error', error);
@@ -172,10 +173,6 @@ export class GameServerGateway
       socc.data.isHost = true;
       socc.data.room = room;
 
-      const students = await this.gameServerService.getStudentsFromClass(
-        data.classId,
-      );
-      socc.emit('receive_students_list', students);
       return socc.emit('game_hosted', game);
     } catch (error) {
       console.log(error);
@@ -186,12 +183,14 @@ export class GameServerGateway
 
   @SubscribeMessage('get_students_list')
   async getStudentsList(
-    @MessageBody() data: { classId: number },
+    @MessageBody() data: { gameId: number; classId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const students = await this.gameServerService.getStudentsFromClass(
+      const inGameStudents = await this.getInGameStudentList(data.gameId);
+      const students = await this.gameServerService.getGameStudentsList(
         data.classId,
+        inGameStudents,
       );
 
       return socc.emit('receive_students_list', students);
@@ -217,7 +216,7 @@ export class GameServerGateway
         }
       }
 
-      if ((await this.getStudentList(data.gameId)).includes(user)) {
+      if ((await this.getInGameStudentList(data.gameId)).includes(user)) {
         throw new WsException('User already in room');
       }
 
@@ -236,7 +235,7 @@ export class GameServerGateway
       this.server.to(room).emit('game_joined', user);
       return this.server
         .to(room)
-        .emit('lobby_updated', await this.getStudentList(data.gameId));
+        .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
     } catch (error) {
       return socc.emit('error', error);
     }
@@ -268,7 +267,7 @@ export class GameServerGateway
       this.server.to(room).emit('kicked_from_game', data.userId);
       return this.server
         .to(room)
-        .emit('lobby_updated', await this.getStudentList(data.gameId));
+        .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
     } catch (error) {
       return socc.emit('error', error);
     }
@@ -337,7 +336,7 @@ export class GameServerGateway
 
       await this.gameServerService.startGame(
         data.gameId,
-        await this.getStudentList(data.gameId),
+        await this.getInGameStudentList(data.gameId),
       );
       return this.server.to(room).emit('game_started', 'Game Started');
     } catch (error) {
@@ -389,7 +388,8 @@ export class GameServerGateway
         answeredPlayers: questionRecord.answeredPlayers,
       });
 
-      const roomStudents = (await this.getStudentList(data.gameId)).length;
+      const roomStudents = (await this.getInGameStudentList(data.gameId))
+        .length;
 
       if (questionRecord.answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
