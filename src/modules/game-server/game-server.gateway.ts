@@ -178,6 +178,25 @@ export class GameServerGateway
       socc.emit('receive_students_list', students);
       return socc.emit('game_hosted', game);
     } catch (error) {
+      console.log(error);
+
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('get_students_list')
+  async getStudentsList(
+    @MessageBody() data: { classId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const students = await this.gameServerService.getStudentsFromClass(
+        data.classId,
+      );
+
+      return socc.emit('receive_students_list', students);
+    } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }
