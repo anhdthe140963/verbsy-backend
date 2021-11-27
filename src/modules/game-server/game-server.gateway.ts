@@ -502,4 +502,19 @@ export class GameServerGateway
       return socc.emit('error', error);
     }
   }
+
+  @SubscribeMessage('get_students_statistics')
+  async getStudentsStatistics(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const studentsStatistics =
+        await this.gameServerService.getStudentsStatistics(data.gameId);
+      socc.emit('receive_students_statistics', studentsStatistics);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
 }
