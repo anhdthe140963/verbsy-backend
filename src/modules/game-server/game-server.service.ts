@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
+import { weightedRandom } from 'src/utils/weigthed-random';
 import { In, Like, Not } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
+import { GameState } from '../game-state/entities/game-state.entity';
+import { GameStateRepository } from '../game-state/repository/game-state.repository';
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
@@ -14,6 +17,7 @@ import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
+import { QuestionTypeConfigRepository } from '../question-type-config/repository/question-type-config.repository';
 import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
@@ -29,8 +33,10 @@ export class GameServerService {
   constructor(
     private readonly questionRepository: QuestionRepository,
     private readonly questionRecordRepository: QuestionRecordRepository,
+    private readonly questionTypeConfigRepository: QuestionTypeConfigRepository,
     private readonly answerRepository: AnswerRepository,
     private readonly gameRepository: GameRepository,
+    private readonly gameStateRepository: GameStateRepository,
     private readonly playerRepository: PlayerRepository,
     private readonly playerDataRepository: PlayerDataRepository,
     private readonly userRepository: UserRepository,
@@ -403,24 +409,92 @@ export class GameServerService {
 
     return shuffledArray;
   }
-  async getGameInfo(gameId: number) {
+
+  async prepareQuestionType(gameId: number) {
+    //Get game
     const game = await this.gameRepository.findOne(gameId);
-    const lecture = await this.lectureRepository.findOne(game.lectureId);
-    if (lecture) {
-      Object.assign(game, { lectureName: lecture.name });
-    }
+
+    //Get questions from lecture
     const questions = await this.questionRepository.find({
-      lectureId: game.lectureId,
+      where: { lectureId: game.lectureId },
     });
-    if (questions) {
-      Object.assign(game, { totalQuestion: questions.length });
+
+    const questionTypesOriginal = game.questionsConfig.questionTypes;
+    console.log('original pool: ', questionTypesOriginal);
+
+    //Set question type
+    for (const question of questions) {
+      const questionTypesPool = questionTypesOriginal.slice();
+
+      //Check if eligible for scramble
+      const answers = question.answers;
+
+      if (questionTypesPool.includes(QuestionType.Scramble)) {
+        for (const answer of answers) {
+          if (answer.isCorrect) {
+            if (
+              answer.content.trim().includes(' ') ||
+              answer.content.length <= 1
+            ) {
+              //Remove Scramble if ineligible
+              const index = questionTypesPool.indexOf(QuestionType.Scramble);
+              if (index != -1) {
+                questionTypesPool.splice(index, 1);
+                continue;
+              }
+            }
+          }
+        }
+      }
+
+      const questionTypeIndex: number = Math.floor(
+        Math.random() * questionTypesPool.length,
+      );
+
+      const questionType = questionTypesPool[questionTypeIndex];
+
+      await this.questionTypeConfigRepository.save({
+        gameId: gameId,
+        questionId: question.id,
+        questionType: questionType,
+      });
     }
-    const lessonLecture = await this.lessonLectureRepository.findOne({
-      lectureId: game.lectureId,
+  }
+
+  async handleHostLeft(
+    gameId: number,
+    currentQuestionId: number,
+    timeLeft: number,
+  ) {
+    const gameState = await this.gameStateRepository.findOne({
+      where: { gameId },
     });
-    const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
-    if (lesson) {
-      Object.assign(game, { lessonName: lesson.name });
+
+    if (!gameState) {
+      return await this.gameStateRepository.save({
+        gameId,
+        currentQuestionId,
+        timeLeft,
+      });
+    } else {
+      return await this.gameStateRepository.save({
+        id: gameState.id,
+        gameId,
+        currentQuestionId,
+        timeLeft,
+      });
     }
+  }
+
+  async getGameState(gameId: number): Promise<GameState> {
+    return await this.gameStateRepository.findOne({
+      where: { gameId },
+    });
+  }
+
+  async isReconnect(gameId: number, studentId: number) {
+    return await this.playerRepository.findOne({
+      where: { gameId, studentId },
+    });
   }
 }

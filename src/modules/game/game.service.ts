@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Role } from 'src/constant/role.enum';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
+import { Curriculum } from '../curriculum/entities/curriculum.entity';
+import { Lesson } from '../curriculum/entities/lesson.entity';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
@@ -41,5 +43,18 @@ export class GameService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getGamesOfCurriculum(curriculumId: number) {
+    const games = await this.gameRepository
+      .createQueryBuilder('g')
+      .leftJoin(Lecture, 'lec', 'g.lecture_id = lec.id')
+      .leftJoin(Lesson, 'les', 'lec.lesson_id = les.id')
+      .leftJoin(Curriculum, 'c', 'les.curriculum_id = c.id')
+      .where('c.id = :curriculumId', { curriculumId })
+      .andWhere('g.is_game_live = :isGameLive', { isGameLive: true })
+      .getMany();
+
+    return games;
   }
 }

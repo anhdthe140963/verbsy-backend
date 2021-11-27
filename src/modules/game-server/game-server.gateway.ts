@@ -91,13 +91,10 @@ export class GameServerGateway
         }
       }
 
-      socket.emit(
-        'socket_disconnected',
-        'username ' + socket.data.user.username + ' has disconnected',
-      );
+      console.log(socket.rooms);
+      console.log(socket.data.user.username + ' has disconnected');
     } catch (error) {
       socket.emit('error', error);
-      return socket.disconnect(true);
     }
   }
 
@@ -113,14 +110,17 @@ export class GameServerGateway
       }
       socket.data.user = user;
 
+      console.log(socket.rooms);
+
+      console.log(socket.data.user.username + ' has connected');
+
       socket.emit(
         'socket_connected',
         'username ' + socket.data.user.username + ' has connected',
       );
     } catch (error) {
-      socket.disconnect(true);
       console.log(error);
-      return;
+      socket.emit('error', error);
     }
   }
 
@@ -132,7 +132,7 @@ export class GameServerGateway
   ) {
     try {
       console.log(data);
-      const h = await this.gameServerService.getAnswerStatistics(12, 1);
+      const h = await this.gameServerService.prepareQuestionType(82);
       return this.server.emit('test', h);
     } catch (error) {
       return socc.emit('error', error);
@@ -204,6 +204,16 @@ export class GameServerGateway
 
       socc.join(room);
       socc.data.room = room;
+
+      //Handle reconnect
+      const isReconnect = await this.gameServerService.isReconnect(
+        data.gameId,
+        user.id,
+      );
+      if (isReconnect) {
+        return this.server.to(room).emit('player_has_reconnected', user);
+      }
+
       this.server.to(room).emit('game_joined', user);
       return this.server
         .to(room)
@@ -412,6 +422,78 @@ export class GameServerGateway
       const game = await this.gameServerService.endGame(data.gameId);
       this.server.to(room).emit('game_ended', game);
       return this.server.to(room).disconnectSockets(true);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('host_left')
+  async handleHostLeft(
+    @MessageBody()
+    data: { gameId: number; currentQuestionId: number; timeLeft: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      this.server.to(room).emit('host_disconnected');
+      await this.gameServerService.handleHostLeft(
+        data.gameId,
+        data.currentQuestionId,
+        data.timeLeft,
+      );
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('host_reconnect')
+  async handleHostReconnect(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      socc.join(room);
+      socc.data.isHost = true;
+      socc.data.room = room;
+      this.server.to(room).emit('host_reconnected');
+      const gameState = await this.gameServerService.getGameState(data.gameId);
+      socc.emit('receive_game_state', gameState);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('player_left')
+  async handlePlayerLeft(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      this.server.to(room).emit('player_has_left', socc.data.user);
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('transfer_question_to_player')
+  async handlePlayerReconnect(
+    @MessageBody()
+    data: { gameId: number; userId: number; info: any },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      const sockets = await this.server.to(room).fetchSockets();
+      for (const socket of sockets) {
+        const user: User = socket.data.user;
+        if (user.id == data.userId) {
+          return socket.emit('receive_info', data.info);
+        }
+      }
     } catch (error) {
       return socc.emit('error', error);
     }

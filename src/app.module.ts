@@ -17,8 +17,6 @@ import { LessonModule } from './modules/lesson/lesson.module';
 import { LessonLectureModule } from './modules/lesson-lecture/lesson-lecture.module';
 import { GameServerModule } from './modules/game-server/game-server.module';
 import { GameModule } from './modules/game/game.module';
-import { QuestionTypeConfigModule } from './modules/question-type-config/question-type-config.module';
-import { BlacklistModule } from './modules/blacklist/blacklist.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -43,8 +41,6 @@ import { BlacklistModule } from './modules/blacklist/blacklist.module';
     LessonLectureModule,
     GameServerModule,
     GameModule,
-    QuestionTypeConfigModule,
-    BlacklistModule,
   ],
 })
 export class AppModule {}

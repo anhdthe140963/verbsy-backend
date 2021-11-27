@@ -35,7 +35,7 @@ export class Game extends BaseEntity {
     type: 'json',
     nullable: true,
   })
-  questionsConfig: { shuflle: boolean; questionTypes: QuestionType[] };
+  questionsConfig: { shuffle: boolean; questionTypes: QuestionType[] };
 
   @Column({
     name: 'created_at',
