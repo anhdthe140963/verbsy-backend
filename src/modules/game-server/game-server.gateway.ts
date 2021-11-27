@@ -21,7 +21,7 @@ export class GameServerGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
-  server: Server;
+  server: Server = new Server({});
 
   GAME_ROOM_PREFIX = 'gameRoom:';
 
@@ -263,13 +263,13 @@ export class GameServerGateway
   @SubscribeMessage('save_game_state')
   async saveGameState(
     @MessageBody()
-    data: { gameId: number; nextQuestionId: number; timeLeft: number },
+    data: { gameId: number; currentQuestionId: number; timeLeft: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
       const gameState = await this.gameServerService.saveGameState(
         data.gameId,
-        data.nextQuestionId,
+        data.currentQuestionId,
         data.timeLeft,
       );
 
