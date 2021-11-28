@@ -63,6 +63,17 @@ export class GameServerService {
     return question;
   }
 
+  async canJoinGame(studentId: number, gameId: number) {
+    const game = await this.gameRepository.findOne(gameId);
+    const classId = game.classId;
+
+    const userClass = await this.userClassRepository.findOne({
+      where: { studentId, classId },
+    });
+
+    return userClass ? true : false;
+  }
+
   async getOngoingGamesLecturesIds(hostId: number) {
     const ongoingGames = await this.gameRepository.find({
       where: { hostId, isGameLive: true },
