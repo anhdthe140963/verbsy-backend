@@ -158,6 +158,19 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_ongoing_games')
+  async getOngoingGames(@ConnectedSocket() socc: Socket): Promise<boolean> {
+    try {
+      const user: User = socc.data.user;
+      const ongoingGames =
+        await this.gameServerService.getOngoingGamesLecturesIds(user.id);
+      return socc.emit('receive_ongoing_games', { lectureIds: ongoingGames });
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('host_game')
   async hostGame(
     @MessageBody() data: { lectureId: number; classId: number },

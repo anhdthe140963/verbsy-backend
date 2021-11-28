@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
-import { In, Like, Not } from 'typeorm';
+import { In, Like, Not, Unique } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Classes } from '../classes/entity/classes.entity';
 import { GameState } from '../game-state/entities/game-state.entity';
@@ -61,6 +61,20 @@ export class GameServerService {
       delete q.isCorrect;
     });
     return question;
+  }
+
+  async getOngoingGamesLecturesIds(hostId: number) {
+    const ongoingGames = await this.gameRepository.find({
+      where: { hostId, isGameLive: true },
+    });
+
+    const lecturesWithOngoingGamesIds = [];
+    for (const ongoingGame of ongoingGames) {
+      if (lecturesWithOngoingGamesIds.indexOf(ongoingGame.lectureId) <= -1) {
+        lecturesWithOngoingGamesIds.push(ongoingGame.lectureId);
+      }
+    }
+    return lecturesWithOngoingGamesIds;
   }
 
   async getQuestionsForGame(gameId: number): Promise<Question[]> {
