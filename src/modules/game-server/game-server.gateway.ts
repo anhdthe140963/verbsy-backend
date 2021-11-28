@@ -394,6 +394,7 @@ export class GameServerGateway
       await this.gameServerService.prepareQuestionType(data.gameId);
       return this.server.to(room).emit('game_started', 'Game Started');
     } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }

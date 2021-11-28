@@ -514,9 +514,9 @@ export class GameServerService {
       where: { lectureId: game.lectureId },
     });
 
-    const questionTypesOriginal = game.questionsConfig.questionTypes ?? [
-      QuestionType.MultipleChoice,
-    ];
+    const questionTypesOriginal = game.questionsConfig
+      ? game.questionsConfig.questionTypes
+      : [QuestionType.MultipleChoice];
     console.log('original pool: ', questionTypesOriginal);
 
     //Set question type
