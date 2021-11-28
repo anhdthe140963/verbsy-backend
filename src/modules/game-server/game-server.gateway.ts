@@ -463,7 +463,7 @@ export class GameServerGateway
 
   @SubscribeMessage('get_leaderboard')
   async getLeaderBoard(
-    @MessageBody() data: { gameId: number; questionId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
