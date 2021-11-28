@@ -26,13 +26,4 @@ export class AuthController {
   async signIn(@Body() logInDto: LogInDto): Promise<{ user; accessToken }> {
     return await this.authService.logIn(logInDto);
   }
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator)
-  @Post('gen-student-acc')
-  @UseInterceptors(FileInterceptor('file', { dest: '/uploads' }))
-  async generateStudentAccount(@UploadedFile() file: Express.Multer.File) {
-    console.log(file);
-    // const xlxs = await readXlsxFile('./uploads', { sheet: 1 });
-    // console.log(xlxs);
-  }
 }
