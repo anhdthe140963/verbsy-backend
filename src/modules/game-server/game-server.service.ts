@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
-import { In, Like, Not } from 'typeorm';
+import { In, Like, Not, Unique } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Classes } from '../classes/entity/classes.entity';
 import { GameState } from '../game-state/entities/game-state.entity';
@@ -18,6 +18,7 @@ import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
+import { QuestionTypeConfig } from '../question-type-config/entities/question-type-config.entity';
 import { QuestionTypeConfigRepository } from '../question-type-config/repository/question-type-config.repository';
 import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
@@ -60,6 +61,20 @@ export class GameServerService {
       delete q.isCorrect;
     });
     return question;
+  }
+
+  async getOngoingGamesLecturesIds(hostId: number) {
+    const ongoingGames = await this.gameRepository.find({
+      where: { hostId, isGameLive: true },
+    });
+
+    const lecturesWithOngoingGamesIds = [];
+    for (const ongoingGame of ongoingGames) {
+      if (lecturesWithOngoingGamesIds.indexOf(ongoingGame.lectureId) <= -1) {
+        lecturesWithOngoingGamesIds.push(ongoingGame.lectureId);
+      }
+    }
+    return lecturesWithOngoingGamesIds;
   }
 
   async getQuestionsForGame(gameId: number): Promise<Question[]> {
@@ -202,7 +217,7 @@ export class GameServerService {
 
       //Score Calculation
       const score = isCorrect
-        ? question.duration * 1000 - submitAnswerDto.answerTime
+        ? (question.duration * 1000 - submitAnswerDto.answerTime) / 100
         : 0;
 
       //Store player data
@@ -276,42 +291,57 @@ export class GameServerService {
   async getAnsweredPlayers(
     gameId: number,
     questionId: number,
-  ): Promise<QuestionRecord> {
-    return await this.questionRecordRepository.findOne({
-      where: { gameId, questionId },
+  ): Promise<number> {
+    const players = await this.playerRepository.find({ where: { gameId } });
+    const playersIds = [];
+    for (const player of players) {
+      playersIds.push(player.id);
+    }
+    return await this.playerDataRepository.count({
+      where: { questionId: questionId, playerId: In(playersIds) },
     });
   }
 
   async getAnswerStatistics(gameId: number, questionId: number) {
-    const statistics = await this.playerDataRepository
-      .createQueryBuilder('pd')
-      .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
-      .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
-      .select('a.id', 'id')
-      .addSelect('a.content', 'content')
-      .addSelect('a.is_correct', 'isCorrect')
-      .addSelect('COUNT(pd.answerId)', 'count')
-      .where('pl.game_id = :gameId', { gameId: gameId })
-      .andWhere('pd.question_id = :questionId', { questionId: questionId })
-      .groupBy('pd.answerId')
-      .getRawMany();
-
-    const appearedAnswersIds = [];
-    for (const s of statistics) {
-      console.log(s);
-      appearedAnswersIds.push(s.id);
-    }
-
-    const answers = await this.answerRepository.find({
-      where: { question: { id: questionId }, id: Not(In(appearedAnswersIds)) },
+    const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
+      where: { gameId, questionId },
     });
 
-    for (const s of statistics) {
-      s.isCorrect = new Boolean(s.isCorrect);
-      s.count = parseInt(s.count);
-    }
+    switch (questionTypeConfig.questionType) {
+      case QuestionType.MultipleChoice:
+        const statistics = await this.playerDataRepository
+          .createQueryBuilder('pd')
+          .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+          .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
+          .select('a.id', 'id')
+          .addSelect('a.content', 'content')
+          .addSelect('a.is_correct', 'isCorrect')
+          .addSelect('COUNT(pd.answerId)', 'count')
+          .where('pl.game_id = :gameId', { gameId: gameId })
+          .andWhere('pd.question_id = :questionId', { questionId: questionId })
+          .groupBy('pd.answerId')
+          .getRawMany();
 
-    return answers.concat(statistics);
+        const appearedAnswersIds = [];
+        for (const s of statistics) {
+          console.log(s);
+          appearedAnswersIds.push(s.id);
+        }
+
+        const answers = await this.answerRepository.find({
+          where: {
+            question: { id: questionId },
+            id: Not(In(appearedAnswersIds)),
+          },
+        });
+
+        for (const s of statistics) {
+          s.isCorrect = new Boolean(s.isCorrect);
+          s.count = parseInt(s.count);
+        }
+
+        return answers.concat(statistics);
+    }
   }
 
   async getLeaderboard(gameId: number) {

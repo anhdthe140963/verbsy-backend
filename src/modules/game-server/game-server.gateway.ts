@@ -158,6 +158,19 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_ongoing_games')
+  async getOngoingGames(@ConnectedSocket() socc: Socket): Promise<boolean> {
+    try {
+      const user: User = socc.data.user;
+      const ongoingGames =
+        await this.gameServerService.getOngoingGamesLecturesIds(user.id);
+      return socc.emit('receive_ongoing_games', { lectureIds: ongoingGames });
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('host_game')
   async hostGame(
     @MessageBody() data: { lectureId: number; classId: number },
@@ -392,7 +405,9 @@ export class GameServerGateway
         await this.getInGameStudentList(data.gameId),
       );
       await this.gameServerService.prepareQuestionType(data.gameId);
-      return this.server.to(room).emit('game_started', 'Game Started');
+
+      const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
+      return this.server.to(room).emit('game_started', gameInfo);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);
@@ -432,21 +447,28 @@ export class GameServerGateway
         data,
       );
 
-      const questionRecord = await this.gameServerService.getAnsweredPlayers(
+      socc.emit('answer_submitted', submittedAnswer);
+
+      const answeredPlayers = await this.gameServerService.getAnsweredPlayers(
         data.gameId,
         data.questionId,
       );
 
-      socc.emit('answer_submitted', submittedAnswer);
+      this.server
+        .to(room)
+        .emit('answered_players_changed', { answeredPlayers });
 
-      this.server.to(room).emit('answered_players_changed', {
-        answeredPlayers: questionRecord.answeredPlayers,
-      });
+      const studentsStatistics =
+        await this.gameServerService.getStudentsStatistics(data.gameId);
+
+      this.server
+        .to(room)
+        .emit('receive_students_statistics', studentsStatistics);
 
       const roomStudents = (await this.getInGameStudentList(data.gameId))
         .length;
 
-      if (questionRecord.answeredPlayers == roomStudents) {
+      if (answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
@@ -456,7 +478,7 @@ export class GameServerGateway
 
   @SubscribeMessage('get_leaderboard')
   async getLeaderBoard(
-    @MessageBody() data: { gameId: number; questionId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
