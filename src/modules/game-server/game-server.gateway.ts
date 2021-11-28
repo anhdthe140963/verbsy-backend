@@ -439,14 +439,16 @@ export class GameServerGateway
         data.questionId,
       );
 
-      const studentsStatistics =
-        await this.gameServerService.getStudentsStatistics(data.gameId);
       this.server
         .to(room)
-        .emit(
-          'answered_players_changed',
-          Object.assign({ answeredPlayers }, { studentsStatistics }),
-        );
+        .emit('answered_players_changed', { answeredPlayers });
+
+      const studentsStatistics =
+        await this.gameServerService.getStudentsStatistics(data.gameId);
+
+      this.server
+        .to(room)
+        .emit('receive_students_statistics', studentsStatistics);
 
       const roomStudents = (await this.getInGameStudentList(data.gameId))
         .length;
