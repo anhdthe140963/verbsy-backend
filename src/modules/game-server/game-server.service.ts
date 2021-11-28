@@ -195,32 +195,9 @@ export class GameServerService {
       //Check Answer
       const isCorrect = answer ? answer.isCorrect : false;
 
-      //Record Question
-      let questionRecord = await this.questionRecordRepository.findOne({
-        where: {
-          gameId: submitAnswerDto.gameId,
-          questionId: submitAnswerDto.questionId,
-        },
-      });
-      if (!questionRecord) {
-        questionRecord = await this.questionRecordRepository.save({
-          gameId: submitAnswerDto.gameId,
-          questionId: submitAnswerDto.questionId,
-          questionType: submitAnswerDto.questionType,
-          answeredPlayers: 1,
-        });
-      } else {
-        const questionRecordId = questionRecord.id;
-        const answeredPlayers = questionRecord.answeredPlayers + 1;
-        questionRecord = await this.questionRecordRepository.save({
-          id: questionRecordId,
-          answeredPlayers: answeredPlayers,
-        });
-      }
-
       //Get question
       const question = await this.questionRepository.findOne(
-        questionRecord.questionId,
+        submitAnswerDto.questionId,
       );
 
       //Score Calculation
@@ -229,7 +206,7 @@ export class GameServerService {
         : 0;
 
       //Store player data
-      return await this.playerDataRepository.save({
+      const playerData = this.playerDataRepository.save({
         playerId: player.id,
         questionId: submitAnswerDto.questionId,
         answerId: answer ? answer.id : null,
@@ -238,6 +215,8 @@ export class GameServerService {
         answerTime: submitAnswerDto.answerTime,
         score: score,
       });
+
+      return playerData;
     } catch (error) {
       console.log(error);
       throw error;
@@ -246,7 +225,10 @@ export class GameServerService {
 
   //Handle when a question duration ran out
   //Should be optimized by using a single query instead
-  async finishQuestion(gameId: number, questionId: number): Promise<void> {
+  async finishQuestion(
+    gameId: number,
+    questionId: number,
+  ): Promise<QuestionRecord> {
     const playersInGame = await this.playerRepository.find({
       where: { gameId: gameId },
     });
@@ -275,6 +257,20 @@ export class GameServerService {
         questionId: questionId,
       });
     }
+
+    //Record Question
+    const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
+      where: { gameId: gameId, questionId: questionId },
+    });
+
+    const questionRecord = await this.questionRecordRepository.save({
+      gameId: gameId,
+      questionId: questionId,
+      questionType: questionTypeConfig.questionType,
+      answeredPlayers: answeredPlayersIds.length,
+    });
+
+    return questionRecord;
   }
 
   async getAnsweredPlayers(
@@ -450,15 +446,15 @@ export class GameServerService {
       where: { gameId: gameId },
     });
 
-    const answered = [];
+    const answeredQuestionsIds = [];
     for (const a of answeredQuestions) {
-      answered.push(a.questionId);
+      answeredQuestionsIds.push(a.questionId);
     }
 
     //Remain questions are questions those aren't answered in the current game
     const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
     const remainQuestions = await this.questionRepository.find({
-      where: { id: Not(In(answered)), lectureId: lectureId },
+      where: { id: Not(In(answeredQuestionsIds)), lectureId: lectureId },
     });
 
     //Next question is a random question in remain questions (if specfified)
@@ -518,7 +514,9 @@ export class GameServerService {
       where: { lectureId: game.lectureId },
     });
 
-    const questionTypesOriginal = game.questionsConfig.questionTypes;
+    const questionTypesOriginal = game.questionsConfig.questionTypes ?? [
+      QuestionType.MultipleChoice,
+    ];
     console.log('original pool: ', questionTypesOriginal);
 
     //Set question type

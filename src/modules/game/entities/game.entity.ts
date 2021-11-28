@@ -37,11 +37,7 @@ export class Game extends BaseEntity {
   })
   questionsConfig: { shuffle: boolean; questionTypes: QuestionType[] };
 
-  @Column({
-    name: 'created_at',
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Column({ name: 'ended_at', nullable: true, default: null })
