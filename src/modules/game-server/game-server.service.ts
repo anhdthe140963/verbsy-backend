@@ -202,7 +202,7 @@ export class GameServerService {
 
       //Score Calculation
       const score = isCorrect
-        ? question.duration * 1000 - submitAnswerDto.answerTime
+        ? question.duration * 10 - submitAnswerDto.answerTime
         : 0;
 
       //Store player data
