@@ -20,4 +20,8 @@ export class PlayerRepository extends Repository<Player> {
     }
     return false;
   }
+
+  async findPlayersByGameId(gameId: number): Promise<Player[]> {
+    return await this.find({ gameId: gameId });
+  }
 }

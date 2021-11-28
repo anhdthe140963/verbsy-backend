@@ -6,6 +6,8 @@ import { GameRepository } from './repositoty/game.repository';
 import { PassportModule } from '@nestjs/passport';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
+import { PlayerRepository } from '../player/repository/player.repository';
+import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { UserClassRepository } from '../user-class/repository/question.repositor
       GameRepository,
       ClassesRepository,
       UserClassRepository,
+      PlayerRepository,
+      PlayerDataRepository,
     ]),
   ],
   controllers: [GameController],

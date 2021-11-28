@@ -1,6 +1,8 @@
 import { Controller, Get, HttpStatus, Param, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Role } from 'src/constant/role.enum';
 import { GetUser } from 'src/decorator/get-user-decorator';
+import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Game } from './entities/game.entity';
 import { GameService } from './game.service';
@@ -32,6 +34,34 @@ export class GameController {
       statusCode: HttpStatus.OK,
       message: 'Get games of curriculum successfully',
       data: games,
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher)
+  @Get('games/:lectureId')
+  async getGamesByLectureId(@Param('lectureId') lectureId: number): Promise<{
+    statusCode: HttpStatus;
+    message: string;
+    data: Game[];
+  }> {
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get games successfully',
+      data: await this.gameService.getGamesByLectureId(lectureId),
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher)
+  @Get('game-history/:gameId')
+  async getGameHistoryByGameId(
+    @Param('gameId') gameId: number,
+  ): Promise<{ statusCode; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get game history succesfully',
+      data: await this.gameService.getGameHistoryByGameId(gameId),
     };
   }
 }
