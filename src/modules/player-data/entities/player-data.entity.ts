@@ -11,6 +11,9 @@ export class PlayerData extends BaseEntity {
   @Column({ name: 'question_id' })
   questionId: number;
 
+  @Column({ name: 'question', nullable: true })
+  question: string;
+
   @Column({ name: 'answer_id', nullable: true })
   answerId: number;
 

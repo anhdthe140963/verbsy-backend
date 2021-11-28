@@ -224,7 +224,8 @@ export class GameServerService {
       const playerData = this.playerDataRepository.save({
         playerId: player.id,
         questionId: submitAnswerDto.questionId,
-        answerId: answer ? answer.id : null,
+        question: question.question,
+        answerId: submitAnswerDto.answerId,
         answer: submitAnswerDto.answer ?? null,
         isCorrect: isCorrect,
         answerTime: submitAnswerDto.answerTime,
