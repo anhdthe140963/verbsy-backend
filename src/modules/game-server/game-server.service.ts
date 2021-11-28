@@ -276,9 +276,14 @@ export class GameServerService {
   async getAnsweredPlayers(
     gameId: number,
     questionId: number,
-  ): Promise<QuestionRecord> {
-    return await this.questionRecordRepository.findOne({
-      where: { gameId, questionId },
+  ): Promise<number> {
+    const players = await this.playerRepository.find({ where: { gameId } });
+    const playersIds = [];
+    for (const player of players) {
+      playersIds.push(player.id);
+    }
+    return await this.playerDataRepository.count({
+      where: { questionId: questionId, playerId: In(playersIds) },
     });
   }
 

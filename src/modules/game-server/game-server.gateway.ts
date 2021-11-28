@@ -432,21 +432,26 @@ export class GameServerGateway
         data,
       );
 
-      const questionRecord = await this.gameServerService.getAnsweredPlayers(
+      socc.emit('answer_submitted', submittedAnswer);
+
+      const answeredPlayers = await this.gameServerService.getAnsweredPlayers(
         data.gameId,
         data.questionId,
       );
 
-      socc.emit('answer_submitted', submittedAnswer);
-
-      this.server.to(room).emit('answered_players_changed', {
-        answeredPlayers: questionRecord.answeredPlayers,
-      });
+      const studentsStatistics =
+        await this.gameServerService.getStudentsStatistics(data.gameId);
+      this.server
+        .to(room)
+        .emit(
+          'answered_players_changed',
+          Object.assign({ answeredPlayers }, { studentsStatistics }),
+        );
 
       const roomStudents = (await this.getInGameStudentList(data.gameId))
         .length;
 
-      if (questionRecord.answeredPlayers == roomStudents) {
+      if (answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
