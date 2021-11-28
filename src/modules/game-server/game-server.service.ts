@@ -18,6 +18,7 @@ import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
+import { QuestionTypeConfig } from '../question-type-config/entities/question-type-config.entity';
 import { QuestionTypeConfigRepository } from '../question-type-config/repository/question-type-config.repository';
 import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
@@ -288,35 +289,45 @@ export class GameServerService {
   }
 
   async getAnswerStatistics(gameId: number, questionId: number) {
-    const statistics = await this.playerDataRepository
-      .createQueryBuilder('pd')
-      .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
-      .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
-      .select('a.id', 'id')
-      .addSelect('a.content', 'content')
-      .addSelect('a.is_correct', 'isCorrect')
-      .addSelect('COUNT(pd.answerId)', 'count')
-      .where('pl.game_id = :gameId', { gameId: gameId })
-      .andWhere('pd.question_id = :questionId', { questionId: questionId })
-      .groupBy('pd.answerId')
-      .getRawMany();
-
-    const appearedAnswersIds = [];
-    for (const s of statistics) {
-      console.log(s);
-      appearedAnswersIds.push(s.id);
-    }
-
-    const answers = await this.answerRepository.find({
-      where: { question: { id: questionId }, id: Not(In(appearedAnswersIds)) },
+    const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
+      where: { gameId, questionId },
     });
 
-    for (const s of statistics) {
-      s.isCorrect = new Boolean(s.isCorrect);
-      s.count = parseInt(s.count);
-    }
+    switch (questionTypeConfig.questionType) {
+      case QuestionType.MultipleChoice:
+        const statistics = await this.playerDataRepository
+          .createQueryBuilder('pd')
+          .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+          .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
+          .select('a.id', 'id')
+          .addSelect('a.content', 'content')
+          .addSelect('a.is_correct', 'isCorrect')
+          .addSelect('COUNT(pd.answerId)', 'count')
+          .where('pl.game_id = :gameId', { gameId: gameId })
+          .andWhere('pd.question_id = :questionId', { questionId: questionId })
+          .groupBy('pd.answerId')
+          .getRawMany();
 
-    return answers.concat(statistics);
+        const appearedAnswersIds = [];
+        for (const s of statistics) {
+          console.log(s);
+          appearedAnswersIds.push(s.id);
+        }
+
+        const answers = await this.answerRepository.find({
+          where: {
+            question: { id: questionId },
+            id: Not(In(appearedAnswersIds)),
+          },
+        });
+
+        for (const s of statistics) {
+          s.isCorrect = new Boolean(s.isCorrect);
+          s.count = parseInt(s.count);
+        }
+
+        return answers.concat(statistics);
+    }
   }
 
   async getLeaderboard(gameId: number) {
