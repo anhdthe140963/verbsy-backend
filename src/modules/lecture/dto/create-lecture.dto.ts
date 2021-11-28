@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateLectureDto {
   @IsNotEmpty()
@@ -6,16 +6,8 @@ export class CreateLectureDto {
   name: string;
 
   @IsNotEmpty()
-  @IsNumber()
-  publicity: number;
-
-  @IsNotEmpty()
   @IsString()
   content: string;
-
-  @IsNotEmpty()
-  @IsString()
-  description: string;
 
   @IsNotEmpty()
   @IsNumber()

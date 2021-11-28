@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+in,0,181
+at,0,181
+on,1,181
+to,0,181
+surf,0,182
+to surf,1,182
+surfing,0,182
+to surfing,0,182
+go,0,183
+go on,1,183
+go on the,0,183
+go for,0,183
+it,0,184
+this,0,184
+what,0,184
+that,1,184
+cook,0,185
+to cook,1,185
+cooking,0,185
+to cooking,0,185
+look out,0,186
+look at,0,186
+look after,1,186
+look in,0,186
+mountains,0,187
+city,0,187
+sea,1,187
+countryside,0,187
+wireless,0,188
+remote,1,188
+automatic,0,188
+local,0,188
+By,0,189
+Instead of,1,189
+Instead,0,189
+At,0,189
+will live,1,190
+live,0,190
+am living,0,190
+has lived,0,190
+do,0,191
+clean,1,191
+surf,0,191
+watch,0,191
+then,0,192
+that,0,192
+than,1,192
+this,0,192
+informative,0,193
+talkative,0,193
+confident,0,193
+smart,1,193
+automatic,1,194
+solar,0,194
+cable,0,194
+wireless,0,194
+dishwashers,0,195
+cleaners,0,195
+fridges,1,195
+washing machines,0,195
+watch,0,196
+see,0,196
+look,1,196
+do,0,196
+iron,1,197
+clean,0,197
+dry,0,197
+have,0,197
+villa,0,198
+flat,0,198
+castle,1,198
+home,0,198
+awful,0,199
+comfortable,1,199
+confident,0,199
+shy,0,199
+special,1,200
+automatic,0,200
+informative,0,200
+intelligent,0,200

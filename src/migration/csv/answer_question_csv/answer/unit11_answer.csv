@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+reuse,0,201
+reduce,1,201
+recycle,0,201
+All are correct,0,201
+Plastic bottles,0,202
+Glasses,0,202
+Clothes,0,202
+A and B are correct,1,202
+reuses,0,203
+reduces,0,203
+recycles,0,203
+All are correct,0,203
+plastic bottles,0,204
+can,0,204
+paper bags,1,204
+plastic bags,0,204
+swaps,0,205
+exchanges,0,205
+wraps,0,205
+A and B are correct,1,205
+garden,0,206
+recycling bins,1,206
+organic green bins,0,206
+All are correct,0,206
+reusable,1,207
+refillable,0,207
+recyclable,0,207
+All are correct,0,207
+does,0,208
+causes,1,208
+makes,0,208
+All are correct,0,208
+noise pollution,0,209
+environment,0,209
+deforestation,1,209
+A and B are correct,0,209
+exchanged,0,210
+reduced,0,210
+polluted,1,210
+All are correct,0,210
+cause,0,211
+effect,1,211
+reason,0,211
+solution,0,211
+pollute,0,212
+exchange,0,212
+appear,0,212
+disappear,1,212
+natural,1,213
+polluted,0,213
+working,0,213
+All are correct,0,213
+polluted - will die,1,214
+polluted - dies,0,214
+is polluted - dies,0,214
+is polluted - will die,0,214
+help - will walk,0,215
+help - walk,0,215
+will help - walk,1,215
+will help - will walk,0,215
+die - will have,0,216
+die - won't have,1,216
+will die - won't have,0,216
+won't die - won't have,0,216
+burn - will produce,1,217
+burns - will produce,0,217
+will burn - produce,0,217
+will burn - produces,0,217
+grow - will be,0,218
+grows - will be,1,218
+grow - won't be,0,218
+grows - won't be,0,218
+study - will fail,0,219
+studies - will failed,0,219
+doesn't study - will fails,0,219
+doesn't study - will fail,1,219
+wrap,0,220
+to wrap,1,220
+wrapping,0,220
+will wrap,0,220

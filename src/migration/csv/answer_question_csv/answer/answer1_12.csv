@@ -1,0 +1,961 @@
+content;isCorrect;questionId
+kindergarten;0;1
+activities;1;1
+hobby;0;1
+equipments;0;1
+kindergarten;1;2
+secondary school;0;2
+overseas;0;2
+high school;0;2
+pay;0;3
+knock;0;3
+borrow;1;3
+help;0;3
+lunch;0;4
+gym;0;4
+meals;0;4
+break time;1;4
+poem;0;5
+classmate;1;5
+swimming pool;0;5
+gym;0;5
+warm;0;6
+excited;0;6
+healthy;1;6
+quiet;0;6
+creative;1;7
+hard-working;0;7
+quiet;0;7
+healthy;0;7
+uniform;0;8
+pocket money;0;8
+equipment;1;8
+share;0;8
+creative;0;9
+excited;1;9
+worry;0;9
+interesting;0;9
+riding;0;10
+playing;0;10
+knocking;1;10
+sharing;0;10
+boarding school;1;11
+greenhouse;0;11
+neighbourhood;0;11
+surround;0;11
+share;0;12
+compasses;1;12
+poems;0;12
+pencil sharpener;0;12
+share;0;13
+knock;0;13
+interview;1;13
+creative;0;13
+quiet;0;14
+healthy;0;14
+international;0;14
+overseas;1;14
+uniform;1;15
+kindergarten;0;15
+pocket money;0;15
+compass;0;15
+creative;0;16
+remember;0;16
+quiet;1;16
+healthy;0;16
+remember;0;17
+knock;0;17
+talk;0;17
+ride;1;17
+history;0;18
+shares;0;18
+surround;1;18
+science;0;18
+school lunch;0;19
+poem;1;19
+playground;0;19
+gym;0;19
+greenhouse;1;20
+gym;0;20
+school;0;20
+poem;0;20
+cupboard;0;21
+dishwasher;0;21
+air conditioner;1;21
+lamp;0;21
+share – apartment;1;22
+move – attic;0;22
+share – furniture;0;22
+move – country house;0;22
+wall;0;23
+hall;0;23
+kitchen;0;23
+chest of drawers;1;23
+crazy;1;24
+attic;0;24
+interesting;0;24
+briefly;0;24
+a hall;0;25
+a living room;0;25
+a department store;1;25
+a stilt house;0;25
+dishwasher;1;26
+kitchen;0;26
+wardrobe;0;26
+sink;0;26
+furniture;0;27
+hall;1;27
+messy;0;27
+armchair;0;27
+sofa;0;28
+sink;0;28
+wardrobe;1;28
+vase;0;28
+fridge;1;29
+dishwasher;0;29
+microwave;0;29
+cooker;0;29
+upstairs;0;30
+attic;0;30
+bathroom;1;30
+apartment;0;30
+wall;0;31
+cupboard;1;31
+fridge;0;31
+lamp;0;31
+things;0;32
+picture;0;32
+desk;0;32
+furniture;1;32
+fridge;0;33
+air conditioner;1;33
+television;0;33
+lamp;0;33
+pillow;1;34
+bed;0;34
+ceiling fan;0;34
+stool;0;34
+cupboard;0;35
+microwave;1;35
+dishwasher;0;35
+sink;0;35
+talk;0;36
+move;1;36
+make;0;36
+eat;0;36
+cookers;0;37
+dishwashers;0;37
+dishes;0;37
+chopsticks;1;37
+town;0;38
+country;0;38
+villa;0;38
+big;1;38
+"tủ ly, chén";1;39
+tủ quần áo;0;39
+bồn rửa tay;0;39
+gác mái;0;39
+hành lang;0;40
+lò vi sóng;1;40
+tủ lạnh;0;40
+máy rửa chén;0;40
+nose;0;41
+neck;0;41
+ears;1;41
+hand;0;41
+tail;1;42
+foot;0;42
+leg;0;42
+eyes;0;42
+arms;0;43
+knees;0;43
+shoulders;1;43
+chest;0;43
+tooth;0;44
+nose;1;44
+elbow;0;44
+mouth;0;44
+chubby;1;45
+finger;0;45
+fur;0;45
+fat;0;45
+chubby;0;46
+appearance;1;46
+neck;0;46
+face;0;46
+competitive;0;47
+active;1;47
+generous;0;47
+patient;0;47
+serious;1;48
+confident;0;48
+reliable;0;48
+responsible;0;48
+shy;0;49
+patient;1;49
+volunteer;0;49
+sporty;0;49
+freedom-loving;0;50
+independent;0;50
+curious;1;50
+friendly;0;50
+finger;0;51
+elbow;0;51
+personality;1;51
+leg;0;51
+independent;1;52
+caring;0;52
+shoulders;0;52
+sensitive;0;52
+funny;0;53
+boring;0;53
+kind;1;53
+fur;0;53
+funny;0;54
+reliable;1;54
+sensitive;0;54
+tail;0;54
+taking;0;55
+is taking;0;55
+are taking;1;55
+take;0;55
+make;1;56
+do;0;56
+play;0;56
+ride;0;56
+have;0;57
+has;1;57
+is;0;57
+are;0;57
+help;0;58
+helps;0;58
+is helping;1;58
+helping;0;58
+move;0;59
+pass;1;59
+have;0;59
+turn;0;59
+on – to;0;60
+on – with;1;60
+to - with;0;60
+to – to;0;60
+cathedral;0;61
+countryside;1;61
+memorial;0;61
+city;0;61
+front yard;0;62
+backyard;0;62
+square;1;62
+D backyard;0;62
+cathedral;0;63
+traffic lights;1;63
+temple;0;63
+rules;0;63
+memorial;0;64
+art gallery;1;64
+pagoda;0;64
+temple;0;64
+railway station;1;65
+palace;0;65
+statue;0;65
+city;0;65
+near;1;66
+next;0;66
+from;0;66
+behind;0;66
+talk;0;67
+show;1;67
+speak;0;67
+give;0;67
+for;1;68
+at;0;68
+on;0;68
+D in;0;68
+across;0;69
+between;1;69
+at;0;69
+on;0;69
+near;0;70
+on the left;1;70
+out;0;70
+in front of;0;70
+out;0;71
+near;0;71
+in front;1;71
+behind;0;71
+between - and;0;72
+from - to;0;72
+from - with;0;72
+from - and;0;72
+across;0;73
+along;1;73
+away;0;73
+through;0;73
+historic;0;74
+modern;1;74
+sandy;0;74
+old;0;74
+comfortable;0;75
+crowded;0;75
+convenient;1;75
+easy;0;75
+narrow;0;76
+peaceful;1;76
+noisy;0;76
+quiet;0;76
+modern;0;77
+polluted;1;77
+incredibly;0;77
+clean;0;77
+terrible;1;78
+fantastic;0;78
+exciting;0;78
+enjoyable;0;78
+"No, this movie isn’t interesting at all.";0;79
+"Yes, there is.";1;79
+"Yes, I like this movie.";0;79
+Just follow the map.;0;79
+No. You’re so beautiful.;0;80
+Sure. Go straight on this roaIt’s at the corner of this street.;1;80
+Yeah. That bakery is very famous.;0;80
+"Yes, there is one down the street";0;80
+walking boots;0;81
+scissors;1;81
+travel items;0;81
+plasters;0;81
+backpack;0;82
+map;0;82
+compass;0;82
+painkillers;1;82
+sleeping bag;0;83
+sun cream;0;83
+torch;1;83
+sun hat;0;83
+waterproof coat;0;84
+tent;0;84
+mobile phone;1;84
+compass;0;84
+backpack;0;85
+map;1;85
+sleeping bag;0;85
+sun hat;0;85
+essential;1;86
+new;0;86
+old;0;86
+expensive;0;86
+coat;0;87
+cave;1;87
+beach;0;87
+coast;0;87
+bay;0;88
+island;0;88
+lake;0;88
+desert;1;88
+forest;0;89
+rainforest;0;89
+island;1;89
+freshwater lake;0;89
+mountain range;0;90
+natural wonder;0;90
+mountain;1;90
+nature;0;90
+valley;0;91
+river;1;91
+waterfall;0;91
+cuisine;0;91
+attractions;1;92
+nature;0;92
+cuisine;0;92
+travel items;0;92
+mount;0;93
+landscape;0;93
+boat;0;93
+man-made;1;93
+amazing;0;94
+show;0;94
+litter;1;94
+rock;0;94
+clean;1;95
+cleaning;0;95
+to clean;0;95
+not clean;0;95
+must;0;96
+must not;1;96
+must to;0;96
+must have;0;96
+is;0;97
+be;1;97
+are;0;97
+am;0;97
+must;1;98
+mustn''t;0;98
+ought;0;98
+may;0;98
+must;0;99
+mustn''t;1;99
+mustnot;0;99
+ought to;0;99
+he - take;1;100
+she - takes;0;100
+they - taking;0;100
+they - takes;0;100
+celebration;0;101
+calendar;1;101
+decoration;0;101
+special food;0;101
+celebrate;0;102
+celebration;0;102
+decorate;1;102
+decoration;0;102
+celebrate;1;103
+celebration;0;103
+special food;0;103
+furniture;0;103
+peach blossoms;1;104
+family gatherings;0;104
+first footers;0;104
+lucky money;0;104
+furniture;0;105
+fireworks;0;105
+laughter;1;105
+apricot blossoms;0;105
+should say;1;106
+do should say;0;106
+should to say;0;106
+shoulds say;0;106
+do should not ask;0;107
+don''t should ask;0;107
+shouldn''t ask;1;107
+shouldn''t to ask;0;107
+shouldn''t watches;0;108
+doesn''t should watch;0;108
+shouldn''t to watch;0;108
+shouldn''t watch;1;108
+shoulds help;1;109
+should help;0;109
+does should help;0;109
+should helps;0;109
+shouldn''t light;1;110
+don''t should light;0;110
+should not to light;0;110
+not should light;0;110
+watch;0;111
+decorate;1;111
+hang;0;111
+All are correct;0;111
+first-footer;1;112
+feather;0;112
+rubbish;0;112
+firework;0;112
+apricot;0;113
+peach;1;113
+daisy;0;113
+rose;0;113
+hang;0;114
+hangs;0;114
+will hang;1;114
+hanged;0;114
+out;1;115
+on;0;115
+in;0;115
+over;0;115
+do;0;116
+make;1;116
+have;0;116
+get;0;116
+calendar;0;117
+furniture;0;117
+pagoda;1;117
+shopping;0;117
+must;0;118
+can’t;0;118
+shouldn’t;1;118
+have to;0;118
+won’t wear;1;119
+don’t wear;0;119
+should wear;0;119
+may wear;0;119
+in;0;120
+at;0;120
+on;1;120
+for;0;120
+comedian;0;121
+cartoon characters;1;121
+main character;0;121
+channel;0;121
+game show;0;122
+talent show;1;122
+programme;0;122
+guide;0;122
+comedian;0;123
+game show;0;123
+channel;0;123
+documentary;1;123
+schedule;1;124
+series;0;124
+volume button;0;124
+channel;0;124
+game show;1;125
+documentary;0;125
+cartoon;0;125
+comedy;0;125
+announce;0;126
+broadcast;1;126
+watch;0;126
+entertain;0;126
+cool;0;127
+funny;1;127
+cute;0;127
+boring;0;127
+MC;0;128
+reporters;0;128
+audiences;1;128
+attendees;0;128
+cool;1;129
+stupid;0;129
+clumsy;0;129
+funny;0;129
+viewer;0;130
+performer;1;130
+dolphin;0;130
+player;0;130
+educational;0;131
+live;1;131
+broadcast;0;131
+good;0;131
+compete;0;132
+educate;0;132
+discover;1;132
+study;0;132
+Who;0;133
+What;1;133
+When;0;133
+Why;0;133
+Who;1;134
+What;0;134
+When;0;134
+Why;0;134
+Who;0;135
+What;0;135
+When;0;135
+How;1;135
+When;0;136
+Where;1;136
+Why;0;136
+How;0;136
+When;0;137
+Where;0;137
+Why;1;137
+How;0;137
+When;1;138
+Where;0;138
+Why;0;138
+How;0;138
+When;0;139
+How often;1;139
+How long;0;139
+How much;0;139
+When;0;140
+How often;0;140
+How long;1;140
+How much;0;140
+congratulation;0;141
+athlete;0;141
+career;1;141
+achievement.;0;141
+regarded;1;142
+looked;0;142
+become;0;142
+thought.;0;142
+Thank you;0;143
+Never mind;0;143
+Congratulations;1;143
+You''re welcome;0;143
+exhausted;1;144
+fantastic;0;144
+exciting;0;144
+stressful;0;144
+tired;0;145
+fat;0;145
+fit;1;145
+bored;0;145
+sporty;1;146
+strange;0;146
+crazy;0;146
+helpless;0;146
+Square;0;147
+House;0;147
+Building;0;147
+Stadium;1;147
+bat;0;148
+sport shoes;1;148
+sandals;0;148
+goggles;0;148
+court;0;149
+pool;0;149
+playground;1;149
+roof;0;149
+elected;1;150
+spent;0;150
+brought;0;150
+thought;0;150
+Stand up;1;151
+Standing up;0;151
+Sit down;0;151
+Sitting down;0;151
+being;0;152
+be;1;152
+been;0;152
+All are correct.;0;152
+talk;0;153
+do talk;0;153
+Both A and B are correct.;1;153
+None are correct.;0;153
+raising;0;154
+raised;0;154
+raise;1;154
+put down;0;154
+Turn on;0;155
+Turn off;0;155
+Turn up;0;155
+Turn down;1;155
+Travel;0;156
+Do travel;0;156
+Don''t travel;1;156
+Don''t travelling;0;156
+open;0;157
+opening;0;157
+close;1;157
+closing;0;157
+Smoke;0;158
+Smoked;0;158
+Do smoke;0;158
+Don''t smoke;1;158
+boxing;1;159
+fishing;0;159
+driving;0;159
+hiking;0;159
+tennis;0;160
+skiing;1;160
+football;0;160
+diving;0;160
+continents;1;161
+palaces;0;161
+creatures;0;161
+landmarks;0;161
+ever visit;0;162
+have ever visited;1;162
+ever visited;0;162
+will ever visit;0;162
+postcard;1;163
+tower;0;163
+symbol;0;163
+design;0;163
+170;0;164
+continent;0;164
+creature;1;164
+time;0;164
+Africa;0;165
+America;0;165
+Asia;1;165
+Antarctica;0;165
+palace;1;166
+channel;0;166
+competition;0;166
+hobby;0;166
+happy;0;167
+fantastic;0;167
+terrible;0;167
+popular;1;167
+design;0;168
+designing;1;168
+to design;0;168
+designed;0;168
+symbol;0;169
+journey;1;169
+award;0;169
+tower;0;169
+sports;0;170
+neighbor;0;170
+landmark;1;170
+sky;0;170
+her;1;171
+hers;0;171
+she;0;171
+him;0;171
+Its;0;172
+It;1;172
+It''s.;0;172
+they;0;172
+him;0;173
+his;1;173
+he;0;173
+their;0;173
+Mine/ yours;0;174
+Mine/ your;0;174
+My/ yours;1;174
+Yours/ mine;0;174
+theirs;1;175
+their;0;175
+A and B are correct.;0;175
+they''re;0;175
+ours;1;176
+our;0;176
+us;0;176
+our''s;0;176
+has sent;1;177
+send;0;177
+sent;0;177
+will send;0;177
+travelling;0;178
+travel;0;178
+travelled;0;178
+to travel;1;178
+Wonder;0;179
+Common;0;179
+Country;0;179
+Heritage;1;179
+Have;1;180
+Do;0;180
+Will;0;180
+Are;0;180
+in;0;181
+at;0;181
+on;1;181
+to;0;181
+surf;0;182
+to surf;1;182
+surfing;0;182
+to surfing;0;182
+go;0;183
+go on;1;183
+go on the;0;183
+go for;0;183
+it;0;184
+this;0;184
+what;0;184
+that;1;184
+cook;0;185
+to cook;1;185
+cooking;0;185
+to cooking;0;185
+look out;0;186
+look at;0;186
+look after;1;186
+look in;0;186
+mountains;0;187
+city;0;187
+sea;1;187
+countryside;0;187
+wireless;0;188
+remote;1;188
+automatic;0;188
+local;0;188
+By;0;189
+Instead of;1;189
+Instead;0;189
+At;0;189
+will live;1;190
+live;0;190
+am living;0;190
+has lived;0;190
+do;0;191
+clean;1;191
+surf;0;191
+watch;0;191
+then;0;192
+that;0;192
+than;1;192
+this;0;192
+informative;0;193
+talkative;0;193
+confident;0;193
+smart;1;193
+automatic;1;194
+solar;0;194
+cable;0;194
+wireless;0;194
+dishwashers;0;195
+cleaners;0;195
+fridges;1;195
+washing machines;0;195
+watch;0;196
+see;0;196
+look;1;196
+do;0;196
+iron;1;197
+clean;0;197
+dry;0;197
+have;0;197
+villa;0;198
+flat;0;198
+castle;1;198
+home;0;198
+awful;0;199
+comfortable;1;199
+confident;0;199
+shy;0;199
+special;1;200
+automatic;0;200
+informative;0;200
+intelligent;0;200
+reuse;0;201
+reduce;1;201
+recycle;0;201
+All are correct;0;201
+Plastic bottles;0;202
+Glasses;0;202
+Clothes;0;202
+A and B are correct;1;202
+reuses;0;203
+reduces;0;203
+recycles;0;203
+All are correct;0;203
+plastic bottles;0;204
+can;0;204
+paper bags;1;204
+plastic bags;0;204
+swaps;0;205
+exchanges;0;205
+wraps;0;205
+A and B are correct;1;205
+garden;0;206
+recycling bins;1;206
+organic green bins;0;206
+All are correct;0;206
+reusable;1;207
+refillable;0;207
+recyclable;0;207
+All are correct;0;207
+does;0;208
+causes;1;208
+makes;0;208
+All are correct;0;208
+noise pollution;0;209
+environment;0;209
+deforestation;1;209
+A and B are correct;0;209
+exchanged;0;210
+reduced;0;210
+polluted;1;210
+All are correct;0;210
+cause;0;211
+effect;1;211
+reason;0;211
+solution;0;211
+pollute;0;212
+exchange;0;212
+appear;0;212
+disappear;1;212
+natural;1;213
+polluted;0;213
+working;0;213
+All are correct;0;213
+polluted - will die;1;214
+polluted - dies;0;214
+is polluted - dies;0;214
+is polluted - will die;0;214
+help - will walk;0;215
+help - walk;0;215
+will help - walk;1;215
+will help - will walk;0;215
+die - will have;0;216
+die - won''t have;1;216
+will die - won''t have;0;216
+won''t die - won''t have;0;216
+burn - will produce;1;217
+burns - will produce;0;217
+will burn - produce;0;217
+will burn - produces;0;217
+grow - will be;0;218
+grows - will be;1;218
+grow - won''t be;0;218
+grows - won''t be;0;218
+study - will fail;0;219
+studies - will failed;0;219
+doesn''t study - will fails;0;219
+doesn''t study - will fail;1;219
+wrap;0;220
+to wrap;1;220
+wrapping;0;220
+will wrap;0;220
+fly;0;221
+to fly;1;221
+flying;0;221
+flew;0;221
+laundry;1;222
+habit;0;222
+town;0;222
+planet;0;222
+garden;0;223
+to garden;0;223
+gardening;1;223
+gardens;0;223
+worker;0;224
+gardening;0;224
+doctor;0;224
+teaching;1;224
+play;1;225
+do;0;225
+make;0;225
+give;0;225
+Can;0;226
+Could;1;226
+Did;0;226
+Will;0;226
+movies;1;227
+robots;0;227
+hedges;0;227
+opinions;0;227
+cut;0;228
+lift;1;228
+water;0;228
+play;0;228
+worker;0;229
+dancer;0;229
+doctor;1;229
+minor;0;229
+make;1;230
+do;0;230
+cut;0;230
+have;0;230
+planet;0;231
+laundry;0;231
+opinion;1;231
+type;0;231
+opinion;0;232
+habit;0;232
+dishes;0;232
+station;1;232
+recognize;1;233
+guard;0;233
+play;0;233
+water;0;233
+type;0;234
+role;1;234
+song;0;234
+hegde;0;234
+cut;0;235
+cuts;1;235
+cutting;0;235
+to cut;0;235
+Very;0;236
+Too much;1;236
+A little;0;236
+Some;0;236
+Do;0;237
+Does;0;237
+Make;0;237
+Makes;1;237
+Do;0;238
+Replace;1;238
+Recognize;0;238
+Make;0;238
+Can;1;239
+Could;0;239
+Will;0;239
+Do;0;239
+To recognize;1;240
+Recognizing;0;240
+Recognized;0;240
+Recognizes;0;240

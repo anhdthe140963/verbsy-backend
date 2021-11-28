@@ -50,12 +50,27 @@ export class LectureController {
     const data = await this.lectureService.getLectureList(
       { page: filter.page, limit: filter.limit },
       filter.ownerId,
+      filter.lessonId,
     );
     return {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Get lecture data successfully',
       data: data,
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator, Role.Student)
+  @Get('lectures/:classId')
+  async getLecturesByClassId(
+    @Param('classId') classId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get lectures by class id successfully',
+      data: await this.lectureService.getLectureByClassId(classId),
     };
   }
 

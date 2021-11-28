@@ -10,13 +10,10 @@ export class ClassFilter extends BasePagination {
   name?: string;
 
   @IsOptional()
-  teacherId?: number;
+  @IsString()
+  gradeId?: string;
 
   @IsOptional()
   @IsString()
-  grade?: string;
-
-  @IsOptional()
-  @IsString()
-  schoolyear?: string;
+  schoolYearId?: string;
 }

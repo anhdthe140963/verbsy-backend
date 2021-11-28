@@ -3,10 +3,6 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { StudentInfo } from '../entity/student-info.entity';
 
 export class UpdateStudentInfoDto extends PartialType(StudentInfo) {
-  @IsNotEmpty()
-  @IsOptional()
-  userId: number;
-
   @IsString()
   @IsNotEmpty()
   @IsOptional()

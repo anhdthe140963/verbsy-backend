@@ -19,8 +19,6 @@ export class SchoolYearService {
     try {
       const schoolYear = new SchoolYear();
       schoolYear.name = createSchoolYearDto.name;
-      schoolYear.startDate = createSchoolYearDto.startDate;
-      schoolYear.endDate = createSchoolYearDto.endDate;
       return await schoolYear.save();
     } catch (error) {
       throw new InternalServerErrorException('Error while create school year');

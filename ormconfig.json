@@ -7,7 +7,9 @@
   "synchronize": true,
   "database": "verbsy_backend",
   "charset": "utf8_unicode_ci",
-  "entities": [
-    "dist/**/*.entity{.ts,.js}"
-  ]
+  "entities": ["dist/**/*.entity{.ts,.js}"],
+  "migrations": ["dist/**/migration/*.js"],
+  "cli": {
+    "migrationsDir": "./src/migration"
+  }
 }

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Role } from 'src/constant/role.enum';
+import { GetUser } from 'src/decorator/get-user-decorator';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { CreateGradeDto } from './dto/create-grade.dto';
@@ -37,13 +38,15 @@ export class GradeController {
 
   @Get()
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator)
-  async findAll(): Promise<{ statusCode; error; message; data }> {
+  @Roles(Role.Administrator, Role.Teacher)
+  async findAll(
+    @GetUser() user,
+  ): Promise<{ statusCode; error; message; data }> {
     return {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Get all grade successfully',
-      data: await this.gradeService.findAll(),
+      data: await this.gradeService.getGradesForUser(user),
     };
   }
 

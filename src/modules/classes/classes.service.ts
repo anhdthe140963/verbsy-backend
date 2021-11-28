@@ -69,7 +69,7 @@ export class ClassesService {
 
   async getClassesDetail(classId: number): Promise<Classes> {
     try {
-      const data = await this.classesRepository.findOne({ id: classId });
+      let data = await this.classesRepository.findOne({ id: classId });
       if (!data) {
         throw new NotFoundException('Class does not exist');
       }
@@ -78,17 +78,20 @@ export class ClassesService {
         .where('u.teacher_id IS NOT NULL')
         .andWhere('u.class_id = :classId', { classId: data.id })
         .getMany();
-      const ids = new Set();
-      for (const teacher of teachers) {
-        ids.add(teacher.teacherId);
-      }
-      const teacherFullNames = await this.userRepository
-        .createQueryBuilder('u')
-        .select(['u.id', 'u.fullName'])
-        .where('u.id IN (:...ids)', { ids: [...ids] })
-        .getMany();
+      if (teachers.length != 0) {
+        const ids = new Set();
+        for (const teacher of teachers) {
+          ids.add(teacher.teacherId);
+        }
+        const teacherFullNames = await this.userRepository
+          .createQueryBuilder('u')
+          .select(['u.id', 'u.fullName'])
+          .where('u.id IN (:...ids)', { ids: [...ids] })
+          .getMany();
 
-      return Object.assign(data, { teachers: teacherFullNames });
+        data = Object.assign(data, { teachers: teacherFullNames });
+      }
+      return data;
     } catch (error) {
       throw error;
     }
@@ -106,14 +109,14 @@ export class ClassesService {
       }
       //check grade
       if (updateClassDto.gradeId) {
-        const grade = this.gradeRepo.findOne(updateClassDto.gradeId);
+        const grade = await this.gradeRepo.findOne(updateClassDto.gradeId);
         if (!grade) {
           throw new NotFoundException('Grade not exist');
         }
       }
       //check school year
       if (updateClassDto.schoolYearId) {
-        const schoolYear = this.schoolYearRepo.findOne(
+        const schoolYear = await this.schoolYearRepo.findOne(
           updateClassDto.schoolYearId,
         );
         if (!schoolYear) {
@@ -122,8 +125,31 @@ export class ClassesService {
       }
       const teacherIds = updateClassDto.teacherIds;
       delete updateClassDto.teacherIds;
-      console.log(teacherIds);
-
+      //check if update teacherIds
+      if (teacherIds) {
+        await this.userClassRepo
+          .createQueryBuilder()
+          .where('teacher_id IS NOT NULL')
+          .andWhere('class_id = :classId', { classId: data.id })
+          .delete()
+          .execute();
+        //check teacherids
+        if (teacherIds.length != 0) {
+          //check if teacher exist
+          for (const id of teacherIds) {
+            const user = await this.userRepository.findOne(id);
+            if (!user) {
+              throw new NotFoundException('Teacher not exist');
+            }
+          }
+          for (const id of teacherIds) {
+            const userClass = new UserClass();
+            userClass.teacherId = id;
+            userClass.classId = data.id;
+            await userClass.save();
+          }
+        }
+      }
       return await this.classesRepository.update(classId, updateClassDto);
     } catch (error) {
       throw error;
@@ -134,17 +160,45 @@ export class ClassesService {
     const duplicatedClasses: addClassDto[] = [];
     const addedClasses: addClassDto[] = [];
     for (const cl of classes) {
-      const duplicatedClass = await this.classesRepository.findOne({
-        where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
-      });
-
+      // const duplicatedClass = await this.classesRepository.findOne({
+      //   where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
+      // });
+      const duplicatedClass = await this.classesRepository
+        .createQueryBuilder('c')
+        .innerJoin(Grade, 'g', 'c.grade_id = g.id')
+        .innerJoin(SchoolYear, 's', 'c.school_year_id = s.id')
+        .where('g.name = :gName', { gName: cl.grade })
+        .andWhere('s.name = :sName', { sName: cl.schoolYear })
+        .andWhere('c.name = :name', { name: cl.name })
+        .getOne();
       if (duplicatedClass) {
         duplicatedClasses.push(cl);
       } else {
         try {
-          await this.classesRepository.insert(cl);
+          let grade = await this.gradeRepo.findOne({ name: cl.grade });
+          if (!grade) {
+            await this.gradeRepo.insert({ name: cl.grade });
+            grade = await this.gradeRepo.findOne({ name: cl.grade });
+          }
+          let schoolYear = await this.schoolYearRepo.findOne({
+            name: cl.schoolYear,
+          });
+          if (!schoolYear) {
+            await this.schoolYearRepo.insert({ name: cl.schoolYear });
+            schoolYear = await this.schoolYearRepo.findOne({
+              name: cl.schoolYear,
+            });
+          }
+          // await this.classesRepository.insert(cl);
+          await this.classesRepository.insert({
+            name: cl.name,
+            gradeId: grade.id,
+            schoolYearId: schoolYear.id,
+          });
           addedClasses.push(cl);
         } catch (error) {
+          console.log(error);
+
           throw new InternalServerErrorException('Error during insertion');
         }
       }
@@ -172,10 +226,29 @@ export class ClassesService {
     }
   }
 
-  async getClassList(options: IPaginationOptions, filter: ClassFilter) {
-    const rawPagination = await paginate(this.classesRepository, options, {
-      where: filter,
-    });
+  async getClassList(
+    options: IPaginationOptions,
+    filter: ClassFilter,
+    user: User,
+  ) {
+    let rawPagination;
+    if (user.role == Role.Administrator) {
+      rawPagination = await paginate(this.classesRepository, options, {
+        where: filter,
+      });
+    } else {
+      const userClasses = await this.userClassRepo.find({
+        teacherId: user.id,
+      });
+      const classIds = [];
+      for (const uc of userClasses) {
+        classIds.push(uc.classId);
+      }
+      const query = await this.classesRepository
+        .createQueryBuilder()
+        .where('id IN (:...ids)', { ids: classIds });
+      rawPagination = await paginate(query, options);
+    }
     await Promise.all(
       rawPagination.items.map(async (cl: Classes) => {
         const teachers = await this.userClassRepo
@@ -183,21 +256,64 @@ export class ClassesService {
           .where('u.teacher_id IS NOT NULL')
           .andWhere('u.class_id = :classId', { classId: cl.id })
           .getMany();
-        const ids = new Set();
-        for (const teacher of teachers) {
-          ids.add(teacher.teacherId);
+        if (teachers.length !== 0) {
+          const ids = new Set();
+          for (const teacher of teachers) {
+            ids.add(teacher.teacherId);
+          }
+          const teacherFullNames = await this.userRepository
+            .createQueryBuilder('u')
+            .select(['u.id', 'u.fullName'])
+            .where('u.id IN (:...ids)', { ids: [...ids] })
+            .getMany();
+          cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
         }
-        const teacherFullNames = await this.userRepository
-          .createQueryBuilder('u')
-          .select(['u.id', 'u.fullName'])
-          .where('u.id IN (:...ids)', { ids: [...ids] })
-          .getMany();
-        cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
       }),
     );
     return rawPagination;
   }
 
+  async getClassListByTeacherId(teacherId: number) {
+    try {
+      const userclasses = await this.userClassRepo.find({
+        teacherId: teacherId,
+      });
+      const classIds = new Set();
+      //get class ids of teacher
+      for (const uc of userclasses) {
+        classIds.add(uc.classId);
+      }
+      const classes = await this.classesRepository
+        .createQueryBuilder('c')
+        .where('c.id IN (:...ids)', { ids: [...classIds] })
+        .getMany();
+
+      await Promise.all(
+        classes.map(async (cl: Classes) => {
+          const teachers = await this.userClassRepo
+            .createQueryBuilder('u')
+            .where('u.teacher_id IS NOT NULL')
+            .andWhere('u.class_id = :classId', { classId: cl.id })
+            .getMany();
+          if (teachers.length !== 0) {
+            const ids = new Set();
+            for (const teacher of teachers) {
+              ids.add(teacher.teacherId);
+            }
+            const teacherFullNames = await this.userRepository
+              .createQueryBuilder('u')
+              .select(['u.id', 'u.fullName'])
+              .where('u.id IN (:...ids)', { ids: [...ids] })
+              .getMany();
+            cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
+          }
+        }),
+      );
+      return classes;
+    } catch (error) {
+      throw error;
+    }
+  }
   async getStudentByClassId(
     options: IPaginationOptions,
     classId: number,

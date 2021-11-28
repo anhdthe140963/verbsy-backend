@@ -7,14 +7,4 @@ export class UpdateSchoolYearDto extends PartialType(SchoolYear) {
   @IsNotEmpty()
   @IsOptional()
   name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  startDate: Date;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  endDate: Date;
 }

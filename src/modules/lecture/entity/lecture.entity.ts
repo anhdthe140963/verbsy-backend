@@ -17,9 +17,6 @@ export class Lecture extends BaseEntity {
   @Column({ name: 'owner_id' })
   ownerId: number;
 
-  @Column()
-  publicity: number;
-
   @Column({ type: 'text' })
   content: string;
 

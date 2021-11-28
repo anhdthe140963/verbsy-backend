@@ -1,0 +1,81 @@
+content,isCorrect,questionId
+walking boots,0,81
+scissors,1,81
+travel items,0,81
+plasters,0,81
+backpack,0,82
+map,0,82
+compass,0,82
+painkillers,1,82
+sleeping bag,0,83
+sun cream,0,83
+torch,1,83
+sun hat,0,83
+waterproof coat,0,84
+tent,0,84
+mobile phone,1,84
+compass,0,84
+backpack,0,85
+map,1,85
+sleeping bag,0,85
+sun hat,0,85
+essential,1,86
+new,0,86
+old,0,86
+expensive,0,86
+coat,0,87
+cave,1,87
+beach,0,87
+coast,0,87
+bay,0,88
+island,0,88
+lake,0,88
+desert,1,88
+forest,0,89
+rainforest,0,89
+island,1,89
+freshwater lake,0,89
+mountain range,0,90
+natural wonder,0,90
+mountain,1,90
+nature,0,90
+valley,0,91
+river,1,91
+waterfall,0,91
+cuisine,0,91
+attractions,1,92
+nature,0,92
+cuisine,0,92
+travel items,0,92
+mount,0,93
+landscape,0,93
+boat,0,93
+man-made,1,93
+amazing,0,94
+show,0,94
+litter,1,94
+rock,0,94
+clean,1,95
+cleaning,0,95
+to clean,0,95
+not clean,0,95
+must,0,96
+mustn't,1,96
+must to,0,96
+must have,0,96
+is,0,97
+be,1,97
+are,0,97
+am,0,97
+must,1,98
+mustn't,0,98
+ought,0,98
+may,0,98
+must,0,99
+mustn't,1,99
+mustnot,0,99
+ought to,0,99
+he - take,1,100
+she - takes,0,100
+they - taking,0,100
+they - takes,0,100

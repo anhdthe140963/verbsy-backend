@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import excelClassesFormat from 'excel-format/classes.format.json';
 import { PaginationEnum } from 'src/constant/pagination.enum';
 import { Role } from 'src/constant/role.enum';
+import { GetUser } from 'src/decorator/get-user-decorator';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
 import fileExcelFilter from '../../filter/file.excel.filter';
@@ -102,6 +103,8 @@ export class ClassesController {
       throw new BadRequestException('Invalid Excel File Format');
     }
 
+    console.log(classes);
+
     return {
       statusCode: HttpStatus.OK,
       error: null,
@@ -114,7 +117,9 @@ export class ClassesController {
   @Roles(Role.Teacher, Role.Administrator)
   @Get('list')
   async getClassList(
-    @Query() filter: ClassFilter,
+    @GetUser() user,
+    @Query()
+    filter: ClassFilter,
   ): Promise<{ statusCode; error; message; data }> {
     const classFilter: ClassFilter = {};
     for (const prop in filter) {
@@ -133,7 +138,21 @@ export class ClassesController {
           limit: filter.limit ? filter.limit : PaginationEnum.DefaultLimit,
         },
         classFilter,
+        user,
       ),
+    };
+  }
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('list/:teacherId')
+  async getClassListByTeacherId(
+    @Param('teacherId') teacherId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getClassListByTeacherId(teacherId),
     };
   }
   @UseGuards(AuthGuard(), RolesGuard)

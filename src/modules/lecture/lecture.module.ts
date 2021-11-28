@@ -5,11 +5,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LectureRepository } from './repository/lecture.repository';
 import { PassportModule } from '@nestjs/passport';
 import { UserRepository } from '../user/repository/user.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
+import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([LectureRepository, UserRepository]),
+    TypeOrmModule.forFeature([
+      LectureRepository,
+      UserRepository,
+      LessonRepository,
+      CurriculumRepository,
+      LessonLectureRepository,
+    ]),
   ],
   controllers: [LectureController],
   providers: [LectureService],
