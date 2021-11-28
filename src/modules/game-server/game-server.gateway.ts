@@ -392,7 +392,9 @@ export class GameServerGateway
         await this.getInGameStudentList(data.gameId),
       );
       await this.gameServerService.prepareQuestionType(data.gameId);
-      return this.server.to(room).emit('game_started', 'Game Started');
+
+      const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
+      return this.server.to(room).emit('game_started', gameInfo);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);
