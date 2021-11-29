@@ -558,9 +558,9 @@ export class GameServerService {
       where: { lectureId: game.lectureId },
     });
 
-    const questionTypesOriginal = game.questionsConfig
-      ? game.questionsConfig.questionTypes
-      : [QuestionType.MultipleChoice];
+    const questionTypesOriginal = game.questionsConfig.questionTypes ?? [
+      QuestionType.MultipleChoice,
+    ];
     console.log('original pool: ', questionTypesOriginal);
 
     //Set question type
@@ -568,7 +568,7 @@ export class GameServerService {
       const questionTypesPool = questionTypesOriginal.slice();
 
       //Check if eligible for scramble
-      const answers = question.answers;
+      // const answers = question.answers;
 
       // if (questionTypesPool.includes(QuestionType.Scramble)) {
       //   for (const answer of answers) {
