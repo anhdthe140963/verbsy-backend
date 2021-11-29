@@ -68,9 +68,11 @@ export class GameService {
 
   async getGamesByLectureId(lectureId: number): Promise<Game[]> {
     try {
-      const games = await this.gameRepository.find({
-        lectureId: lectureId,
-      });
+      const games = await this.gameRepository
+        .createQueryBuilder()
+        .where('lecture_id = :id', { id: lectureId })
+        .orderBy('created_at', 'DESC')
+        .getMany();
       return games;
     } catch (error) {
       throw error;
