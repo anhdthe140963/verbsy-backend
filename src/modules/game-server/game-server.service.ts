@@ -364,7 +364,7 @@ export class GameServerService {
         return answers.concat(statistics);
         break;
 
-      case QuestionType.Scramble:
+      case QuestionType.Scramble || QuestionType.Writting:
         const players = await this.playerRepository.find({ where: { gameId } });
         const playersIds = [];
         for (const player of players) {
