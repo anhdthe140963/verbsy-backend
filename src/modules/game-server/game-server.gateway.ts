@@ -173,7 +173,8 @@ export class GameServerGateway
 
   @SubscribeMessage('host_game')
   async hostGame(
-    @MessageBody() data: { lectureId: number; classId: number },
+    @MessageBody()
+    data: { lectureId: number; classId: number; questionTypes: QuestionType[] },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -182,6 +183,7 @@ export class GameServerGateway
         data.lectureId,
         data.classId,
         user.id,
+        data.questionTypes,
       );
       const room = this.getRoom(game.id);
 

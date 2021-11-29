@@ -384,12 +384,14 @@ export class GameServerService {
     lectureId: number,
     classId: number,
     hostId: number,
+    questionTypes: QuestionType[],
   ): Promise<Game> {
     const game = await this.gameRepository.save({
       lectureId: lectureId,
       classId: classId,
       hostId: hostId,
       isGameLive: true,
+      questionsConfig: { shuffle: false, questionTypes },
     });
     // const lecture = await this.lectureRepository.findOne(lectureId);
     // if (lecture) {
