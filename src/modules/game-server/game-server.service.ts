@@ -55,6 +55,12 @@ export class GameServerService {
     });
   }
 
+  async isHost(userId: number, gameId: number) {
+    const game = await this.gameRepository.findOne(gameId);
+
+    return userId == game.hostId;
+  }
+
   async getQuestion(questionId: number) {
     const question = await this.questionRepository.findOne(questionId);
     question.answers.forEach((q) => {

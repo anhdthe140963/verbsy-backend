@@ -524,7 +524,8 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      if (!socc.data.isHost) {
+      const user: User = socc.data.user;
+      if (!(await this.gameServerService.isHost(user.id, data.gameId))) {
         throw new WsException('Only Host can end game');
       }
       const room = this.getRoom(data.gameId);
