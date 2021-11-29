@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from 'src/decorator/get-user-decorator';
 import { PaginationEnum } from '../../constant/pagination.enum';
 import { Role } from '../../constant/role.enum';
 import { Roles } from '../../decorator/roles.decorator';
@@ -27,10 +28,14 @@ export class LectureController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Post()
-  async createQuestion(
+  async createLecture(
+    @GetUser() user,
     @Body() createLectureDto: CreateLectureDto,
   ): Promise<{ statusCode; error; message; data }> {
-    const data = await this.lectureService.createLecture(createLectureDto);
+    const data = await this.lectureService.createLecture(
+      createLectureDto,
+      user,
+    );
     return {
       statusCode: HttpStatus.CREATED,
       error: null,
