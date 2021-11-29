@@ -479,11 +479,7 @@ export class GameServerService {
   }
 
   //Should be optimized by using a single query instead
-  async getNextQuestion(
-    gameId: number,
-    isRandom = false,
-    questionType: QuestionType = QuestionType.MultipleChoice,
-  ): Promise<NextQuestion> {
+  async getNextQuestion(gameId: number): Promise<NextQuestion> {
     //Answered questions are questions that has been recorded in the current game
     const answeredQuestions = await this.questionRecordRepository.find({
       select: ['questionId'],
@@ -502,21 +498,25 @@ export class GameServerService {
     });
 
     //Next question is a random question in remain questions (if specfified)
-    const index = isRandom
-      ? Math.floor(Math.random() * remainQuestions.length)
-      : 0;
+    // const index = isRandom
+    //   ? Math.floor(Math.random() * remainQuestions.length)
+    //   : 0;
 
-    const nextQuestion = remainQuestions[index];
+    const nextQuestion = remainQuestions[0];
+
+    const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
+      where: { gameId, questionId: nextQuestion.id },
+    });
 
     //Prepare data for frontend
     const next = new NextQuestion();
-    next.questionType = questionType;
+    next.questionType = questionTypeConfig.questionType;
     next.remainQuestions = remainQuestions.length - 1;
     next.totalQuestions = await this.questionRepository.count({
       where: { lectureId: lectureId },
     });
 
-    switch (questionType) {
+    switch (next.questionType) {
       case QuestionType.Scramble:
         delete nextQuestion.answers;
         next.nextQuestion = Object.assign(nextQuestion, {
@@ -570,23 +570,23 @@ export class GameServerService {
       //Check if eligible for scramble
       const answers = question.answers;
 
-      if (questionTypesPool.includes(QuestionType.Scramble)) {
-        for (const answer of answers) {
-          if (answer.isCorrect) {
-            if (
-              answer.content.trim().includes(' ') ||
-              answer.content.length <= 1
-            ) {
-              //Remove Scramble if ineligible
-              const index = questionTypesPool.indexOf(QuestionType.Scramble);
-              if (index != -1) {
-                questionTypesPool.splice(index, 1);
-                continue;
-              }
-            }
-          }
-        }
-      }
+      // if (questionTypesPool.includes(QuestionType.Scramble)) {
+      //   for (const answer of answers) {
+      //     if (answer.isCorrect) {
+      //       if (
+      //         answer.content.trim().includes(' ') ||
+      //         answer.content.length <= 1
+      //       ) {
+      //         //Remove Scramble if ineligible
+      //         const index = questionTypesPool.indexOf(QuestionType.Scramble);
+      //         if (index != -1) {
+      //           questionTypesPool.splice(index, 1);
+      //           continue;
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
 
       const questionTypeIndex: number = Math.floor(
         Math.random() * questionTypesPool.length,

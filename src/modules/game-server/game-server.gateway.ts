@@ -435,8 +435,6 @@ export class GameServerGateway
 
       const nextQuestion = await this.gameServerService.getNextQuestion(
         data.gameId,
-        false,
-        data.questionType,
       );
 
       return this.server.to(room).emit('receive_next_question', nextQuestion);
