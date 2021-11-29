@@ -463,9 +463,12 @@ export class GameServerGateway
         data.questionId,
       );
 
-      this.server
-        .to(room)
-        .emit('answered_players_changed', { answeredPlayers });
+      const students = await this.getInGameStudentList(data.gameId);
+
+      this.server.to(room).emit('answered_players_changed', {
+        answeredPlayers,
+        totalPlayers: students.length,
+      });
 
       const studentsStatistics =
         await this.gameServerService.getStudentsStatistics(data.gameId);
