@@ -237,7 +237,7 @@ export class GameServerService {
         questionId: submitAnswerDto.questionId,
         question: question.question,
         answerId: submitAnswerDto.answerId,
-        answer: submitAnswerDto.answer ?? null,
+        answer: submitAnswerDto.answer ?? answer.content,
         isCorrect: isCorrect,
         answerTime: submitAnswerDto.answerTime,
         score: score,
