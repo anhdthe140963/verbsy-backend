@@ -144,6 +144,7 @@ export class LectureService {
       if (!data) {
         throw new BadRequestException('Lecture does not exist');
       }
+      await this.lessonLectureRepo.delete({ lectureId: lectureId });
       await this.lectureRepository.delete({ id: lectureId });
     } catch (error) {
       throw error;
