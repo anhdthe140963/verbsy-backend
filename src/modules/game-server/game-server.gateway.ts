@@ -162,8 +162,9 @@ export class GameServerGateway
   async getOngoingGames(@ConnectedSocket() socc: Socket): Promise<boolean> {
     try {
       const user: User = socc.data.user;
-      const ongoingGames =
-        await this.gameServerService.getOngoingGamesLecturesIds(user.id);
+      const ongoingGames = await this.gameServerService.getOngoingGames(
+        user.id,
+      );
       return socc.emit('receive_ongoing_games', { lectureIds: ongoingGames });
     } catch (error) {
       console.log(error);

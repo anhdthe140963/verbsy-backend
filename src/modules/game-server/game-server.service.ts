@@ -74,7 +74,7 @@ export class GameServerService {
     return userClass ? true : false;
   }
 
-  async getOngoingGamesLecturesIds(hostId: number) {
+  async getOngoingGames(hostId: number) {
     const ongoingGames = await this.gameRepository.find({
       where: { hostId, isGameLive: true },
     });
@@ -82,7 +82,10 @@ export class GameServerService {
     const lecturesWithOngoingGamesIds = [];
     for (const ongoingGame of ongoingGames) {
       if (lecturesWithOngoingGamesIds.indexOf(ongoingGame.lectureId) <= -1) {
-        lecturesWithOngoingGamesIds.push(ongoingGame.lectureId);
+        lecturesWithOngoingGamesIds.push({
+          gameId: ongoingGame.id,
+          lectureId: ongoingGame.lectureId,
+        });
       }
     }
     return lecturesWithOngoingGamesIds;
@@ -353,6 +356,35 @@ export class GameServerService {
         }
 
         return answers.concat(statistics);
+        break;
+
+      case QuestionType.Scramble:
+        const players = await this.playerRepository.find({ where: { gameId } });
+        const playersIds = [];
+        for (const player of players) {
+          playersIds.push(player.id);
+        }
+        const correctPlayersCount = await this.playerDataRepository.count({
+          where: {
+            playerId: In(playersIds),
+            questionId: questionId,
+            isCorrect: true,
+          },
+        });
+        const correctAnswers = await this.answerRepository.find({
+          where: { question: { id: questionId }, isCorrect: true },
+        });
+
+        const correctAnswersContents: string[] = [];
+        for (const correctAnswer of correctAnswers) {
+          correctAnswersContents.push(correctAnswer.content);
+        }
+
+        return {
+          correctAnswersContents,
+          correctPlayersCount,
+          incorrectPlayersCount: players.length - correctPlayersCount,
+        };
     }
   }
 
