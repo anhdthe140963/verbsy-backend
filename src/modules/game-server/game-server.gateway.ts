@@ -240,6 +240,15 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
+      const canJoinGame = await this.gameServerService.canJoinGame(
+        user.id,
+        data.gameId,
+      );
+
+      if (!canJoinGame) {
+        throw new WsException('User is not in the designated class');
+      }
+
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
 
       for (const bl of blacklist) {

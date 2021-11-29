@@ -63,6 +63,17 @@ export class GameServerService {
     return question;
   }
 
+  async canJoinGame(studentId: number, gameId: number) {
+    const game = await this.gameRepository.findOne(gameId);
+    const classId = game.classId;
+
+    const userClass = await this.userClassRepository.findOne({
+      where: { studentId, classId },
+    });
+
+    return userClass ? true : false;
+  }
+
   async getOngoingGamesLecturesIds(hostId: number) {
     const ongoingGames = await this.gameRepository.find({
       where: { hostId, isGameLive: true },
@@ -224,7 +235,8 @@ export class GameServerService {
       const playerData = this.playerDataRepository.save({
         playerId: player.id,
         questionId: submitAnswerDto.questionId,
-        answerId: answer ? answer.id : null,
+        question: question.question,
+        answerId: submitAnswerDto.answerId,
         answer: submitAnswerDto.answer ?? null,
         isCorrect: isCorrect,
         answerTime: submitAnswerDto.answerTime,
