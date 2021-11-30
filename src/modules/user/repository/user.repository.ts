@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/constant/role.enum';
 import { LogInDto } from 'src/modules/auth/dto/log-in.dto';
 import { SignUpDto } from 'src/modules/auth/dto/sign-up.dto';
 import { EntityRepository, Repository } from 'typeorm';
@@ -21,6 +22,7 @@ export class UserRepository extends Repository<User> {
     user.fullName = fullname;
     user.salt = await bcrypt.genSalt();
     user.password = await this.hashPassword(password, user.salt);
+    user.role = Role.Administrator;
     await user.save();
     return user;
   }
