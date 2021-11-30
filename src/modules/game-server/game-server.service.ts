@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
 import { In, Like, Not, Unique } from 'typeorm';
@@ -215,21 +215,19 @@ export class GameServerService {
       //Get Answer
       let answer: Answer;
       switch (submitAnswerDto.questionType) {
-        case QuestionType.Scramble:
-          answer = await this.answerRepository.findOne({
-            where: { content: Like(submitAnswerDto.answer) },
-          });
+        case QuestionType.MultipleChoice:
+          answer = await this.answerRepository.findOne(
+            submitAnswerDto.answerId,
+          );
           break;
+        case QuestionType.Scramble:
         case QuestionType.Writting:
           answer = await this.answerRepository.findOne({
             where: { content: Like(submitAnswerDto.answer) },
           });
           break;
         default:
-          //Multiple Choice
-          answer = await this.answerRepository.findOne(
-            submitAnswerDto.answerId,
-          );
+          throw new BadRequestException('Invalid questionType');
       }
 
       //Check Answer
@@ -333,72 +331,69 @@ export class GameServerService {
       where: { gameId, questionId },
     });
 
-    if (
-      questionTypeConfig.questionType == QuestionType.Scramble ||
-      questionTypeConfig.questionType == QuestionType.Writting
-    ) {
-      const players = await this.playerRepository.find({ where: { gameId } });
-      const playersIds = [];
-      for (const player of players) {
-        playersIds.push(player.id);
-      }
-      const correctAnswers = await this.answerRepository.find({
-        where: { question: { id: questionId }, isCorrect: true },
-      });
+    switch (questionTypeConfig.questionType) {
+      case QuestionType.MultipleChoice:
+        const statistics = await this.playerDataRepository
+          .createQueryBuilder('pd')
+          .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+          .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
+          .select('a.id', 'id')
+          .addSelect('a.content', 'content')
+          .addSelect('a.is_correct', 'isCorrect')
+          .addSelect('COUNT(pd.answerId)', 'count')
+          .where('pl.game_id = :gameId', { gameId: gameId })
+          .andWhere('pd.question_id = :questionId', { questionId: questionId })
+          .groupBy('pd.answerId')
+          .getRawMany();
 
-      const correctAnswersContents: string[] = [];
-      for (const correctAnswer of correctAnswers) {
-        correctAnswersContents.push(correctAnswer.content);
-      }
+        const appearedAnswersIds = [];
+        for (const s of statistics) {
+          console.log(s);
+          appearedAnswersIds.push(s.id);
+        }
 
-      const correctPlayersCount = await this.playerDataRepository.count({
-        where: {
-          playerId: In(playersIds),
-          questionId: questionId,
-          isCorrect: true,
-        },
-      });
+        const answers = await this.answerRepository.find({
+          where: {
+            question: { id: questionId },
+            id: Not(In(appearedAnswersIds)),
+          },
+        });
 
-      return {
-        correctAnswersContents,
-        correctPlayersCount,
-        incorrectPlayersCount: players.length - correctPlayersCount,
-      };
-    } else if (questionTypeConfig.questionType == QuestionType.MultipleChoice) {
-      const statistics = await this.playerDataRepository
-        .createQueryBuilder('pd')
-        .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
-        .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
-        .select('a.id', 'id')
-        .addSelect('a.content', 'content')
-        .addSelect('a.is_correct', 'isCorrect')
-        .addSelect('COUNT(pd.answerId)', 'count')
-        .where('pl.game_id = :gameId', { gameId: gameId })
-        .andWhere('pd.question_id = :questionId', {
-          questionId: questionId,
-        })
-        .groupBy('pd.answerId')
-        .getRawMany();
+        for (const s of statistics) {
+          s.isCorrect = new Boolean(s.isCorrect);
+          s.count = parseInt(s.count);
+        }
 
-      const appearedAnswersIds = [];
-      for (const s of statistics) {
-        console.log(s);
-        appearedAnswersIds.push(s.id);
-      }
+        return answers.concat(statistics);
 
-      const answers = await this.answerRepository.find({
-        where: {
-          question: { id: questionId },
-          id: Not(In(appearedAnswersIds)),
-        },
-      });
+      case QuestionType.Scramble:
+      case QuestionType.Writting:
+        const players = await this.playerRepository.find({ where: { gameId } });
+        const playersIds = [];
+        for (const player of players) {
+          playersIds.push(player.id);
+        }
+        const correctPlayersCount = await this.playerDataRepository.count({
+          where: {
+            playerId: In(playersIds),
+            questionId: questionId,
+            isCorrect: true,
+          },
+        });
+        const correctAnswers = await this.answerRepository.find({
+          where: { question: { id: questionId }, isCorrect: true },
+        });
 
-      for (const s of statistics) {
-        s.isCorrect = new Boolean(s.isCorrect);
-        s.count = parseInt(s.count);
-      }
+        const correctAnswersContents: string[] = [];
+        for (const correctAnswer of correctAnswers) {
+          correctAnswersContents.push(correctAnswer.content);
+        }
 
-      return answers.concat(statistics);
+        return {
+          correctAnswersContents,
+          correctPlayersCount,
+          incorrectPlayersCount: players.length - correctPlayersCount,
+        };
     }
   }
 
