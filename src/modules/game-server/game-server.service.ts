@@ -348,7 +348,6 @@ export class GameServerService {
 
         const appearedAnswersIds = [];
         for (const s of statistics) {
-          console.log(s);
           appearedAnswersIds.push(s.id);
         }
 
@@ -602,7 +601,6 @@ export class GameServerService {
     const questionTypesOriginal = game.questionsConfig.questionTypes ?? [
       QuestionType.MultipleChoice,
     ];
-    console.log('original pool: ', questionTypesOriginal);
 
     //Set question type
     for (const question of questions) {

@@ -12,6 +12,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
+import { ScreenState } from 'src/constant/screen-state.enum';
 import { User } from '../user/entity/user.entity';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
@@ -79,6 +80,22 @@ export class GameServerGateway
 
         if (socket.data.isHost) {
           this.server.to(room).emit('host_disconnected');
+          const players = await this.server
+            .to(room)
+            .except(socket.id)
+            .fetchSockets();
+
+          for (const p of players) {
+            console.log('player: ', p.data.user);
+          }
+
+          const randomPlayerIndex = Math.floor(Math.random() * players.length);
+          console.log('index: ', randomPlayerIndex);
+
+          const chosenPlayer = players[randomPlayerIndex];
+          console.log('chosen: ', players[randomPlayerIndex].data);
+
+          chosenPlayer.emit('request_game_state');
         }
         //Leave room and emit to room
         socket.leave(room);
@@ -97,9 +114,27 @@ export class GameServerGateway
       console.log(socket.rooms);
       console.log(socket.data.user.username + ' has disconnected');
     } catch (error) {
+      console.log(error);
       socket.emit('error', error);
     }
   }
+
+  // @SubscribeMessage('disconnecting')
+  // async handleDisconnecting(
+  //   @ConnectedSocket()
+  //   socc: Socket,
+  // ) {
+  //   try {
+  //     if (socc.data.room) {
+  //       const user: User = socc.data.user;
+  //       const room = socc.data.room;
+  //       return this.server.to(room).emit('game_paused');
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     return socc.emit('error', error);
+  //   }
+  // }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     try {
@@ -285,10 +320,15 @@ export class GameServerGateway
     }
   }
 
-  @SubscribeMessage('save_game_state')
+  @SubscribeMessage('send_game_state')
   async saveGameState(
     @MessageBody()
-    data: { gameId: number; currentQuestionId: number; timeLeft: number },
+    data: {
+      gameId: number;
+      currentQuestionId: number;
+      screenState: ScreenState;
+      timeLeft: number;
+    },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
