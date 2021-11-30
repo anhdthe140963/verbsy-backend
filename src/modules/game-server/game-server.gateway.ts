@@ -608,4 +608,19 @@ export class GameServerGateway
       return socc.emit('error', error);
     }
   }
+
+  @SubscribeMessage('pause_game')
+  async pauseGame(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      return this.server.to(room).emit('game_paused');
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
 }
