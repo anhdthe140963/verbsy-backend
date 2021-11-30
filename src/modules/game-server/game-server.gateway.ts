@@ -158,9 +158,24 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_ongoing_games')
+  async getOngoingGames(@ConnectedSocket() socc: Socket): Promise<boolean> {
+    try {
+      const user: User = socc.data.user;
+      const ongoingGames = await this.gameServerService.getOngoingGames(
+        user.id,
+      );
+      return socc.emit('receive_ongoing_games', { lectureIds: ongoingGames });
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('host_game')
   async hostGame(
-    @MessageBody() data: { lectureId: number; classId: number },
+    @MessageBody()
+    data: { lectureId: number; classId: number; questionTypes: QuestionType[] },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -169,6 +184,7 @@ export class GameServerGateway
         data.lectureId,
         data.classId,
         user.id,
+        data.questionTypes,
       );
       const room = this.getRoom(game.id);
 
@@ -227,6 +243,15 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
+      const canJoinGame = await this.gameServerService.canJoinGame(
+        user.id,
+        data.gameId,
+      );
+
+      if (!canJoinGame) {
+        throw new WsException('User is not in the designated class');
+      }
+
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
 
       for (const bl of blacklist) {
@@ -391,8 +416,12 @@ export class GameServerGateway
         data.gameId,
         await this.getInGameStudentList(data.gameId),
       );
-      return this.server.to(room).emit('game_started', 'Game Started');
+      await this.gameServerService.prepareQuestionType(data.gameId);
+
+      const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
+      return this.server.to(room).emit('game_started', gameInfo);
     } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }
@@ -407,8 +436,6 @@ export class GameServerGateway
 
       const nextQuestion = await this.gameServerService.getNextQuestion(
         data.gameId,
-        false,
-        data.questionType,
       );
 
       return this.server.to(room).emit('receive_next_question', nextQuestion);
@@ -430,21 +457,31 @@ export class GameServerGateway
         data,
       );
 
-      const questionRecord = await this.gameServerService.getAnsweredPlayers(
+      socc.emit('answer_submitted', submittedAnswer);
+
+      const answeredPlayers = await this.gameServerService.getAnsweredPlayers(
         data.gameId,
         data.questionId,
       );
 
-      socc.emit('answer_submitted', submittedAnswer);
+      const students = await this.getInGameStudentList(data.gameId);
 
       this.server.to(room).emit('answered_players_changed', {
-        answeredPlayers: questionRecord.answeredPlayers,
+        answeredPlayers,
+        totalPlayers: students.length,
       });
+
+      const studentsStatistics =
+        await this.gameServerService.getStudentsStatistics(data.gameId);
+
+      this.server
+        .to(room)
+        .emit('receive_students_statistics', studentsStatistics);
 
       const roomStudents = (await this.getInGameStudentList(data.gameId))
         .length;
 
-      if (questionRecord.answeredPlayers == roomStudents) {
+      if (answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
@@ -454,7 +491,7 @@ export class GameServerGateway
 
   @SubscribeMessage('get_leaderboard')
   async getLeaderBoard(
-    @MessageBody() data: { gameId: number; questionId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -487,7 +524,8 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      if (!socc.data.isHost) {
+      const user: User = socc.data.user;
+      if (!(await this.gameServerService.isHost(user.id, data.gameId))) {
         throw new WsException('Only Host can end game');
       }
       const room = this.getRoom(data.gameId);

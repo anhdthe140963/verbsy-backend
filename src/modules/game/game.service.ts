@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Role } from 'src/constant/role.enum';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Curriculum } from '../curriculum/entities/curriculum.entity';
 import { Lesson } from '../curriculum/entities/lesson.entity';
 import { Lecture } from '../lecture/entity/lecture.entity';
+import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
+import { PlayerRepository } from '../player/repository/player.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { Game } from './entities/game.entity';
@@ -16,6 +22,8 @@ export class GameService {
     private gameRepository: GameRepository,
     private classRepository: ClassesRepository,
     private userClassRepository: UserClassRepository,
+    private playerRepository: PlayerRepository,
+    private playerDataRepository: PlayerDataRepository,
   ) {}
   async findActiveGames(user: User): Promise<Game[]> {
     try {
@@ -56,5 +64,41 @@ export class GameService {
       .getMany();
 
     return games;
+  }
+
+  async getGamesByLectureId(lectureId: number): Promise<Game[]> {
+    try {
+      const games = await this.gameRepository
+        .createQueryBuilder()
+        .where('lecture_id = :id', { id: lectureId })
+        .orderBy('created_at', 'DESC')
+        .getMany();
+      return games;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getGameHistoryByGameId(gameId: number): Promise<Game> {
+    try {
+      const game = await this.gameRepository.findOne(gameId);
+      if (!game) {
+        throw new NotFoundException('Game not exist');
+      }
+      const gamePlayers = await this.playerRepository.findPlayersByGameId(
+        gameId,
+      );
+      if (gamePlayers.length != 0) {
+        for (const gp of gamePlayers) {
+          const playerDatas =
+            await this.playerDataRepository.findPlayerDatasByPlayerId(gp.id);
+          Object.assign(gp, { playerData: playerDatas });
+        }
+        Object.assign(game, { gameData: gamePlayers });
+      }
+      return game;
+    } catch (error) {
+      throw error;
+    }
   }
 }

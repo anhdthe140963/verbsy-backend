@@ -15,6 +15,7 @@ import { CurriculumRepository } from '../curriculum/repository/curriculum.reposi
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
+import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { CreateLectureDto } from './dto/create-lecture.dto';
 import { UpdateLectureDto } from './dto/update-lecture.dto';
@@ -33,20 +34,27 @@ export class LectureService {
     private lessonLectureRepo: LessonLectureRepository,
   ) {}
 
-  async createLecture(createLectureDto: CreateLectureDto): Promise<Lecture> {
+  async createLecture(
+    createLectureDto: CreateLectureDto,
+    user: User,
+  ): Promise<Lecture> {
     try {
       const lecture = new Lecture();
-      const user = await this.userRepo.findOne(createLectureDto.ownerId);
-      if (!user) {
-        throw new NotFoundException('Owner not exist');
-      }
       if (user.role == Role.Student) {
         throw new BadRequestException('Owner can not be a student');
       }
       lecture.name = createLectureDto.name;
       lecture.content = createLectureDto.content;
-      lecture.ownerId = createLectureDto.ownerId;
-      return await lecture.save();
+      lecture.ownerId = user.id;
+      await lecture.save();
+
+      const lessonLecture = new LessonLecture();
+      lessonLecture.lectureId = lecture.id;
+      lessonLecture.lessonId = createLectureDto.lessonId;
+      await lessonLecture.save();
+
+      Object.assign(lecture, { lessonId: createLectureDto.lessonId });
+      return lecture;
     } catch (error) {
       throw error;
     }
@@ -136,6 +144,7 @@ export class LectureService {
       if (!data) {
         throw new BadRequestException('Lecture does not exist');
       }
+      await this.lessonLectureRepo.delete({ lectureId: lectureId });
       await this.lectureRepository.delete({ id: lectureId });
     } catch (error) {
       throw error;
