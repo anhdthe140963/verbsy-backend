@@ -692,4 +692,19 @@ export class GameServerGateway
       return socc.emit('error', error);
     }
   }
+
+  @SubscribeMessage('resume_game')
+  async resumeGame(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      return this.server.to(room).emit('game_resumed');
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
 }
