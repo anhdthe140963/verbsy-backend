@@ -64,4 +64,17 @@ export class GameController {
       data: await this.gameService.getGameHistoryByGameId(gameId),
     };
   }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher)
+  @Get('teacher-games')
+  async getTeacherActiveGames(
+    @GetUser() user,
+  ): Promise<{ statusCode; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get teacher active games successfully',
+      data: await this.gameService.getTeacherActiveGames(user),
+    };
+  }
 }

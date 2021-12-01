@@ -101,4 +101,14 @@ export class GameService {
       throw error;
     }
   }
+  async getTeacherActiveGames(user: User): Promise<Game[]> {
+    try {
+      return await this.gameRepository.find({
+        hostId: user.id,
+        isGameLive: true,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
