@@ -652,7 +652,7 @@ export class GameServerService {
       return await this.gameStateRepository.save(gameState);
     } else {
       return await this.gameStateRepository.save({
-        id: gameState.id,
+        id: existGameState.id,
         gameState,
       });
     }
