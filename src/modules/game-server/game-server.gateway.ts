@@ -14,6 +14,7 @@ import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
 import { ScreenState } from 'src/constant/screen-state.enum';
 import { User } from '../user/entity/user.entity';
+import { GameStateDto } from './dto/game-state.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
 
@@ -320,25 +321,53 @@ export class GameServerGateway
     }
   }
 
-  @SubscribeMessage('send_game_state')
-  async saveGameState(
-    @MessageBody()
-    data: {
-      gameId: number;
-      currentQuestionId: number;
-      screenState: ScreenState;
-      timeLeft: number;
-    },
+  @SubscribeMessage('host_join_game')
+  async hostJoinGame(
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const gameState = await this.gameServerService.saveGameState(
-        data.gameId,
-        data.currentQuestionId,
-        data.timeLeft,
-      );
+      const user: User = socc.data.user;
+      const room = this.getRoom(data.gameId);
+
+      socc.join(room);
+      socc.data.room = room;
+
+      this.server.to(room).emit('game_joined', user);
+      return this.server
+        .to(room)
+        .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('send_game_state')
+  async saveGameState(
+    @MessageBody() data: GameStateDto,
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const gameState = await this.gameServerService.saveGameState(data);
 
       return socc.emit('saved_game_state', gameState);
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('recover_game_state')
+  async recoverGameState(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const isHost = socc.data.isHost ?? false;
+      const recoveredGameStateData =
+        await this.gameServerService.recoverGameState(data.gameId, isHost);
+
+      return socc.emit('recovered_game_state', recoveredGameStateData);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);

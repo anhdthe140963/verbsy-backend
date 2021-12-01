@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
+import { ScreenState } from 'src/constant/screen-state.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
 import { In, Like, Not, Unique } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
@@ -27,6 +28,7 @@ import { QuestionRepository } from '../question/repository/question.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
+import { GameStateDto } from './dto/game-state.dto';
 import { NextQuestion } from './dto/next-question.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 
@@ -641,29 +643,53 @@ export class GameServerService {
     }
   }
 
-  async saveGameState(
-    gameId: number,
-    currentQuestionId: number,
-    timeLeft: number,
-  ) {
+  async saveGameState(gameState: GameStateDto) {
+    const existGameState = await this.gameStateRepository.findOne({
+      where: { gameId: gameState.gameId },
+    });
+
+    if (!existGameState) {
+      return await this.gameStateRepository.save(gameState);
+    } else {
+      return await this.gameStateRepository.save({
+        id: gameState.id,
+        gameState,
+      });
+    }
+  }
+
+  async recoverGameState(gameId: number, isHost: boolean) {
     const gameState = await this.gameStateRepository.findOne({
       where: { gameId },
     });
 
-    if (!gameState) {
-      return await this.gameStateRepository.save({
-        gameId,
-        currentQuestionId,
-        timeLeft,
-      });
-    } else {
-      return await this.gameStateRepository.save({
-        id: gameState.id,
-        gameId,
-        currentQuestionId,
-        timeLeft,
-      });
+    let recoveredGameStateData = {};
+    switch (gameState.screenState) {
+      case ScreenState.Lobby:
+        break;
+      case ScreenState.Question:
+        const question: NextQuestion = await this.getNextQuestion(gameId);
+        recoveredGameStateData = { question, timeLeft: gameState.timeLeft };
+        break;
+      case ScreenState.Statistic:
+        const answerStatistics = await this.getAnswerStatistics(
+          gameId,
+          gameState.currentQuestionId,
+        );
+        recoveredGameStateData = { answerStatistics };
+        break;
+      case ScreenState.Leaderboard:
+        const leaderboard = await this.getLeaderboard(gameId);
+        recoveredGameStateData = { leaderboard };
+        break;
     }
+
+    if (isHost) {
+      const studentsStatistics = await this.getStudentsStatistics(gameId);
+      recoveredGameStateData = { ...studentsStatistics };
+    }
+
+    return recoveredGameStateData;
   }
 
   async getGameState(gameId: number): Promise<GameState> {
