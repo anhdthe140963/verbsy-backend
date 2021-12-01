@@ -731,7 +731,11 @@ export class GameServerService {
         id: user.id,
         username: user.username,
         fullName: user.fullName,
-        ...{ totalScore: parseInt(totalScore.totalScore) },
+        ...{
+          totalScore: totalScore.totalScore
+            ? parseInt(totalScore.totalScore)
+            : 0,
+        },
         ...{ stats: playerStats },
       });
     }
