@@ -686,7 +686,9 @@ export class GameServerService {
 
     if (isHost) {
       const studentsStatistics = await this.getStudentsStatistics(gameId);
-      recoveredGameStateData = { ...studentsStatistics };
+      recoveredGameStateData = Object.assign(recoveredGameStateData, {
+        studentsStatistics,
+      });
     }
 
     return recoveredGameStateData;
