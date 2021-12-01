@@ -652,7 +652,7 @@ export class GameServerService {
       return await this.gameStateRepository.save(gameState);
     } else {
       return await this.gameStateRepository.save({
-        id: gameState.id,
+        id: existGameState.id,
         gameState,
       });
     }
@@ -686,7 +686,9 @@ export class GameServerService {
 
     if (isHost) {
       const studentsStatistics = await this.getStudentsStatistics(gameId);
-      recoveredGameStateData = { ...studentsStatistics };
+      recoveredGameStateData = Object.assign(recoveredGameStateData, {
+        studentsStatistics,
+      });
     }
 
     return recoveredGameStateData;
@@ -705,37 +707,44 @@ export class GameServerService {
   }
 
   async getStudentsStatistics(gameId: number) {
-    const players = await this.playerRepository.find({ where: { gameId } });
+    try {
+      const players = await this.playerRepository.find({ where: { gameId } });
 
-    const playersStats: {
-      id: number;
-      username: string;
-      fullName: string;
-      totalScore: number;
-      stats: PlayerData[];
-    }[] = [];
-    for (const player of players) {
-      const user = await this.userRepository.findOne(player.studentId);
-      const totalScore = await this.playerDataRepository
-        .createQueryBuilder('pd')
-        .select('SUM(pd.score)', 'totalScore')
-        .where('pd.player_id = :playerId', { playerId: player.id })
-        .groupBy('pd.player_id')
-        .getRawOne();
-      const playerStats = await this.playerDataRepository.find({
-        select: ['id', 'questionId', 'isCorrect'],
-        where: { playerId: player.id },
-        order: { questionId: 'ASC' },
-      });
-      playersStats.push({
-        id: user.id,
-        username: user.username,
-        fullName: user.fullName,
-        ...{ totalScore: parseInt(totalScore.totalScore) },
-        ...{ stats: playerStats },
-      });
+      const playersStats: {
+        id: number;
+        username: string;
+        fullName: string;
+        totalScore: number;
+        stats: PlayerData[];
+      }[] = [];
+      for (const player of players) {
+        const user = await this.userRepository.findOne(player.studentId);
+        const totalScore = await this.playerDataRepository
+          .createQueryBuilder('pd')
+          .select('SUM(pd.score)', 'totalScore')
+          .where('pd.player_id = :playerId', { playerId: player.id })
+          .groupBy('pd.player_id')
+          .getRawOne();
+        const playerStats = await this.playerDataRepository.find({
+          select: ['id', 'questionId', 'isCorrect'],
+          where: { playerId: player.id },
+          order: { questionId: 'ASC' },
+        });
+        playersStats.push({
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          ...{
+            totalScore: totalScore ? parseInt(totalScore.totalScore) : 0,
+          },
+          ...{ stats: playerStats },
+        });
+      }
+      playersStats.sort((a, b) => b.totalScore - a.totalScore);
+      return playersStats;
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-    playersStats.sort((a, b) => b.totalScore - a.totalScore);
-    return playersStats;
   }
 }
