@@ -689,6 +689,10 @@ export class GameServerService {
         const currentQuestion = await this.questionRepository.findOne(
           gameState.currentQuestionId,
         );
+        const questionTypeConfig =
+          await this.questionTypeConfigRepository.findOne({
+            where: { questionId: currentQuestion.id },
+          });
         const answerStatistics = await this.getAnswerStatistics(
           gameId,
           gameState.currentQuestionId,
@@ -696,7 +700,8 @@ export class GameServerService {
         recoveredGameStateData = {
           question: {
             question: currentQuestion.question,
-            remainQuestions: nextQuestion.remainQuestions - 1,
+            questionType: questionTypeConfig.questionType,
+            remainQuestions: nextQuestion.remainQuestions + 1,
             totalQuestions: nextQuestion.totalQuestions,
           },
           answerStatistics,
