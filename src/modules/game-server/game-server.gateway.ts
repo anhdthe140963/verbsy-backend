@@ -81,28 +81,36 @@ export class GameServerGateway
 
         if (socket.data.isHost) {
           this.server.to(room).emit('host_disconnected');
-          const players = await this.server
+          const usersInRoom = await this.server
             .to(room)
             .except(socket.id)
             .fetchSockets();
 
-          for (const p of players) {
-            console.log('player: ', p.data.user);
+          const playerSockets = [];
+          for (const p of usersInRoom) {
+            const user: User = p.data.user;
+            console.log('user in room: ', p.data.user);
+            if (user.role == Role.Student) {
+              playerSockets.push(p);
+            }
           }
 
-          const randomPlayerIndex = Math.floor(Math.random() * players.length);
+          const randomPlayerIndex = Math.floor(
+            Math.random() * playerSockets.length,
+          );
           console.log('index: ', randomPlayerIndex);
 
-          const chosenPlayer = players[randomPlayerIndex];
-          console.log('chosen: ', players[randomPlayerIndex].data);
+          const chosenPlayer = playerSockets[randomPlayerIndex];
+          console.log('chosen: ', playerSockets[randomPlayerIndex].data);
 
           chosenPlayer.emit('request_game_state');
+        } else {
+          //Leave room and emit to room
+          socket.leave(room);
+          this.server
+            .to(room)
+            .emit('lobby_updated', await this.getInGameStudentList(gameId));
         }
-        //Leave room and emit to room
-        socket.leave(room);
-        this.server
-          .to(room)
-          .emit('lobby_updated', await this.getInGameStudentList(gameId));
 
         //Check if anyone left in room
         const socketsInGameRoom = (await this.server.to(room).allSockets())
