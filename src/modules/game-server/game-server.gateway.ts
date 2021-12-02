@@ -690,12 +690,13 @@ export class GameServerGateway
   @SubscribeMessage('pause_game')
   async pauseGame(
     @MessageBody()
-    data: { gameId: number },
+    data: GameStateDto,
     @ConnectedSocket() socc: Socket,
   ) {
     try {
       const room = this.getRoom(data.gameId);
-      return this.server.to(room).emit('game_paused');
+      const gameState = await this.gameServerService.saveGameState(data);
+      return this.server.to(room).emit('game_paused', gameState);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);
@@ -710,7 +711,11 @@ export class GameServerGateway
   ) {
     try {
       const room = this.getRoom(data.gameId);
-      return this.server.to(room).emit('game_resumed');
+      const gameState = this.gameServerService.recoverGameState(
+        data.gameId,
+        false,
+      );
+      return this.server.to(room).emit('game_resumed', gameState);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);
