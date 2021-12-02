@@ -14,6 +14,7 @@ import { PlayerDataRepository } from '../player-data/repository/player-data.repo
 import { PlayerRepository } from '../player/repository/player.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
+import { UserRepository } from '../user/repository/user.repository';
 import { Game } from './entities/game.entity';
 import { GameRepository } from './repositoty/game.repository';
 
@@ -26,6 +27,7 @@ export class GameService {
     private playerRepository: PlayerRepository,
     private playerDataRepository: PlayerDataRepository,
     private lectureRepository: LectureRepository,
+    private userRepository: UserRepository,
   ) {}
   async findActiveGames(user: User): Promise<Game[]> {
     try {
@@ -101,11 +103,29 @@ export class GameService {
       if (!game) {
         throw new NotFoundException('Game not exist');
       }
+      //assign lecture name and class name
+      const lecture = await this.lectureRepository.findOne(game.lectureId);
+      if (lecture) {
+        Object.assign(game, {
+          lectureName: lecture.name,
+        });
+      }
+      const classById = await this.classRepository.findOne(game.classId);
+      if (classById) {
+        Object.assign(game, {
+          className: classById.name,
+        });
+      }
+
       const gamePlayers = await this.playerRepository.findPlayersByGameId(
         gameId,
       );
       if (gamePlayers.length != 0) {
         for (const gp of gamePlayers) {
+          //assign player name
+          const user = await this.userRepository.findOne(gp.studentId);
+          Object.assign(gp, { studentName: user.fullName });
+          //assign player data
           const playerDatas =
             await this.playerDataRepository.findPlayerDatasByPlayerId(gp.id);
           Object.assign(gp, { playerData: playerDatas });

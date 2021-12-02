@@ -9,6 +9,7 @@ import { UserClassRepository } from '../user-class/repository/question.repositor
 import { PlayerRepository } from '../player/repository/player.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { UserRepository } from '../user/repository/user.repository';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { LectureRepository } from '../lecture/repository/lecture.repository';
       PlayerRepository,
       PlayerDataRepository,
       LectureRepository,
+      UserRepository,
     ]),
   ],
   controllers: [GameController],
