@@ -691,7 +691,7 @@ export class GameServerService {
       });
     }
 
-    return recoveredGameStateData;
+    return { gameState, recoveredGameStateData };
   }
 
   async getGameState(gameId: number): Promise<GameState> {
