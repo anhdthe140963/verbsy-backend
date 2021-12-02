@@ -8,6 +8,7 @@ import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PlayerDataRepository } from '../player-data/repository/player-data.repo
       UserClassRepository,
       PlayerRepository,
       PlayerDataRepository,
+      LectureRepository,
     ]),
   ],
   controllers: [GameController],

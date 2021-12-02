@@ -9,6 +9,7 @@ import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Curriculum } from '../curriculum/entities/curriculum.entity';
 import { Lesson } from '../curriculum/entities/lesson.entity';
 import { Lecture } from '../lecture/entity/lecture.entity';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
@@ -24,6 +25,7 @@ export class GameService {
     private userClassRepository: UserClassRepository,
     private playerRepository: PlayerRepository,
     private playerDataRepository: PlayerDataRepository,
+    private lectureRepository: LectureRepository,
   ) {}
   async findActiveGames(user: User): Promise<Game[]> {
     try {
@@ -73,6 +75,20 @@ export class GameService {
         .where('lecture_id = :id', { id: lectureId })
         .orderBy('created_at', 'DESC')
         .getMany();
+      for (const game of games) {
+        const lecture = await this.lectureRepository.findOne(game.lectureId);
+        if (lecture) {
+          Object.assign(game, {
+            lectureName: lecture.name,
+          });
+        }
+        const classById = await this.classRepository.findOne(game.classId);
+        if (classById) {
+          Object.assign(game, {
+            className: classById.name,
+          });
+        }
+      }
       return games;
     } catch (error) {
       throw error;
