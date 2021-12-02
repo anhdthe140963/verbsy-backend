@@ -694,7 +694,7 @@ export class GameServerService {
       case ScreenState.Statistic:
         const questionTypeConfig =
           await this.questionTypeConfigRepository.findOne({
-            where: { questionId: currentQuestion.id },
+            where: { gameId, questionId: currentQuestion.id },
           });
         const answerStatistics = await this.getAnswerStatistics(
           gameId,
