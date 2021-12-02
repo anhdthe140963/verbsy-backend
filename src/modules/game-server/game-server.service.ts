@@ -676,19 +676,22 @@ export class GameServerService {
       where: { gameId },
     });
 
+    const nextQuestion: NextQuestion = await this.getNextQuestion(gameId);
+    const currentQuestion = await this.questionRepository.findOne(
+      gameState.currentQuestionId,
+    );
+
     let recoveredGameStateData = {};
     switch (gameState.screenState) {
       case ScreenState.Lobby:
         break;
       case ScreenState.Question:
-        const question: NextQuestion = await this.getNextQuestion(gameId);
-        recoveredGameStateData = { question, timeLeft: gameState.timeLeft };
+        recoveredGameStateData = {
+          question: nextQuestion,
+          timeLeft: gameState.timeLeft,
+        };
         break;
       case ScreenState.Statistic:
-        const nextQuestion: NextQuestion = await this.getNextQuestion(gameId);
-        const currentQuestion = await this.questionRepository.findOne(
-          gameState.currentQuestionId,
-        );
         const questionTypeConfig =
           await this.questionTypeConfigRepository.findOne({
             where: { questionId: currentQuestion.id },
@@ -709,7 +712,11 @@ export class GameServerService {
         break;
       case ScreenState.Leaderboard:
         const leaderboard = await this.getLeaderboard(gameId);
-        recoveredGameStateData = { leaderboard };
+        recoveredGameStateData = {
+          leaderboard,
+          remainQuestions: nextQuestion.remainQuestions,
+          totalQuestions: nextQuestion.totalQuestions,
+        };
         break;
     }
 
