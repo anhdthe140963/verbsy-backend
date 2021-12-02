@@ -81,6 +81,7 @@ export class GameServerGateway
 
         if (socket.data.isHost) {
           this.server.to(room).emit('host_disconnected');
+          this.server.to(room).emit('game_paused');
           const usersInRoom = await this.server
             .to(room)
             .except(socket.id)
