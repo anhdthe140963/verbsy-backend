@@ -685,11 +685,12 @@ export class GameServerService {
         recoveredGameStateData = { question, timeLeft: gameState.timeLeft };
         break;
       case ScreenState.Statistic:
+        const questionStat: NextQuestion = await this.getNextQuestion(gameId);
         const answerStatistics = await this.getAnswerStatistics(
           gameId,
           gameState.currentQuestionId,
         );
-        recoveredGameStateData = { question, answerStatistics };
+        recoveredGameStateData = { questionStat, answerStatistics };
         break;
       case ScreenState.Leaderboard:
         const leaderboard = await this.getLeaderboard(gameId);
