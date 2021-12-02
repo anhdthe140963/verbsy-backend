@@ -662,12 +662,12 @@ export class GameServerService {
     });
 
     if (!existGameState) {
-      return await this.gameStateRepository.save(gameState);
+      return await this.gameStateRepository.insert(gameState);
     } else {
-      return await this.gameStateRepository.save({
-        id: existGameState.id,
+      return await this.gameStateRepository.update(
+        existGameState.id,
         gameState,
-      });
+      );
     }
   }
 
