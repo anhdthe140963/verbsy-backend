@@ -89,9 +89,9 @@ export class GameServerGateway
           const playerSockets = [];
           for (const p of usersInRoom) {
             const user: User = p.data.user;
+            console.log('user in room: ', p.data.user);
             if (user.role == Role.Student) {
               playerSockets.push(p);
-              console.log('player: ', p.data.user);
             }
           }
 
@@ -100,8 +100,8 @@ export class GameServerGateway
           );
           console.log('index: ', randomPlayerIndex);
 
-          const chosenPlayer = usersInRoom[randomPlayerIndex];
-          console.log('chosen: ', usersInRoom[randomPlayerIndex].data);
+          const chosenPlayer = playerSockets[randomPlayerIndex];
+          console.log('chosen: ', playerSockets[randomPlayerIndex].data);
 
           chosenPlayer.emit('request_game_state');
         } else {
