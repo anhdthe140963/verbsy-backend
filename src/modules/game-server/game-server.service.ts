@@ -689,7 +689,7 @@ export class GameServerService {
           gameId,
           gameState.currentQuestionId,
         );
-        recoveredGameStateData = { answerStatistics };
+        recoveredGameStateData = { question, answerStatistics };
         break;
       case ScreenState.Leaderboard:
         const leaderboard = await this.getLeaderboard(gameId);
