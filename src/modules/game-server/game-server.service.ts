@@ -51,6 +51,19 @@ export class GameServerService {
     private readonly lessonRepository: LessonRepository,
   ) {}
 
+  calculateScore(answerTime: number, questionDuration: number) {
+    const baseScore = 100;
+    const timeFactorWeight = 0.25;
+    const duration = questionDuration * 1000;
+    const score =
+      baseScore +
+      Math.floor(
+        ((duration - answerTime) / duration) * baseScore * timeFactorWeight,
+      );
+
+    return score;
+  }
+
   async getUser(username: string): Promise<User> {
     return await this.userRepository.findOne({
       where: { username: username },
@@ -242,7 +255,7 @@ export class GameServerService {
 
       //Score Calculation
       const score = isCorrect
-        ? (question.duration * 1000 - submitAnswerDto.answerTime) / 100
+        ? this.calculateScore(submitAnswerDto.answerTime, question.duration)
         : 0;
 
       //Store player data
