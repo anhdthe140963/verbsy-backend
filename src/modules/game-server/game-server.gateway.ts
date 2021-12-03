@@ -318,7 +318,7 @@ export class GameServerGateway
         user.id,
       );
       if (isReconnect) {
-        return this.server.to(room).emit('player_has_reconnected', user);
+        this.server.to(room).emit('player_has_reconnected', user);
       }
 
       this.server.to(room).emit('game_joined', user);
@@ -654,7 +654,7 @@ export class GameServerGateway
     data: {
       gameId: number;
       userId: number;
-      info: { questionId: number; timeLeft: number };
+      info: GameStateDto;
     },
     @ConnectedSocket() socc: Socket,
   ) {

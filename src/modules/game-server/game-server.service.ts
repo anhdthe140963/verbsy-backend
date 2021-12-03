@@ -348,6 +348,16 @@ export class GameServerService {
 
     switch (questionTypeConfig.questionType) {
       case QuestionType.MultipleChoice:
+        const questionRecord = await this.questionRecordRepository.findOne({
+          where: { gameId, questionId },
+        });
+
+        if (!questionRecord) {
+          return await this.answerRepository.find({
+            where: { question: { id: questionId } },
+          });
+        }
+
         const statistics = await this.playerDataRepository
           .createQueryBuilder('pd')
           .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
@@ -378,7 +388,10 @@ export class GameServerService {
           s.count = parseInt(s.count);
         }
 
-        return answers.concat(statistics);
+        const answerStats = answers.concat(statistics);
+        answerStats.sort((a, b) => a.id - b.id);
+
+        return answerStats;
 
       case QuestionType.Scramble:
       case QuestionType.Writting:
