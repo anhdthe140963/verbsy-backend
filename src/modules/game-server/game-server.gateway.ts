@@ -4,6 +4,7 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -20,7 +21,7 @@ import { GameServerService } from './game-server.service';
 
 @WebSocketGateway({ cors: true })
 export class GameServerGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   @WebSocketServer()
   server: Server = new Server({});
@@ -31,6 +32,9 @@ export class GameServerGateway
     private readonly jwtService: JwtService,
     private readonly gameServerService: GameServerService,
   ) {}
+  afterInit(server: Server) {
+    return console.log('Server initialized');
+  }
 
   //Utils
   getRoom(gameId: number): string {
@@ -167,6 +171,13 @@ export class GameServerGateway
         'socket_connected',
         'username ' + socket.data.user.username + ' has connected',
       );
+
+      console.log('Connected Sockets');
+
+      for (const s of await this.server.fetchSockets()) {
+        const u: User = s.data.user;
+        console.log(u.username, s.id);
+      }
     } catch (error) {
       console.log(error);
       socket.emit('error', error);
@@ -323,6 +334,7 @@ export class GameServerGateway
       }
 
       this.server.to(room).emit('game_joined', user);
+
       return this.server
         .to(room)
         .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
