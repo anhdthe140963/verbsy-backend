@@ -123,6 +123,7 @@ export class GameServerGateway
 
       console.log(socket.rooms);
       console.log(socket.data.user.username + ' has disconnected');
+      socket.disconnect(true);
     } catch (error) {
       console.log(error);
       socket.emit('error', error);
