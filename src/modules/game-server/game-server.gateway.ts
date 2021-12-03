@@ -661,23 +661,29 @@ export class GameServerGateway
     }
   }
 
-  @SubscribeMessage('transfer_question_to_player')
-  async handlePlayerReconnect(
+  @SubscribeMessage('recover_game_state_for_player')
+  async recoverGameStateForPlayer(
     @MessageBody()
     data: {
       gameId: number;
       userId: number;
-      info: GameStateDto;
+      gameState: GameStateDto;
     },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
+      await this.gameServerService.saveGameState(data.gameState);
+
       const room = this.getRoom(data.gameId);
       const sockets = await this.server.to(room).fetchSockets();
       for (const socket of sockets) {
         const user: User = socket.data.user;
         if (user.id == data.userId) {
-          return socket.emit('receive_info', data.info);
+          const gameStateData = await this.gameServerService.recoverGameState(
+            data.gameId,
+            false,
+          );
+          return socket.emit('recovered_game_state', gameStateData);
         }
       }
     } catch (error) {
