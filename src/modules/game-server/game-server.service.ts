@@ -352,7 +352,7 @@ export class GameServerService {
           where: { gameId, questionId },
         });
 
-        if (!questionRecord) {
+        if (questionRecord.answeredPlayers == 0) {
           return await this.answerRepository.find({
             where: { question: { id: questionId } },
           });
