@@ -622,7 +622,7 @@ export class GameServerGateway
       const room = this.getRoom(data.gameId);
       const game = await this.gameServerService.endGame(data.gameId);
       this.server.to(room).emit('game_ended', game);
-      return this.server.to(room).disconnectSockets(true);
+      return this.server.to(room).except(socc.id).disconnectSockets(true);
     } catch (error) {
       return socc.emit('error', error);
     }
