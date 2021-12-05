@@ -35,7 +35,10 @@ export class Game extends BaseEntity {
     type: 'json',
     nullable: true,
   })
-  questionsConfig: { shuffle: boolean; questionTypes: QuestionType[] };
+  questionsConfig: {
+    timeFactorWeight: number;
+    questionTypes: QuestionType[];
+  };
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

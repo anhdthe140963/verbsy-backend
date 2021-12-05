@@ -232,7 +232,12 @@ export class GameServerGateway
   @SubscribeMessage('host_game')
   async hostGame(
     @MessageBody()
-    data: { lectureId: number; classId: number; questionTypes: QuestionType[] },
+    data: {
+      lectureId: number;
+      classId: number;
+      timeFactorWeight: number;
+      questionTypes: QuestionType[];
+    },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -241,6 +246,7 @@ export class GameServerGateway
         data.lectureId,
         data.classId,
         user.id,
+        data.timeFactorWeight,
         data.questionTypes,
       );
       const room = this.getRoom(game.id);
@@ -385,9 +391,9 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const isHost = socc.data.isHost ?? false;
+      const user: User = socc.data.user;
       const recoveredGameStateData =
-        await this.gameServerService.recoverGameState(data.gameId, isHost);
+        await this.gameServerService.recoverGameState(data.gameId, user.id);
 
       return socc.emit('recovered_game_state', recoveredGameStateData);
     } catch (error) {
@@ -649,8 +655,7 @@ export class GameServerGateway
 
   @SubscribeMessage('player_left')
   async handlePlayerLeft(
-    @MessageBody()
-    data: { gameId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -681,7 +686,7 @@ export class GameServerGateway
         if (user.id == data.userId) {
           const gameStateData = await this.gameServerService.recoverGameState(
             data.gameId,
-            false,
+            data.userId,
           );
           return socket.emit('recovered_game_state', gameStateData);
         }
@@ -729,10 +734,11 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
+      const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
       const gameState = this.gameServerService.recoverGameState(
         data.gameId,
-        false,
+        user.id,
       );
       return this.server.to(room).emit('game_resumed', gameState);
     } catch (error) {

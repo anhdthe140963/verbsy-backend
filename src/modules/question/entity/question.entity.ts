@@ -1,3 +1,4 @@
+import { QuestionLevel } from 'src/constant/question-level.enum';
 import {
   BaseEntity,
   Column,
@@ -34,6 +35,6 @@ export class Question extends BaseEntity {
   })
   answers: Answer[];
 
-  @Column({ default: 0 })
-  level: number;
+  @Column({ default: QuestionLevel.Easy })
+  level: QuestionLevel;
 }

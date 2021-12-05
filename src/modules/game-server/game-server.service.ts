@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { ScreenState } from 'src/constant/screen-state.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
-import { In, Like, Not, Unique } from 'typeorm';
+import { In, Like, Not } from 'typeorm';
 import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Classes } from '../classes/entity/classes.entity';
 import { GameState } from '../game-state/entities/game-state.entity';
@@ -10,16 +10,12 @@ import { GameStateRepository } from '../game-state/repository/game-state.reposit
 import { Game } from '../game/entities/game.entity';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { Lecture } from '../lecture/entity/lecture.entity';
-import { LectureRepository } from '../lecture/repository/lecture.repository';
-import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
-import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerData } from '../player-data/entities/player-data.entity';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecord } from '../question-record/entities/question-record.entity';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
-import { QuestionTypeConfig } from '../question-type-config/entities/question-type-config.entity';
 import { QuestionTypeConfigRepository } from '../question-type-config/repository/question-type-config.repository';
 import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
@@ -46,22 +42,25 @@ export class GameServerService {
     private readonly userRepository: UserRepository,
     private readonly userClassRepository: UserClassRepository,
     private readonly blacklistRepository: BlacklistRepository,
-    private readonly lectureRepository: LectureRepository,
-    private readonly lessonLectureRepository: LessonLectureRepository,
-    private readonly lessonRepository: LessonRepository,
   ) {}
 
-  calculateScore(answerTime: number, questionDuration: number) {
+  calculateScore(
+    answerTime: number,
+    questionDuration: number,
+    timeFactorWeight: number,
+  ) {
     const baseScore = 100;
-    const timeFactorWeight = 0.25;
     const duration = questionDuration * 1000;
-    const score =
-      baseScore +
-      Math.floor(
-        ((duration - answerTime) / duration) * baseScore * timeFactorWeight,
-      );
+    const score = Math.floor(
+      baseScore * (1 + (1 - answerTime / duration) * timeFactorWeight),
+    );
 
     return score;
+  }
+
+  async getGameTimeFactorWeight(gameId: number): Promise<number> {
+    const game = await this.gameRepository.findOne(gameId);
+    return game.questionsConfig.timeFactorWeight;
   }
 
   async getUser(username: string): Promise<User> {
@@ -254,8 +253,15 @@ export class GameServerService {
       );
 
       //Score Calculation
+      const timeFactorWeight = await this.getGameTimeFactorWeight(
+        submitAnswerDto.gameId,
+      );
       const score = isCorrect
-        ? this.calculateScore(submitAnswerDto.answerTime, question.duration)
+        ? this.calculateScore(
+            submitAnswerDto.answerTime,
+            question.duration,
+            timeFactorWeight,
+          )
         : 0;
 
       //Store player data
@@ -306,10 +312,6 @@ export class GameServerService {
     });
 
     for (const player of unansweredPlayers) {
-      const playerData = await this.playerDataRepository.save({
-        playerId: player.id,
-        questionId: questionId,
-      });
     }
 
     //Record Question
@@ -452,6 +454,7 @@ export class GameServerService {
     lectureId: number,
     classId: number,
     hostId: number,
+    timeFactorWeight: number,
     questionTypes: QuestionType[],
   ): Promise<Game> {
     const game = await this.gameRepository.save({
@@ -459,25 +462,8 @@ export class GameServerService {
       classId: classId,
       hostId: hostId,
       isGameLive: true,
-      questionsConfig: { shuffle: false, questionTypes },
+      questionsConfig: { timeFactorWeight, questionTypes },
     });
-    // const lecture = await this.lectureRepository.findOne(lectureId);
-    // if (lecture) {
-    //   Object.assign(game, { lectureName: lecture.name });
-    // }
-    // const questions = await this.questionRepository.find({
-    //   lectureId: lectureId,
-    // });
-    // if (questions) {
-    //   Object.assign(game, { totalQuestion: questions.length });
-    // }
-    // const lessonLecture = await this.lessonLectureRepository.findOne({
-    //   lectureId: lectureId,
-    // });
-    // const lesson = await this.lessonRepository.findOne(lessonLecture.lessonId);
-    // if (lesson) {
-    //   Object.assign(game, { lessonName: lesson.name });
-    // }
     return game;
   }
 
@@ -684,7 +670,10 @@ export class GameServerService {
     }
   }
 
-  async recoverGameState(gameId: number, isHost: boolean) {
+  async recoverGameState(gameId: number, userId: number) {
+    const game = await this.gameRepository.findOne(gameId);
+    const isHost = game.hostId == userId;
+
     const gameState = await this.gameStateRepository.findOne({
       where: { gameId },
     });
@@ -693,6 +682,20 @@ export class GameServerService {
     const currentQuestion = await this.questionRepository.findOne(
       gameState.currentQuestionId,
     );
+
+    let playerData: PlayerData = null;
+    if (!isHost) {
+      const player = await this.playerRepository.findOne({
+        where: { gameId, studentId: userId },
+      });
+
+      playerData = await this.playerDataRepository.findOne({
+        where: {
+          playerId: player.id,
+          questionId: gameState.currentQuestionId,
+        },
+      });
+    }
 
     let recoveredGameStateData = {};
     switch (gameState.screenState) {
@@ -709,11 +712,13 @@ export class GameServerService {
           await this.questionTypeConfigRepository.findOne({
             where: { gameId, questionId: currentQuestion.id },
           });
+
         const answerStatistics = await this.getAnswerStatistics(
           gameId,
           gameState.currentQuestionId,
         );
         recoveredGameStateData = {
+          playerData: isHost ? null : playerData,
           question: {
             question: currentQuestion.question,
             questionType: questionTypeConfig.questionType,
@@ -733,11 +738,16 @@ export class GameServerService {
         break;
     }
 
+    if (!isHost) {
+      recoveredGameStateData = { playerData, ...recoveredGameStateData };
+    }
+
     if (isHost) {
       const studentsStatistics = await this.getStudentsStatistics(gameId);
-      recoveredGameStateData = Object.assign(recoveredGameStateData, {
-        studentsStatistics,
-      });
+      recoveredGameStateData = {
+        recoveredGameStateData,
+        ...studentsStatistics,
+      };
     }
 
     return { gameState, recoveredGameStateData };
