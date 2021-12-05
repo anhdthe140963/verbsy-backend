@@ -33,4 +33,7 @@ export class Question extends BaseEntity {
     cascade: true,
   })
   answers: Answer[];
+
+  @Column({ default: 0 })
+  level: number;
 }
