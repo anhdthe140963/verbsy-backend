@@ -718,7 +718,6 @@ export class GameServerService {
           gameState.currentQuestionId,
         );
         recoveredGameStateData = {
-          playerData: isHost ? null : playerData,
           question: {
             question: currentQuestion.question,
             questionType: questionTypeConfig.questionType,
@@ -739,18 +738,21 @@ export class GameServerService {
     }
 
     if (!isHost) {
-      recoveredGameStateData = { playerData, ...recoveredGameStateData };
+      recoveredGameStateData = {
+        ...playerData,
+        ...recoveredGameStateData,
+      };
     }
 
     if (isHost) {
       const studentsStatistics = await this.getStudentsStatistics(gameId);
       recoveredGameStateData = {
-        recoveredGameStateData,
+        ...recoveredGameStateData,
         ...studentsStatistics,
       };
     }
 
-    return { gameState, recoveredGameStateData };
+    return { ...gameState, ...recoveredGameStateData };
   }
 
   async getGameState(gameId: number): Promise<GameState> {
