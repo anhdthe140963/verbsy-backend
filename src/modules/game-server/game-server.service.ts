@@ -314,6 +314,10 @@ export class GameServerService {
     });
 
     for (const player of unansweredPlayers) {
+      await this.playerDataRepository.insert({
+        playerId: player.id,
+        questionId: questionId,
+      });
     }
 
     //Record Question
