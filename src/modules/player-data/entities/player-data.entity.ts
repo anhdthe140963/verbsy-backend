@@ -1,4 +1,10 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('player_data')
 export class PlayerData extends BaseEntity {
@@ -28,4 +34,7 @@ export class PlayerData extends BaseEntity {
 
   @Column({ name: 'score', default: 0 })
   score: number;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 }

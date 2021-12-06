@@ -838,7 +838,7 @@ export class GameServerService {
         const playerStats = await this.playerDataRepository.find({
           select: ['id', 'questionId', 'isCorrect'],
           where: { playerId: player.id },
-          order: { questionId: 'ASC' },
+          order: { createdAt: 'DESC' },
         });
         playersStats.push({
           id: user.id,
