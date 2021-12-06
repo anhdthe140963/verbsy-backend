@@ -195,18 +195,18 @@ export class CurriculumService {
     user: User,
   ) {
     try {
-      let rawPagination;
-      if (user.role == Role.Administrator || user.role == Role.Teacher) {
-        rawPagination = await paginate(this.curriculumRepo, options, {
-          where: filter,
-        });
-        // } else if (user.role == Role.Teacher) {
-        //   const query = await this.curriculumRepo
-        //     .createQueryBuilder()
-        //     .where('created_by = :id', { id: user.id })
-        //     .orWhere('parent_id IS NULL');
-        //   rawPagination = await paginate(query, options);
-      }
+      // let rawPagination;
+      // if (user.role == Role.Administrator || user.role == Role.Teacher) {
+      //   rawPagination = await paginate(this.curriculumRepo, options, {
+      //     where: filter,
+      //   });
+      // } else if (user.role == Role.Teacher) {
+      //   const query = await this.curriculumRepo
+      //     .createQueryBuilder()
+      //     .where('created_by = :id', { id: user.id })
+      //     .orWhere('parent_id IS NULL');
+      //   rawPagination = await paginate(query, options);
+      // }
       //  else if (user.role == Role.Teacher) {
       //   const userClasses = await this.userClassRepo.find({
       //     teacherId: user.id,
@@ -226,34 +226,85 @@ export class CurriculumService {
       //     .orWhere('created_by IN (:...ids)', { ids: adminIds });
       //   rawPagination = await paginate(query, options);
       // }
-      else {
-        const userClasses = await this.userClassRepo.find({
-          studentId: user.id,
-        });
+      // else {
+      //   const userClasses = await this.userClassRepo.find({
+      //     studentId: user.id,
+      //   });
+      //   const classIds = [];
+      //   for (const uc of userClasses) {
+      //     classIds.push(uc.classId);
+      //   }
+      //   const query = await this.curriculumRepo
+      //     .createQueryBuilder()
+      //     .where('class_id IN (:...ids)', { ids: classIds });
+      //   rawPagination = await paginate(query, options);
+      // }
+      // for (const curri of rawPagination.items) {
+      //   const createrName = (
+      //     await this.userRepo
+      //       .createQueryBuilder('u')
+      //       .select('u.fullName')
+      //       .where('u.id = :id', { id: curri.createdBy })
+      //       .getOne()
+      //   ).fullName;
+      //   const className = (await this.classRepo.findOne(curri.classId)).name;
+      //   Object.assign(curri, {
+      //     creatorName: createrName,
+      //     className: className,
+      //   });
+      // }
+      // return rawPagination;
+      const query = this.curriculumRepo.createQueryBuilder();
+      const classes = [];
+      const grades = await this.gradeRepo.find();
+      //check if user is a Admin
+      if (user.role == Role.Administrator) {
+        classes.push(await this.classRepo.find());
+      }
+      //check if user is a teacher or a student
+      if (user.role == Role.Teacher || user.role == Role.Student) {
         const classIds = [];
-        for (const uc of userClasses) {
-          classIds.push(uc.classId);
-        }
-        const query = await this.curriculumRepo
-          .createQueryBuilder()
-          .where('class_id IN (:...ids)', { ids: classIds });
-        rawPagination = await paginate(query, options);
-      }
-      for (const curri of rawPagination.items) {
-        const createrName = (
-          await this.userRepo
-            .createQueryBuilder('u')
-            .select('u.fullName')
-            .where('u.id = :id', { id: curri.createdBy })
-            .getOne()
-        ).fullName;
-        const className = (await this.classRepo.findOne(curri.classId)).name;
-        Object.assign(curri, {
-          creatorName: createrName,
-          className: className,
+        //find user's class
+        const userClasses = await this.userClassRepo.find({
+          teacherId: user.id,
         });
+        //push user class to array
+        for (const uc of userClasses) {
+          const classById = await this.classRepo.findOne(uc.classId);
+          classes.push(classById);
+          classIds.push(classById.id);
+        }
+        console.log(classIds);
+
+        query.where('class_id IN (:...ids)', { ids: classIds });
       }
-      return rawPagination;
+      //check if filter is inputed
+      if (filter.classId) {
+        query.andWhere('class_id = :id', { id: filter.classId });
+      }
+      if (filter.gradeId) {
+        query.andWhere('grade_id = :id', { id: filter.gradeId });
+      }
+      if (filter.name) {
+        query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+      }
+      //check if user is a Teacher
+      if (user.role == Role.Teacher) {
+        const adminIds = [];
+        //push admin ids to array
+        const admins = await this.userRepo.find({ role: Role.Administrator });
+        for (const admin of admins) {
+          adminIds.push(admin.id);
+        }
+        console.log(adminIds);
+
+        query.orWhere('created_by IN (:...ids)', { ids: adminIds });
+      }
+      console.log(query.getQuery());
+      //get paginate curriculum
+      const rawPaginate = await paginate<Curriculum>(query, options);
+      Object.assign(rawPaginate, { grades: grades, classes: classes });
+      return rawPaginate;
     } catch (error) {
       throw error;
     }
