@@ -147,4 +147,14 @@ export class GameService {
       throw error;
     }
   }
+  async getTeacherRecentGame(user: User): Promise<Game> {
+    try {
+      return await this.gameRepository.findOne({
+        where: { hostId: user.id },
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
