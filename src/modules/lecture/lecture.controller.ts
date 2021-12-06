@@ -110,6 +110,22 @@ export class LectureController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
+  @Get('questions/:lectureId')
+  async getLectureQuestionsInfo(
+    @Param('lectureId') lectureId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    const lectureQuestionInfo =
+      await this.lectureService.getLectureQuestionsInfo(lectureId);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get lecture detail successfully',
+      data: lectureQuestionInfo,
+    };
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
   @Delete(':lectureId')
   async delete(
     @Param('lectureId') lectureId: number,
