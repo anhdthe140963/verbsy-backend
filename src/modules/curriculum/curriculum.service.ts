@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
 import { Lecture } from '../lecture/entity/lecture.entity';
@@ -316,9 +316,14 @@ export class CurriculumService {
           adminIds.push(admin.id);
         }
         console.log(adminIds);
-        query
-          .where('class_id IN (:...ids)', { ids: classIds })
-          .orWhere('created_by IN (:...ids)', { ids: adminIds });
+        query.where(
+          new Brackets((qb) => {
+            qb.where('class_id IN (:...ids)', { ids: classIds }).orWhere(
+              'created_by IN (:...ids)',
+              { ids: adminIds },
+            );
+          }),
+        );
         //check if filter is inputed
         if (filter.classId) {
           query.andWhere('class_id = :id', { id: filter.classId });
