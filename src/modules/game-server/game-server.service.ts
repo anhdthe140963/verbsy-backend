@@ -614,7 +614,7 @@ export class GameServerService {
     });
 
     //Shuffle questions pool
-    const shuffledQuestions: Question[] = shuffleArray(questions);
+    const shuffledQuestions: Question[] = questions;
 
     //Get questions config
     const questionsConfig = game.questionsConfig;
