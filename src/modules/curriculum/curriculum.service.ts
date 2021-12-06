@@ -260,9 +260,44 @@ export class CurriculumService {
       //check if user is a Admin
       if (user.role == Role.Administrator) {
         classes.push(await this.classRepo.find());
+        //check if filter is inputed
+        if (filter.classId) {
+          query.andWhere('class_id = :id', { id: filter.classId });
+        }
+        if (filter.gradeId) {
+          query.andWhere('grade_id = :id', { id: filter.gradeId });
+        }
+        if (filter.name) {
+          query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
       }
-      //check if user is a teacher or a student
-      if (user.role == Role.Teacher || user.role == Role.Student) {
+      //check if user is a student
+      if (user.role == Role.Student) {
+        const classIds = [];
+        //find user's class
+        const userClasses = await this.userClassRepo.find({
+          studentId: user.id,
+        });
+        //push user class to array
+        for (const uc of userClasses) {
+          const classById = await this.classRepo.findOne(uc.classId);
+          classes.push(classById);
+          classIds.push(classById.id);
+        }
+        query.where('class_id IN (:...ids)', { ids: classIds });
+        //check if filter is inputed
+        if (filter.classId) {
+          query.andWhere('class_id = :id', { id: filter.classId });
+        }
+        if (filter.gradeId) {
+          query.andWhere('grade_id = :id', { id: filter.gradeId });
+        }
+        if (filter.name) {
+          query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
+      }
+      //check if user is a Teacher
+      if (user.role == Role.Teacher) {
         const classIds = [];
         //find user's class
         const userClasses = await this.userClassRepo.find({
@@ -274,22 +309,6 @@ export class CurriculumService {
           classes.push(classById);
           classIds.push(classById.id);
         }
-        console.log(classIds);
-
-        query.where('class_id IN (:...ids)', { ids: classIds });
-      }
-      //check if filter is inputed
-      if (filter.classId) {
-        query.andWhere('class_id = :id', { id: filter.classId });
-      }
-      if (filter.gradeId) {
-        query.andWhere('grade_id = :id', { id: filter.gradeId });
-      }
-      if (filter.name) {
-        query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
-      }
-      //check if user is a Teacher
-      if (user.role == Role.Teacher) {
         const adminIds = [];
         //push admin ids to array
         const admins = await this.userRepo.find({ role: Role.Administrator });
@@ -297,8 +316,19 @@ export class CurriculumService {
           adminIds.push(admin.id);
         }
         console.log(adminIds);
-
-        query.orWhere('created_by IN (:...ids)', { ids: adminIds });
+        query
+          .where('class_id IN (:...ids)', { ids: classIds })
+          .orWhere('created_by IN (:...ids)', { ids: adminIds });
+        //check if filter is inputed
+        if (filter.classId) {
+          query.andWhere('class_id = :id', { id: filter.classId });
+        }
+        if (filter.gradeId) {
+          query.andWhere('grade_id = :id', { id: filter.gradeId });
+        }
+        if (filter.name) {
+          query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
       }
       console.log(query.getQuery());
       //get paginate curriculum
