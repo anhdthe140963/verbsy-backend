@@ -36,8 +36,20 @@ export class Game extends BaseEntity {
     nullable: true,
   })
   questionsConfig: {
+    questions: number;
     timeFactorWeight: number;
     questionTypes: QuestionType[];
+  };
+
+  @Column({
+    name: 'difficulty_config',
+    type: 'json',
+    nullable: true,
+  })
+  difficultyConfig: {
+    easy: number;
+    medium: number;
+    hard: number;
   };
 
   @CreateDateColumn({ name: 'created_at' })

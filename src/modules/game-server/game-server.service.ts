@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { ScreenState } from 'src/constant/screen-state.enum';
 import { shuffleArray } from 'src/utils/shuffle-array.util';
@@ -25,6 +26,7 @@ import { UserClassRepository } from '../user-class/repository/question.repositor
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
 import { GameStateDto } from './dto/game-state.dto';
+import { HostGameDto } from './dto/host-game.dto';
 import { NextQuestion } from './dto/next-question.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 
@@ -450,19 +452,13 @@ export class GameServerService {
     );
   }
 
-  async hostGame(
-    lectureId: number,
-    classId: number,
-    hostId: number,
-    timeFactorWeight: number,
-    questionTypes: QuestionType[],
-  ): Promise<Game> {
+  async hostGame(hostId: number, hostGameDto: HostGameDto): Promise<Game> {
     const game = await this.gameRepository.save({
-      lectureId: lectureId,
-      classId: classId,
       hostId: hostId,
-      isGameLive: true,
-      questionsConfig: { timeFactorWeight, questionTypes },
+      classId: hostGameDto.classId,
+      lectureId: hostGameDto.lectureId,
+      questionsConfig: hostGameDto.questionsConfig,
+      difficultyConfig: hostGameDto.difficultyConfig,
     });
     return game;
   }
@@ -546,9 +542,9 @@ export class GameServerService {
     }
 
     //Remain questions are questions those aren't answered in the current game
-    const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
-    const remainQuestions = await this.questionRepository.find({
-      where: { id: Not(In(answeredQuestionsIds)), lectureId: lectureId },
+    // const lectureId = (await this.gameRepository.findOne(gameId)).lectureId;
+    const remainQuestions = await this.questionTypeConfigRepository.find({
+      where: { questionId: Not(In(answeredQuestionsIds)), gameId },
     });
 
     //Next question is a random question in remain questions (if specfified)
@@ -556,7 +552,8 @@ export class GameServerService {
     //   ? Math.floor(Math.random() * remainQuestions.length)
     //   : 0;
 
-    const nextQuestion = remainQuestions[0];
+    const nextQuestionId = remainQuestions[0].questionId;
+    const nextQuestion = await this.questionRepository.findOne(nextQuestionId);
 
     const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
       where: { gameId, questionId: nextQuestion.id },
@@ -566,8 +563,8 @@ export class GameServerService {
     const next = new NextQuestion();
     next.questionType = questionTypeConfig.questionType;
     next.remainQuestions = remainQuestions.length - 1;
-    next.totalQuestions = await this.questionRepository.count({
-      where: { lectureId: lectureId },
+    next.totalQuestions = await this.questionTypeConfigRepository.count({
+      where: { gameId },
     });
 
     switch (next.questionType) {
@@ -607,17 +604,61 @@ export class GameServerService {
     //Get game
     const game = await this.gameRepository.findOne(gameId);
 
-    //Get questions from lecture
+    //Get questions pool
     const questions = await this.questionRepository.find({
       where: { lectureId: game.lectureId },
     });
 
-    const questionTypesOriginal = game.questionsConfig.questionTypes ?? [
+    //Shuffle questions pool
+    const shuffledQuestions: Question[] = shuffleArray(questions);
+
+    //Get questions config
+    const questionsConfig = game.questionsConfig;
+
+    //Number of questions needed
+    const questionsCount = questionsConfig.questions;
+    const difficultyConfig = game.difficultyConfig;
+
+    //Array contains the questions pool of the game
+    const gameQuestionsPool = [];
+
+    //Number of questions of difficulties appear in game
+    let easyQuestionsCount = difficultyConfig.easy;
+    let mediumQuestionsCount = difficultyConfig.medium;
+    let hardQuestionsCount = difficultyConfig.hard;
+
+    //Fill gameQuestionPool array
+    for (let i = 0; i < shuffledQuestions.length; i++) {
+      switch (shuffledQuestions[i].level) {
+        case QuestionLevel.Easy:
+          if (easyQuestionsCount == 0) break;
+          gameQuestionsPool.push(shuffledQuestions[i]);
+          easyQuestionsCount--;
+          break;
+        case QuestionLevel.Medium:
+          if (mediumQuestionsCount == 0) break;
+          gameQuestionsPool.push(shuffledQuestions[i]);
+          mediumQuestionsCount--;
+          break;
+        case QuestionLevel.Hard:
+          if (hardQuestionsCount == 0) break;
+          gameQuestionsPool.push(shuffledQuestions[i]);
+          hardQuestionsCount--;
+          break;
+      }
+
+      if (gameQuestionsPool.length == questionsCount) {
+        break;
+      }
+    }
+
+    //Question types pool
+    const questionTypesOriginal = questionsConfig.questionTypes ?? [
       QuestionType.MultipleChoice,
     ];
 
     //Set question type
-    for (const question of questions) {
+    for (const question of gameQuestionsPool) {
       const questionTypesPool = questionTypesOriginal.slice();
 
       //Check if eligible for scramble
@@ -677,6 +718,10 @@ export class GameServerService {
     const gameState = await this.gameStateRepository.findOne({
       where: { gameId },
     });
+
+    if (!gameState) {
+      return null;
+    }
 
     const nextQuestion: NextQuestion = await this.getNextQuestion(gameId);
     const currentQuestion = await this.questionRepository.findOne(

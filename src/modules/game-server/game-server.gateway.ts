@@ -16,6 +16,7 @@ import { Role } from 'src/constant/role.enum';
 import { ScreenState } from 'src/constant/screen-state.enum';
 import { User } from '../user/entity/user.entity';
 import { GameStateDto } from './dto/game-state.dto';
+import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
 
@@ -231,24 +232,12 @@ export class GameServerGateway
 
   @SubscribeMessage('host_game')
   async hostGame(
-    @MessageBody()
-    data: {
-      lectureId: number;
-      classId: number;
-      timeFactorWeight: number;
-      questionTypes: QuestionType[];
-    },
+    @MessageBody() data: HostGameDto,
     @ConnectedSocket() socc: Socket,
   ) {
     try {
       const user: User = socc.data.user;
-      const game = await this.gameServerService.hostGame(
-        data.lectureId,
-        data.classId,
-        user.id,
-        data.timeFactorWeight,
-        data.questionTypes,
-      );
+      const game = await this.gameServerService.hostGame(user.id, data);
       const room = this.getRoom(game.id);
 
       socc.join(room);
