@@ -339,6 +339,20 @@ export class CurriculumService {
       //get paginate curriculum
       const rawPaginate = await paginate<Curriculum>(query, options);
       Object.assign(rawPaginate, { grades: grades, classes: classes });
+      for (const curri of rawPaginate.items) {
+        const createrName = (
+          await this.userRepo
+            .createQueryBuilder('u')
+            .select('u.fullName')
+            .where('u.id = :id', { id: curri.createdBy })
+            .getOne()
+        ).fullName;
+        const className = (await this.classRepo.findOne(curri.classId)).name;
+        Object.assign(curri, {
+          creatorName: createrName,
+          className: className,
+        });
+      }
       return rawPaginate;
     } catch (error) {
       throw error;
