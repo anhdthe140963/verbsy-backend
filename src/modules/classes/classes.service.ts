@@ -314,6 +314,49 @@ export class ClassesService {
       throw error;
     }
   }
+
+  async getTeachingClasses(gradeId: number, userId: number) {
+    try {
+      const userclasses = await this.userClassRepo.find({
+        teacherId: userId,
+      });
+      const classIds = new Set();
+      //get class ids of teacher
+      for (const uc of userclasses) {
+        classIds.add(uc.classId);
+      }
+      const classes = await this.classesRepository
+        .createQueryBuilder('c')
+        .where('c.id IN (:...ids)', { ids: [...classIds] })
+        .andWhere('c.grade_id = :id', { id: gradeId })
+        .getMany();
+
+      await Promise.all(
+        classes.map(async (cl: Classes) => {
+          const teachers = await this.userClassRepo
+            .createQueryBuilder('u')
+            .where('u.teacher_id IS NOT NULL')
+            .andWhere('u.class_id = :classId', { classId: cl.id })
+            .getMany();
+          if (teachers.length !== 0) {
+            const ids = new Set();
+            for (const teacher of teachers) {
+              ids.add(teacher.teacherId);
+            }
+            const teacherFullNames = await this.userRepository
+              .createQueryBuilder('u')
+              .select(['u.id', 'u.fullName'])
+              .where('u.id IN (:...ids)', { ids: [...ids] })
+              .getMany();
+            cl = Object.assign(cl, { teacherFullNames: teacherFullNames });
+          }
+        }),
+      );
+      return classes;
+    } catch (error) {
+      throw error;
+    }
+  }
   async getStudentByClassId(
     options: IPaginationOptions,
     classId: number,

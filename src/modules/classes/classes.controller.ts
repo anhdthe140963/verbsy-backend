@@ -155,6 +155,21 @@ export class ClassesController {
       data: await this.classesService.getClassListByTeacherId(teacherId),
     };
   }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('teaching-classes/:gradeId')
+  async getUserClassList(
+    @GetUser() user,
+    @Param('gradeId') gradeId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getTeachingClasses(gradeId, user.id),
+    };
+  }
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('students/:classId')
