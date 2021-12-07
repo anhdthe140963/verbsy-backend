@@ -315,14 +315,11 @@ export class CurriculumService {
         for (const admin of admins) {
           adminIds.push(admin.id);
         }
-        console.log(adminIds);
-        console.log(classIds);
         query.where(
           new Brackets((qb) => {
-            qb.where('class_id IN (:...ids)', { ids: classIds }).orWhere(
-              'created_by IN (:...ids)',
-              { ids: adminIds },
-            );
+            qb.where('class_id IN (:...classIds)', {
+              classIds: classIds,
+            }).orWhere('created_by IN (:...adminIds)', { adminIds: adminIds });
           }),
         );
         //check if filter is inputed
@@ -336,7 +333,6 @@ export class CurriculumService {
           query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
         }
       }
-      console.log(query.getQuery());
       //get paginate curriculum
       const rawPaginate = await paginate<Curriculum>(query, options);
       Object.assign(rawPaginate, { grades: grades, classes: classes });
