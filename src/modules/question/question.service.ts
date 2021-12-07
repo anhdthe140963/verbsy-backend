@@ -87,7 +87,7 @@ export class QuestionService {
     }
     const data = await questionById.save();
     //check if answers need update
-    if (answers.length != 0) {
+    if (answers.length != 0 || answers) {
       await Promise.all(
         answers.map(async (answer) => {
           //

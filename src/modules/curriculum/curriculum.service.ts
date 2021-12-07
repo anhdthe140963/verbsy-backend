@@ -316,6 +316,7 @@ export class CurriculumService {
           adminIds.push(admin.id);
         }
         console.log(adminIds);
+        console.log(classIds);
         query.where(
           new Brackets((qb) => {
             qb.where('class_id IN (:...ids)', { ids: classIds }).orWhere(
