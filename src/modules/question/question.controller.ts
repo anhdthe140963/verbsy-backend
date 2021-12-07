@@ -161,7 +161,7 @@ export class QuestionController {
         answer3: string;
         answer4: string;
         correctAnswer: number;
-      }[] = excel['Sheet1'];
+      }[] = excel['Questions'];
       const questions: Question[] = [];
       for (const raw of rawData) {
         //new question
@@ -193,10 +193,11 @@ export class QuestionController {
 
         questions.push(question);
       }
+
       return {
         statusCode: HttpStatus.OK,
         error: null,
-        message: 'Teachers added succesfully',
+        message: 'Questions added succesfully',
         data: await this.questionService.importQuestion(questions),
       };
     } catch (error) {
