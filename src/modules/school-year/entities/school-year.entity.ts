@@ -7,4 +7,7 @@ export class SchoolYear extends BaseEntity {
 
   @Column()
   name: string;
+
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
 }

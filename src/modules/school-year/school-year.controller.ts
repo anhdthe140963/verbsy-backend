@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -87,6 +88,21 @@ export class SchoolYearController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'School year deleted',
+    };
+  }
+
+  @Put('change-status/:id')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  async changeSchoolYearStatus(
+    @Param('id') id: number,
+    @Body() status: { isActive: boolean },
+  ): Promise<{ statusCode; error; message }> {
+    await this.schoolYearService.changeStatus(id, status.isActive);
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'School year status changed',
     };
   }
 }

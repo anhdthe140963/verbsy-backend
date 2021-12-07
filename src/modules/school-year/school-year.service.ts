@@ -68,4 +68,17 @@ export class SchoolYearService {
       throw error;
     }
   }
+
+  async changeStatus(id: number, isActive: boolean) {
+    try {
+      const data = await this.schoolYearRepo.findOne(id);
+      if (!data) {
+        throw new NotFoundException('School year does not exist');
+      }
+      data.isActive = isActive;
+      await data.save();
+    } catch (error) {
+      throw error;
+    }
+  }
 }
