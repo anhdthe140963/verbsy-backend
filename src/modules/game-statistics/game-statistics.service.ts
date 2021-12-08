@@ -75,86 +75,51 @@ export class GameStatisticsService {
   }
 
   async getAnswerStatistics(gameId: number, questionId: number) {
+    const question = await this.questionRepository.findOne(questionId);
     const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
       where: { gameId, questionId },
     });
-
+    const players = await this.playerRepository.find({ where: { gameId } });
+    const playersIds = [];
+    for (const player of players) {
+      playersIds.push(player.id);
+    }
+    let answerStats = [];
     switch (questionTypeConfig.questionType) {
       case QuestionType.MultipleChoice:
-        const questionRecord = await this.questionRecordRepository.findOne({
-          where: { gameId, questionId },
-        });
-
-        if (questionRecord.answeredPlayers == 0) {
-          return await this.answerRepository.find({
-            where: { question: { id: questionId } },
+        for (const answer of question.answers) {
+          const count = await this.playerDataRepository.count({
+            where: { playerId: In(playersIds), answerId: answer.id },
           });
+          answerStats.push({ ...answer, count });
         }
-
-        const statistics = await this.playerDataRepository
-          .createQueryBuilder('pd')
-          .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
-          .leftJoin(Answer, 'a', 'pd.answer_id = a.id')
-          .select('a.id', 'id')
-          .addSelect('a.content', 'content')
-          .addSelect('a.is_correct', 'isCorrect')
-          .addSelect('COUNT(pd.answerId)', 'count')
-          .where('pl.game_id = :gameId', { gameId: gameId })
-          .andWhere('pd.question_id = :questionId', { questionId: questionId })
-          .groupBy('pd.answerId')
-          .getRawMany();
-
-        const appearedAnswersIds = [];
-        for (const s of statistics) {
-          appearedAnswersIds.push(s.id);
-        }
-
-        const answers = await this.answerRepository.find({
-          where: {
-            question: { id: questionId },
-            id: Not(In(appearedAnswersIds)),
-          },
-        });
-
-        for (const s of statistics) {
-          s.isCorrect = new Boolean(s.isCorrect);
-          s.count = parseInt(s.count);
-        }
-
-        const answerStats = answers.concat(statistics);
-        answerStats.sort((a, b) => a.id - b.id);
-
-        return answerStats;
-
+        break;
       case QuestionType.Scramble:
       case QuestionType.Writting:
-        const players = await this.playerRepository.find({ where: { gameId } });
-        const playersIds = [];
-        for (const player of players) {
-          playersIds.push(player.id);
-        }
-        const correctPlayersCount = await this.playerDataRepository.count({
-          where: {
-            playerId: In(playersIds),
-            questionId: questionId,
-            isCorrect: true,
-          },
-        });
-        const correctAnswers = await this.answerRepository.find({
-          where: { question: { id: questionId }, isCorrect: true },
-        });
-
-        const correctAnswersContents: string[] = [];
-        for (const correctAnswer of correctAnswers) {
-          correctAnswersContents.push(correctAnswer.content);
-        }
-
-        return {
-          correctAnswersContents,
-          correctPlayersCount,
-          incorrectPlayersCount: players.length - correctPlayersCount,
-        };
+        answerStats = await this.playerDataRepository
+          .createQueryBuilder('pd')
+          .select('pd.answer_id', 'id')
+          .addSelect('pd.answer', 'answer')
+          .addSelect('COUNT(*)', 'count')
+          .where('pd.player_id IN(:playerIds)', { playersIds })
+          .andWhere('pd.answer NOT null')
+          .groupBy('id')
+          .addGroupBy('answer')
+          .getRawMany();
+        break;
     }
+
+    answerStats.push({
+      noAnswer: await this.playerDataRepository.count({
+        where: {
+          playerId: In(playersIds),
+          questionId: question.id,
+          answer: null,
+        },
+      }),
+    });
+
+    return answerStats;
   }
 
   async getLeaderboard(gameId: number): Promise<
