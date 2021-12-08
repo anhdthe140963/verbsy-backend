@@ -32,7 +32,7 @@ export class GameStatisticsService {
     private readonly userClassRepository: UserClassRepository,
   ) {}
 
-  async getSummary(gameId: number) {
+  async getGameGeneralInfo(gameId: number) {
     const game = await this.gameRepository.findOne(gameId);
     //Game duration in seconds
     const time = (game.endedAt.getTime() - game.createdAt.getTime()) / 1000;
@@ -245,4 +245,6 @@ export class GameStatisticsService {
       answers: answersStats,
     };
   }
+
+  async getNeedHelpPlayers(gameId: number) {}
 }

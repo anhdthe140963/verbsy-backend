@@ -5,9 +5,23 @@ import { GameStatisticsService } from './game-statistics.service';
 export class GameStatisticsController {
   constructor(private readonly gameStatisticsService: GameStatisticsService) {}
 
+  @Get('leaderboard/:gameId')
+  async getLeaderboard(@Param('gameId') gameId: number) {
+    const leaderboard = await this.gameStatisticsService.getLeaderboard(gameId);
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: {
+        leaderboard,
+      },
+    };
+  }
+
   @Get('summary/:gameId')
   async getGameSummary(@Param('gameId') gameId: number) {
-    const summary = await this.gameStatisticsService.getSummary(gameId);
+    const generalInfo = await this.gameStatisticsService.getGameGeneralInfo(
+      gameId,
+    );
     const leaderboard = await this.gameStatisticsService.getLeaderboard(gameId);
     const completionRate =
       await this.gameStatisticsService.getGameCompletionRate(gameId);
@@ -15,7 +29,7 @@ export class GameStatisticsController {
       status: HttpStatus.OK,
       message: 'h',
       data: {
-        summary,
+        summary: generalInfo,
         leaderboard,
         completionRate,
       },
