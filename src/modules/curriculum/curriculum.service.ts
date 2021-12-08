@@ -87,8 +87,6 @@ export class CurriculumService {
           .createQueryBuilder()
           .where('curriculum_id = :id', { id: curriculumById.id })
           .getMany();
-        console.log(lessons);
-
         //clone curriculum's lessons
         for (const lesson of lessons) {
           const ls = new Lesson();
@@ -257,18 +255,35 @@ export class CurriculumService {
       const query = this.curriculumRepo.createQueryBuilder();
       const classes = [];
       const grades = await this.gradeRepo.find();
-      //check if user is a Admin
+      const classesBySyId = [];
+      if (filter.schoolYearId) {
+        const classes = await this.classRepo.find({
+          schoolYearId: filter.schoolYearId,
+        });
+        for (const c of classes) {
+          classesBySyId.push(c.id);
+        }
+        if (classesBySyId.length == 0) {
+          throw new NotFoundException('None class in selected school year');
+        }
+      }
       if (user.role == Role.Administrator) {
+        //check if user is a Admin
         classes.push(await this.classRepo.find());
         //check if filter is inputed
         if (filter.classId) {
-          query.andWhere('class_id = :id', { id: filter.classId });
+          query.andWhere('class_id = :classId', { classId: filter.classId });
         }
         if (filter.gradeId) {
-          query.andWhere('grade_id = :id', { id: filter.gradeId });
+          query.andWhere('grade_id = :gradeId', { id: filter.gradeId });
         }
         if (filter.name) {
           query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
+        if (filter.schoolYearId) {
+          query.andWhere('class_id IN (:...classBySyIds)', {
+            classBySyIds: classesBySyId,
+          });
         }
       }
       //check if user is a student
@@ -287,13 +302,18 @@ export class CurriculumService {
         query.where('class_id IN (:...ids)', { ids: classIds });
         //check if filter is inputed
         if (filter.classId) {
-          query.andWhere('class_id = :id', { id: filter.classId });
+          query.andWhere('class_id = :classId', { classId: filter.classId });
         }
         if (filter.gradeId) {
-          query.andWhere('grade_id = :id', { id: filter.gradeId });
+          query.andWhere('grade_id = :gradeId', { gradeId: filter.gradeId });
         }
         if (filter.name) {
           query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
+        if (filter.schoolYearId) {
+          query.andWhere('class_id IN (:...classBySyIds)', {
+            classBySyIds: classesBySyId,
+          });
         }
       }
       //check if user is a Teacher
@@ -315,22 +335,36 @@ export class CurriculumService {
         for (const admin of admins) {
           adminIds.push(admin.id);
         }
-        query.where(
-          new Brackets((qb) => {
-            qb.where('class_id IN (:...classIds)', {
-              classIds: classIds,
-            }).orWhere('created_by IN (:...adminIds)', { adminIds: adminIds });
-          }),
-        );
+        //check if only get sample curriculum
+        if (filter.sample == 1) {
+          query.where('created_by IN (:...adminIds)', { adminIds: adminIds });
+        } else if (filter.sample == 0) {
+          query.where('class_id IN (:...classIds)', { classIds: classIds });
+        } else {
+          query.where(
+            new Brackets((qb) => {
+              qb.where('class_id IN (:...classIds)', {
+                classIds: classIds,
+              }).orWhere('created_by IN (:...adminIds)', {
+                adminIds: adminIds,
+              });
+            }),
+          );
+        }
         //check if filter is inputed
         if (filter.classId) {
-          query.andWhere('class_id = :id', { id: filter.classId });
+          query.andWhere('class_id = :classId', { classId: filter.classId });
         }
         if (filter.gradeId) {
-          query.andWhere('grade_id = :id', { id: filter.gradeId });
+          query.andWhere('grade_id = :gradeId', { gradeId: filter.gradeId });
         }
         if (filter.name) {
           query.andWhere('name LIKE :name', { name: `%${filter.name}%` });
+        }
+        if (filter.schoolYearId) {
+          query.andWhere('class_id IN (:...classBySyIds)', {
+            classBySyIds: classesBySyId,
+          });
         }
       }
       //get paginate curriculum
