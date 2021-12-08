@@ -15,13 +15,4 @@ export class StudentInfo extends BaseEntity {
 
   @Column({ name: 'status', type: 'varchar', nullable: true })
   status: string;
-
-  @Column({ name: 'current_exp', type: 'int', default: '0' })
-  currentExp: number;
-
-  @Column({ name: 'req_exp', type: 'int', default: '0' })
-  reqExp: number;
-
-  @Column({ name: 'level', type: 'int', default: '0' })
-  level: number;
 }
