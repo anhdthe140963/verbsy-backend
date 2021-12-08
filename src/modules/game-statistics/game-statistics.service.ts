@@ -34,9 +34,13 @@ export class GameStatisticsService {
 
   async getSummary(gameId: number) {
     const game = await this.gameRepository.findOne(gameId);
-    //Game duration in minutes
-    const time =
-      (game.endedAt.getTime() - game.createdAt.getTime()) / 1000 / 60;
+    //Game duration in seconds
+    const time = (game.endedAt.getTime() - game.createdAt.getTime()) / 1000;
+
+    // const time = 75;
+
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time - minutes * 60);
 
     const players = await this.playerRepository.count({ where: { gameId } });
     const playersInClass = await this.userClassRepository.count({
@@ -70,7 +74,9 @@ export class GameStatisticsService {
         hard,
         total: easy + medium + hard,
       },
-      time: time.toFixed(2),
+      time: minutes
+        ? minutes + ' minutes ' + seconds + ' seconds'
+        : seconds + ' seconds',
     };
   }
 
