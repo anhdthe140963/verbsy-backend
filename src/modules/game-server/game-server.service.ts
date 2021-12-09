@@ -460,6 +460,7 @@ export class GameServerService {
     const game = await this.gameRepository.save({
       hostId: hostId,
       classId: hostGameDto.classId,
+      lessonId: hostGameDto.lessonId,
       lectureId: hostGameDto.lectureId,
       questionsConfig: hostGameDto.questionsConfig,
       difficultyConfig: hostGameDto.difficultyConfig,

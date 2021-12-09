@@ -1,6 +1,7 @@
 import { QuestionType } from 'src/constant/question-type.enum';
 
 export class HostGameDto {
+  lessonId: number;
   lectureId: number;
   classId: number;
   questionsConfig: {
