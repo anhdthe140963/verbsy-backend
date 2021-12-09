@@ -5,9 +5,12 @@ import { QuestionType } from 'src/constant/question-type.enum';
 import { In, Like, Not } from 'typeorm';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
+import { Lesson } from '../curriculum/entities/lesson.entity';
+import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
@@ -36,6 +39,8 @@ export class GameStatisticsService {
     private readonly userClassRepository: UserClassRepository,
     private readonly lectureRepository: LectureRepository,
     private readonly classesRepository: ClassesRepository,
+    private readonly curriculumRepository: CurriculumRepository,
+    private readonly lessonRepository: LessonRepository,
   ) {}
 
   async getLatestGame(hostId: number) {
@@ -196,8 +201,14 @@ export class GameStatisticsService {
     const lecture = await this.lectureRepository.findOne(game.lectureId);
     const cl = await this.classesRepository.findOne(game.classId);
 
+    let lesson: Lesson;
+    if (game.lessonId) {
+      lesson = await this.lessonRepository.findOne(game.lessonId);
+    }
+
     return {
       gameId: game.id,
+      curriculumId: game.lessonId ? lesson.curriculumId : null,
       lessonId: game.lessonId,
       classId: game.classId,
       className: cl.name,
