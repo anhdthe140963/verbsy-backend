@@ -198,6 +198,7 @@ export class GameStatisticsService {
 
     return {
       gameId: game.id,
+      lessonId: game.lessonId,
       classId: game.classId,
       className: cl.name,
       lectureId: lecture.id,

@@ -15,6 +15,9 @@ export class Game extends BaseEntity {
   @Column({ name: 'lecture_id' })
   lectureId: number;
 
+  @Column({ name: 'lesson_id', nullable: true })
+  lessonId: number;
+
   @Column({ name: 'class_id' })
   classId: number;
 
