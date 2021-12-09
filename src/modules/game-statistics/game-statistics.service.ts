@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { In, Like, Not } from 'typeorm';
+import { Classes } from '../classes/entity/classes.entity';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
@@ -31,6 +32,47 @@ export class GameStatisticsService {
     private readonly userRepository: UserRepository,
     private readonly userClassRepository: UserClassRepository,
   ) {}
+
+  async getGamesOfLecture(lectureId: number) {
+    const games = await this.gameRepository
+      .createQueryBuilder('g')
+      .leftJoin(User, 'u', 'g.host_id = u.id')
+      .leftJoin(Classes, 'cl', 'g.class_id = cl.id')
+      .select('g.id', 'id')
+      .addSelect('u.full_name', 'hostName')
+      .addSelect('cl.id', 'classId')
+      .addSelect('cl.name', 'className')
+      .addSelect('g.questions_config', 'questionsConfig')
+      .addSelect('g.created_at', 'createdAt')
+      .where('g.lecture_id =:lectureId', { lectureId })
+      .getRawMany();
+
+    for (const g of games) {
+      const game: {
+        id: number;
+        hostName: string;
+        classId: number;
+        className: string;
+        createdAt: Date;
+        joined: string;
+        questionsConfig: {
+          questions: number;
+          questionTypes: QuestionType[];
+          timeFactorWeight: number;
+        };
+      } = g;
+      game.joined =
+        (await this.playerRepository.count({
+          where: { gameId: game.id },
+        })) +
+        '/' +
+        (await this.userClassRepository.count({
+          where: { classId: game.classId, teacherId: null },
+        }));
+    }
+
+    return games;
+  }
 
   async getGameGeneralInfo(gameId: number) {
     const game = await this.gameRepository.findOne(gameId);

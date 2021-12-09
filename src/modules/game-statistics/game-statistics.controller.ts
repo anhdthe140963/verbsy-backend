@@ -5,6 +5,16 @@ import { GameStatisticsService } from './game-statistics.service';
 export class GameStatisticsController {
   constructor(private readonly gameStatisticsService: GameStatisticsService) {}
 
+  @Get('games/:lectureId')
+  async getGamesOfLecture(@Param('lectureId') lectureId: number) {
+    const games = await this.gameStatisticsService.getGamesOfLecture(lectureId);
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: games,
+    };
+  }
+
   @Get('leaderboard/:gameId')
   async getLeaderboard(@Param('gameId') gameId: number) {
     const leaderboard = await this.gameStatisticsService.getLeaderboard(gameId);
