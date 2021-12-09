@@ -45,6 +45,7 @@ export class GameStatisticsService {
       .addSelect('g.questions_config', 'questionsConfig')
       .addSelect('g.created_at', 'createdAt')
       .where('g.lecture_id =:lectureId', { lectureId })
+      .andWhere('g.is_game_live = false')
       .getRawMany();
 
     for (const g of games) {
