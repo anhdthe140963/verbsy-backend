@@ -437,14 +437,55 @@ export class GameStatisticsService {
         duration: number;
         difficulty: QuestionLevel;
         answers: any;
+        completionRate: any;
       } = q;
       question.answers = await this.getAnswerStatistics(
+        gameId,
+        question.questionId,
+      );
+      question.completionRate = await this.getQuestionCompletionRate(
         gameId,
         question.questionId,
       );
     }
 
     return questions;
+  }
+
+  async getQuestionCompletionRate(gameId: number, questionId: number) {
+    const players = await this.playerRepository.find({ where: { gameId } });
+
+    const playersIds = [];
+    for (const p of players) {
+      playersIds.push(p.id);
+    }
+
+    const playersData = await this.playerDataRepository.find({
+      where: { playerId: In(playersIds), questionId: questionId },
+    });
+
+    let correct = 0;
+    let incorrect = 0;
+    let notAnswered = 0;
+    for (const p of playersData) {
+      switch (p.isCorrect) {
+        case null:
+          notAnswered++;
+          break;
+        case true:
+          correct++;
+          break;
+        case false:
+          incorrect++;
+          break;
+      }
+    }
+
+    return {
+      correct,
+      incorrect,
+      notAnswered,
+    };
   }
 
   async getNeedHelpPlayers(gameId: number) {}
