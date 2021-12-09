@@ -432,11 +432,27 @@ export class GameStatisticsService {
       playersIds.push(p.id);
     }
 
-    const playersData = await this.playerDataRepository.find();
+    // const playersData = await this.playerDataRepository.find({
+    //   where: { playerId: In(playersIds), questionId },
+    // });
 
+    const playersData = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .leftJoin(Player, 'pl', 'pd.player_id = pl.id')
+      .leftJoin(User, 'u', 'pl.student_id = u.id')
+      .select('u.id', 'id')
+      .addSelect('u.full_name', 'fullName')
+      .addSelect('pd.answer', 'answer')
+      .addSelect('pd.is_correct', 'isCorrect')
+      .addSelect('pd.answer_time', 'answerTime')
+      .addSelect('pd.score', 'score')
+      .where('pd.player_id IN(:playersIds)', { playersIds })
+      .andWhere('pd.question_id =:questionId', { questionId })
+      .getRawMany();
     return {
       ...question,
       answers: answersStats,
+      playersData,
     };
   }
 
