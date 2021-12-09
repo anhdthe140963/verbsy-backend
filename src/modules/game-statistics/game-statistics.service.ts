@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
-import { In, Not } from 'typeorm';
+import { In, Like, Not } from 'typeorm';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
@@ -85,6 +85,11 @@ export class GameStatisticsService {
     const questionTypeConfig = await this.questionTypeConfigRepository.findOne({
       where: { gameId, questionId },
     });
+
+    if (!questionTypeConfig) {
+      throw new BadRequestException('Question not in game');
+    }
+
     const players = await this.playerRepository.find({ where: { gameId } });
     const playersIds = [];
     for (const player of players) {
@@ -102,16 +107,61 @@ export class GameStatisticsService {
         break;
       case QuestionType.Scramble:
       case QuestionType.Writting:
-        answerStats = await this.playerDataRepository
+        const correctAnswers = await this.answerRepository.find({
+          where: { question: { id: questionId }, isCorrect: true },
+        });
+
+        for (const a of correctAnswers) {
+          const correctAnswerCount = await this.playerDataRepository.count({
+            where: {
+              answer: Like(a.content),
+              playerId: In(playersIds),
+              questionId,
+            },
+          });
+          answerStats.push({
+            id: null,
+            answer: a.content,
+            isCorrect: true,
+            count: correctAnswerCount,
+          });
+        }
+
+        const incorrectAnswers = await this.playerDataRepository
           .createQueryBuilder('pd')
           .select('pd.answer_id', 'id')
           .addSelect('pd.answer', 'answer')
+          .addSelect('pd.is_correct', 'isCorrect')
           .addSelect('COUNT(*)', 'count')
-          .where('pd.player_id IN(:playerIds)', { playersIds })
-          .andWhere('pd.answer NOT null')
-          .groupBy('id')
-          .addGroupBy('answer')
+          .where('pd.player_id IN(:playersIds)', {
+            playersIds,
+          })
+          .andWhere('pd.question_id = :questionId', { questionId })
+          .andWhere('pd.is_correct = false')
+          .andWhere('pd.answer IS NOT null')
+          .groupBy('pd.answer_id')
+          .addGroupBy('pd.answer')
+          .addGroupBy('pd.is_correct')
           .getRawMany();
+
+        answerStats = answerStats.concat(incorrectAnswers);
+        // const playersData = await this.playerDataRepository.find({
+        //   where: { playerId: In(playersIds), questionId: questionId },
+        // });
+
+        // for (const pd of playersData) {
+
+        // }
+
+        // for (const a of playerDatas) {
+        //   const answerStat = a as {
+        //     id: number;
+        //     answer: string;
+        //     isCorrect: boolean;
+        //     count: number;
+        //   };
+        //   answerStats.push(answerStat);
+        // }
         break;
     }
 
@@ -247,16 +297,34 @@ export class GameStatisticsService {
   }
 
   async getGameQuestions(gameId: number) {
-    const questions = await this.questionTypeConfigRepository
-      .createQueryBuilder('qtc')
-      .leftJoin(Question, 'q', 'qtc.question_id = q.id')
-      .select('qtc.id', 'id')
+    const questions = await this.questionRecordRepository
+      .createQueryBuilder('qr')
+      .leftJoin(QuestionTypeConfig, 'qtc', 'qr.question_id = qtc.question_id')
+      .leftJoin(Question, 'q', 'qr.question_id = q.id')
+      .select('qr.id', 'id')
+      .addSelect('q.id', 'questionId')
       .addSelect('q.question', 'question')
-      .addSelect('qtc.question_type', 'quesionType')
+      .addSelect('qtc.question_type', 'questionType')
       .addSelect('q.duration', 'duration')
       .addSelect('q.level', 'difficulty')
-      .where('qtc.game_id = :gameId', { gameId })
+      .where('qr.game_id = :gameId', { gameId })
       .getRawMany();
+
+    for (const q of questions) {
+      const question: {
+        id: number;
+        questionId: number;
+        question: string;
+        questionType: QuestionType;
+        duration: number;
+        difficulty: QuestionLevel;
+        answers: any;
+      } = q;
+      question.answers = await this.getAnswerStatistics(
+        gameId,
+        question.questionId,
+      );
+    }
 
     return questions;
   }
