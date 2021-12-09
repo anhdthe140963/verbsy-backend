@@ -12,6 +12,8 @@ import { Curriculum } from '../curriculum/entities/curriculum.entity';
 import { Lesson } from '../curriculum/entities/lesson.entity';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
@@ -30,6 +32,8 @@ export class GameService {
     private playerDataRepository: PlayerDataRepository,
     private lectureRepository: LectureRepository,
     private userRepository: UserRepository,
+    private lessonLectureRepository: LessonLectureRepository,
+    private lessonRepository: LessonRepository,
   ) {}
   async findActiveGames(user: User): Promise<Game[]> {
     try {
@@ -157,11 +161,18 @@ export class GameService {
             gameId: game.id,
           })
         ).length;
+        const lessonLecture = await this.lessonLectureRepository.findOne(
+          game.lectureId,
+        );
+        const lesson = await this.lessonRepository.findOne(
+          lessonLecture.lessonId,
+        );
         Object.assign(game, {
           lectureName: (await this.lectureRepository.findOne(game.lectureId))
             .name,
           hostName: (await this.userRepository.findOne(game.hostId)).fullName,
           className: (await this.classRepository.findOne(game.classId)).name,
+          lessonName: lesson.name,
           joined: playerJoin / studentNumber,
         });
       }
