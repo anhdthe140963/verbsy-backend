@@ -5,6 +5,7 @@ import { In, Like, Not } from 'typeorm';
 import { Classes } from '../classes/entity/classes.entity';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
 import { Player } from '../player/entities/player.entity';
 import { PlayerRepository } from '../player/repository/player.repository';
@@ -31,9 +32,12 @@ export class GameStatisticsService {
     private readonly answerRepository: AnswerRepository,
     private readonly userRepository: UserRepository,
     private readonly userClassRepository: UserClassRepository,
+    private readonly lectureRepository: LectureRepository,
   ) {}
 
   async getGamesOfLecture(lectureId: number) {
+    const lecture = await this.lectureRepository.findOne(lectureId);
+
     const games = await this.gameRepository
       .createQueryBuilder('g')
       .leftJoin(User, 'u', 'g.host_id = u.id')
@@ -46,6 +50,7 @@ export class GameStatisticsService {
       .addSelect('g.created_at', 'createdAt')
       .where('g.lecture_id =:lectureId', { lectureId })
       .andWhere('g.is_game_live = false')
+      .orderBy('g.created_at', 'DESC')
       .getRawMany();
 
     for (const g of games) {
@@ -72,7 +77,12 @@ export class GameStatisticsService {
         }));
     }
 
-    return games;
+    return {
+      lectureId: lecture.id,
+      lectureName: lecture.name,
+      count: games.length,
+      games,
+    };
   }
 
   async getGameGeneralInfo(gameId: number) {
