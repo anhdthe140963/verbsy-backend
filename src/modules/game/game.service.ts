@@ -3,7 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { number } from 'joi';
 import { Role } from 'src/constant/role.enum';
+import { IsNull, Not } from 'typeorm';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Curriculum } from '../curriculum/entities/curriculum.entity';
@@ -139,10 +141,31 @@ export class GameService {
   }
   async getTeacherActiveGames(user: User): Promise<Game[]> {
     try {
-      return await this.gameRepository.find({
+      const games = await this.gameRepository.find({
         hostId: user.id,
         isGameLive: true,
       });
+      for (const game of games) {
+        const studentNumber = (
+          await this.userClassRepository.find({
+            classId: game.classId,
+            studentId: Not(IsNull()),
+          })
+        ).length;
+        const playerJoin = (
+          await this.playerRepository.find({
+            gameId: game.id,
+          })
+        ).length;
+        Object.assign(game, {
+          lectureName: (await this.lectureRepository.findOne(game.lectureId))
+            .name,
+          hostName: (await this.userRepository.findOne(game.hostId)).fullName,
+          className: (await this.classRepository.findOne(game.classId)).name,
+          joined: playerJoin / studentNumber,
+        });
+      }
+      return games;
     } catch (error) {
       throw error;
     }
