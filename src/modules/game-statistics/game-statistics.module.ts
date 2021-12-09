@@ -15,6 +15,7 @@ import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { UserRepository } from '../user/repository/user.repository';
+import { ClassesRepository } from '../classes/repository/classes.repository';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserRepository } from '../user/repository/user.repository';
       PlayerRepository,
       UserRepository,
       UserClassRepository,
+      ClassesRepository,
       QuestionRecordRepository,
       PlayerDataRepository,
       LectureRepository,

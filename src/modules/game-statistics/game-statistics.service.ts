@@ -4,6 +4,7 @@ import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { In, Like, Not } from 'typeorm';
 import { Classes } from '../classes/entity/classes.entity';
+import { ClassesRepository } from '../classes/repository/classes.repository';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
@@ -34,6 +35,7 @@ export class GameStatisticsService {
     private readonly userRepository: UserRepository,
     private readonly userClassRepository: UserClassRepository,
     private readonly lectureRepository: LectureRepository,
+    private readonly classesRepository: ClassesRepository,
   ) {}
 
   async getLatestGame(hostId: number) {
@@ -191,7 +193,15 @@ export class GameStatisticsService {
       where: { id: In(questionIds), level: QuestionLevel.Hard },
     });
 
+    const lecture = await this.lectureRepository.findOne(game.lectureId);
+    const cl = await this.classesRepository.findOne(game.classId);
+
     return {
+      gameId: game.id,
+      classId: game.classId,
+      className: cl.name,
+      lectureId: lecture.id,
+      lectureName: lecture.name,
       players: players + `/` + playersInClass,
       questions: {
         easy,
@@ -415,6 +425,14 @@ export class GameStatisticsService {
       loadEagerRelations: false,
     });
     const answersStats = await this.getAnswerStatistics(gameId, questionId);
+
+    const players = await this.playerRepository.find({ where: { gameId } });
+    const playersIds = [];
+    for (const p of players) {
+      playersIds.push(p.id);
+    }
+
+    const playersData = await this.playerDataRepository.find();
 
     return {
       ...question,
