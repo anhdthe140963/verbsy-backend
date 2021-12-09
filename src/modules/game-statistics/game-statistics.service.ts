@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { paginateRaw } from 'nestjs-typeorm-paginate';
 import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { In, Like, Not } from 'typeorm';
@@ -66,6 +67,7 @@ export class GameStatisticsService {
           questionTypes: QuestionType[];
           timeFactorWeight: number;
         };
+        completionRate: any;
       } = g;
       game.joined =
         (await this.playerRepository.count({
@@ -75,6 +77,7 @@ export class GameStatisticsService {
         (await this.userClassRepository.count({
           where: { classId: game.classId, teacherId: null },
         }));
+      game.completionRate = await this.getGameCompletionRate(game.id);
     }
 
     return {
@@ -84,6 +87,68 @@ export class GameStatisticsService {
       games,
     };
   }
+
+  // async getPaginatedGamesOfLecture(lectureId: number) {
+  //   const lecture = await this.lectureRepository.findOne(lectureId);
+
+  //   const games = await this.gameRepository
+  //     .createQueryBuilder('g')
+  //     .leftJoin(User, 'u', 'g.host_id = u.id')
+  //     .leftJoin(Classes, 'cl', 'g.class_id = cl.id')
+  //     .select('g.id', 'id')
+  //     .addSelect('u.full_name', 'hostName')
+  //     .addSelect('cl.id', 'classId')
+  //     .addSelect('cl.name', 'className')
+  //     .addSelect('g.questions_config', 'questionsConfig')
+  //     .addSelect('g.created_at', 'createdAt')
+  //     .where('g.lecture_id =:lectureId', { lectureId })
+  //     .andWhere('g.is_game_live = false')
+  //     .orderBy('g.created_at', 'DESC');
+
+  //   const paginated = paginateRaw<{
+  //     id: number;
+  //     hostName: string;
+  //     classId: number;
+  //     className: string;
+  //     createdAt: Date;
+  //     questionsConfig: {
+  //       questions: number;
+  //       questionTypes: QuestionType[];
+  //       timeFactorWeight: number;
+  //     };
+  //   }>(games, { page: 1, limit: 10 });
+
+  //   for (const g of (await paginated).items) {
+  //     const game: {
+  //       id: number;
+  //       hostName: string;
+  //       classId: number;
+  //       className: string;
+  //       createdAt: Date;
+  //       joined: string;
+  //       questionsConfig: {
+  //         questions: number;
+  //         questionTypes: QuestionType[];
+  //         timeFactorWeight: number;
+  //       };
+  //     } = g;
+  //     game.joined =
+  //       (await this.playerRepository.count({
+  //         where: { gameId: game.id },
+  //       })) +
+  //       '/' +
+  //       (await this.userClassRepository.count({
+  //         where: { classId: game.classId, teacherId: null },
+  //       }));
+  //   }
+
+  //   return {
+  //     lectureId: lecture.id,
+  //     lectureName: lecture.name,
+  //     count: games.length,
+  //     games,
+  //   };
+  // }
 
   async getGameGeneralInfo(gameId: number) {
     const game = await this.gameRepository.findOne(gameId);
