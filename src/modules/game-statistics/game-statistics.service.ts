@@ -246,5 +246,20 @@ export class GameStatisticsService {
     };
   }
 
+  async getGameQuestions(gameId: number) {
+    const questions = await this.questionTypeConfigRepository
+      .createQueryBuilder('qtc')
+      .leftJoin(Question, 'q', 'qtc.question_id = q.id')
+      .select('qtc.id', 'id')
+      .addSelect('q.question', 'question')
+      .addSelect('qtc.question_type', 'quesionType')
+      .addSelect('q.duration', 'duration')
+      .addSelect('q.level', 'difficulty')
+      .where('qtc.game_id = :gameId', { gameId })
+      .getRawMany();
+
+    return questions;
+  }
+
   async getNeedHelpPlayers(gameId: number) {}
 }

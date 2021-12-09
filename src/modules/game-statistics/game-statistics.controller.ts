@@ -48,6 +48,16 @@ export class GameStatisticsController {
     };
   }
 
+  @Get('questions/:gameId')
+  async getGameQuesitons(@Param('gameId') gameId: number) {
+    const questions = await this.gameStatisticsService.getGameQuestions(gameId);
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: questions,
+    };
+  }
+
   @Get('question/:gameId/:questionId')
   async getQuestionDetailedStats(
     @Param('gameId') gameId: number,
