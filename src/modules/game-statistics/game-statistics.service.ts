@@ -36,6 +36,13 @@ export class GameStatisticsService {
     private readonly lectureRepository: LectureRepository,
   ) {}
 
+  async getLatestGame(hostId: number) {
+    return await this.gameRepository.findOne({
+      where: { hostId: hostId },
+      order: { endedAt: 'DESC' },
+    });
+  }
+
   async getGamesOfLecture(lectureId: number) {
     const lecture = await this.lectureRepository.findOne(lectureId);
 
@@ -195,6 +202,7 @@ export class GameStatisticsService {
       time: minutes
         ? minutes + ' minutes ' + seconds + ' seconds'
         : seconds + ' seconds',
+      createdAt: game.createdAt,
     };
   }
 

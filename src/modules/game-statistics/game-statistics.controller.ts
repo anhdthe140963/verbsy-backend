@@ -1,9 +1,43 @@
-import { Controller, Get, HttpCode, HttpStatus, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from 'src/decorator/get-user-decorator';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { User } from '../user/entity/user.entity';
 import { GameStatisticsService } from './game-statistics.service';
 
 @Controller('game-statistics')
 export class GameStatisticsController {
   constructor(private readonly gameStatisticsService: GameStatisticsService) {}
+
+  @Get('latest-game')
+  @UseGuards(AuthGuard(), RolesGuard)
+  async getLatestGameSummary(@GetUser() user: User) {
+    const game = await this.gameStatisticsService.getLatestGame(user.id);
+    const generalInfo = await this.gameStatisticsService.getGameGeneralInfo(
+      game.id,
+    );
+    const leaderboard = await this.gameStatisticsService.getLeaderboard(
+      game.id,
+    );
+    const completionRate =
+      await this.gameStatisticsService.getGameCompletionRate(game.id);
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: {
+        summary: generalInfo,
+        leaderboard,
+        completionRate,
+      },
+    };
+  }
 
   @Get('games/:lectureId')
   async getGamesOfLecture(@Param('lectureId') lectureId: number) {
