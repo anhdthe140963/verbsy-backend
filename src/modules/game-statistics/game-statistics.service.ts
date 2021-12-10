@@ -411,6 +411,7 @@ export class GameStatisticsService {
       .addSelect('pd.answer_time', 'answerTime')
       .addSelect('pd.score', 'score')
       .where('pd.player_id =:playerId', { playerId: player.id })
+      .andWhere('qtc.game_id =:gameId', { gameId: player.gameId })
       .getRawMany();
 
     const answeredQuesitonsIds = [];
