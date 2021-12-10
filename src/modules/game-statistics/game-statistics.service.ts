@@ -313,17 +313,20 @@ export class GameStatisticsService {
         break;
     }
 
-    answerStats.push({
-      noAnswer: await this.playerDataRepository.count({
-        where: {
-          playerId: In(playersIds),
-          questionId: question.id,
-          answer: null,
-        },
-      }),
-    });
+    // answerStats.push();
 
-    return answerStats;
+    return {
+      answered: answerStats,
+      ...{
+        noAnswer: await this.playerDataRepository.count({
+          where: {
+            playerId: In(playersIds),
+            questionId: question.id,
+            answer: null,
+          },
+        }),
+      },
+    };
   }
 
   async getLeaderboard(gameId: number): Promise<

@@ -29,7 +29,7 @@ export class PlayerData extends BaseEntity {
   @Column({ name: 'is_correct', nullable: true, default: null })
   isCorrect: boolean;
 
-  @Column({ name: 'answer_time', default: 0 })
+  @Column({ name: 'answer_time', default: null })
   answerTime: number;
 
   @Column({ name: 'score', default: 0 })

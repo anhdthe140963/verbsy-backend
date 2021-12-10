@@ -239,7 +239,10 @@ export class GameServerService {
         case QuestionType.Scramble:
         case QuestionType.Writting:
           answer = await this.answerRepository.findOne({
-            where: { content: Like(submitAnswerDto.answer) },
+            where: {
+              question: { id: submitAnswerDto.questionId },
+              content: Like(submitAnswerDto.answer),
+            },
           });
           break;
         default:
@@ -313,10 +316,13 @@ export class GameServerService {
       where: { id: Not(In(answeredPlayersIds)), gameId: gameId },
     });
 
+    const question = await this.questionRepository.findOne(questionId);
+
     for (const player of unansweredPlayers) {
       await this.playerDataRepository.insert({
         playerId: player.id,
         questionId: questionId,
+        question: question.question,
       });
     }
 
