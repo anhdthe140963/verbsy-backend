@@ -105,4 +105,15 @@ export class SchoolYearController {
       message: 'School year status changed',
     };
   }
+
+  @Put('set-active/:schoolYearId')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator)
+  async setActiveSchoolYear(@Param('schoolYearId') schoolYearId: number) {
+    await this.schoolYearService.setActiveSchoolYear(schoolYearId);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Active school year set',
+    };
+  }
 }

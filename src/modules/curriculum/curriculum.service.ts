@@ -9,13 +9,18 @@ import { Role } from 'src/constant/role.enum';
 import { Brackets, Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Grade } from '../grade/entities/grade.entity';
+import { GradeRepository } from '../grade/repository/school-year.repository';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
+import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
@@ -26,26 +31,23 @@ import { UpdateCurriculumDto } from './dto/update-curriculum.dto';
 import { UpdateLesssonDto } from './dto/update-lesson.dto';
 import { Curriculum } from './entities/curriculum.entity';
 import { Lesson } from './entities/lesson.entity';
+import { CurriculumRepository } from './repository/curriculum.repository';
 
 @Injectable()
 export class CurriculumService {
   constructor(
-    @InjectRepository(Curriculum)
-    private curriculumRepo: Repository<Curriculum>,
-    private userRepo: UserRepository,
-    private classRepo: ClassesRepository,
-    @InjectRepository(Grade)
-    private gradeRepo: Repository<Grade>,
-    @InjectRepository(Lesson)
-    private lessonRepo: Repository<Lesson>,
-    private lessonMaterialRepo: LessonMaterialRepository,
-    @InjectRepository(LessonLecture)
-    private lessonLectureRepo: Repository<LessonLecture>,
-    private lectureRepo: LectureRepository,
-    private userClassRepo: UserClassRepository,
-    private questionRepo: QuestionRepository,
-    @InjectRepository(Answer)
-    private answerRepo: Repository<Answer>,
+    private readonly curriculumRepository: CurriculumRepository,
+    private readonly userRepository: UserRepository,
+    private readonly classRepository: ClassesRepository,
+    private readonly lessonRepository: LessonRepository,
+    private readonly lessonMaterialRepository: LessonMaterialRepository,
+    private readonly lessonLectureRepository: LessonLectureRepository,
+    private readonly lectureRepository: LectureRepository,
+    private readonly userClassRepository: UserClassRepository,
+    private readonly questionRepository: QuestionRepository,
+    private readonly answerRepository: AnswerRepository,
+    private readonly gradeRepository: GradeRepository,
+    private readonly schoolYearRepository: SchoolYearRepository,
   ) {}
   async create(
     user: User,
@@ -58,7 +60,7 @@ export class CurriculumService {
       curriculum.createdBy = user.id;
       //check grade id
       if (gradeId) {
-        const grade = await this.gradeRepo.findOne(gradeId);
+        const grade = await this.gradeRepository.findOne(gradeId);
         if (!grade) {
           throw new NotFoundException('Grade not found');
         }
@@ -66,7 +68,7 @@ export class CurriculumService {
       }
       //check class id
       if (classId) {
-        const classById = await this.classRepo.findOne(classId);
+        const classById = await this.classRepository.findOne(classId);
         if (!classById) {
           throw new NotFoundException('Class not found');
         }
@@ -77,13 +79,15 @@ export class CurriculumService {
       }
       //check parent id, if curriculum does not have parent id means its a template
       if (parentId) {
-        const curriculumById = await this.curriculumRepo.findOne(parentId);
+        const curriculumById = await this.curriculumRepository.findOne(
+          parentId,
+        );
         if (!curriculumById) {
           throw new NotFoundException('Curriculum not found');
         }
         curriculum.parentId = parentId;
         const curri = await curriculum.save();
-        const lessons = await this.lessonRepo
+        const lessons = await this.lessonRepository
           .createQueryBuilder()
           .where('curriculum_id = :id', { id: curriculumById.id })
           .getMany();
@@ -95,12 +99,12 @@ export class CurriculumService {
           ls.curriculumId = curri.id;
           await ls.save();
           //clone lesson's material
-          const lessonMaterials = await this.lessonMaterialRepo
+          const lessonMaterials = await this.lessonMaterialRepository
             .createQueryBuilder()
             .where('lesson_id = :id', { id: lesson.id })
             .getMany();
           for (const lessonMaterial of lessonMaterials) {
-            await this.lessonMaterialRepo.insert({
+            await this.lessonMaterialRepository.insert({
               displayName: lessonMaterial.displayName,
               url: lessonMaterial.url,
               uploaderId: lessonMaterial.uploaderId,
@@ -108,25 +112,25 @@ export class CurriculumService {
             });
           }
           //clone lectures
-          const lessonLectures = await this.lessonLectureRepo
+          const lessonLectures = await this.lessonLectureRepository
             .createQueryBuilder()
             .where('lesson_id = :id', { id: lesson.id })
             .getMany();
           for (const ll of lessonLectures) {
             //clone lecture
-            const lecture = await this.lectureRepo.findOne(ll.lectureId);
+            const lecture = await this.lectureRepository.findOne(ll.lectureId);
             const newLec = new Lecture();
             newLec.name = lecture.name;
             newLec.content = lecture.content;
             newLec.ownerId = user.id;
             await newLec.save();
-            await this.lessonLectureRepo.insert({
+            await this.lessonLectureRepository.insert({
               lessonId: ls.id,
               lectureId: newLec.id,
             });
 
             //clone lecture's question
-            const questions = await this.questionRepo.find({
+            const questions = await this.questionRepository.find({
               lectureId: lecture.id,
             });
             for (const question of questions) {
@@ -138,11 +142,11 @@ export class CurriculumService {
               await newQ.save();
 
               //clone answer
-              const answers = await this.answerRepo.find({
+              const answers = await this.answerRepository.find({
                 question: question,
               });
               for (const answer of answers) {
-                await this.answerRepo.insert({
+                await this.answerRepository.insert({
                   content: answer.content,
                   isCorrect: answer.isCorrect,
                   question: newQ,
@@ -161,7 +165,7 @@ export class CurriculumService {
   async createLesson(createLessonDto: CreateLessonDto): Promise<Lesson> {
     try {
       //check curriculum
-      const curri = await this.curriculumRepo.findOne(
+      const curri = await this.curriculumRepository.findOne(
         createLessonDto.curriculumId,
       );
       if (!curri) {
@@ -171,7 +175,7 @@ export class CurriculumService {
       newLesson.curriculumId = createLessonDto.curriculumId;
       newLesson.name = createLessonDto.name;
       //get max position value
-      const lessonNumber = await this.lessonRepo
+      const lessonNumber = await this.lessonRepository
         .createQueryBuilder('l')
         .select('MAX(l.position)', 'max')
         .where('l.curriculum_id = :id', { id: createLessonDto.curriculumId })
@@ -252,12 +256,12 @@ export class CurriculumService {
       //   });
       // }
       // return rawPagination;
-      const query = this.curriculumRepo.createQueryBuilder();
+      const query = this.curriculumRepository.createQueryBuilder();
       const classes = [];
-      const grades = await this.gradeRepo.find();
+      const grades = await this.gradeRepository.find();
       const classesBySyId = [];
       if (filter.schoolYearId) {
-        const classes = await this.classRepo.find({
+        const classes = await this.classRepository.find({
           schoolYearId: filter.schoolYearId,
         });
         for (const c of classes) {
@@ -269,7 +273,7 @@ export class CurriculumService {
       }
       if (user.role == Role.Administrator) {
         //check if user is a Admin
-        classes.push(await this.classRepo.find());
+        classes.push(await this.classRepository.find());
         //check if filter is inputed
         if (filter.classId) {
           query.andWhere('class_id = :classId', { classId: filter.classId });
@@ -290,12 +294,12 @@ export class CurriculumService {
       if (user.role == Role.Student) {
         const classIds = [];
         //find user's class
-        const userClasses = await this.userClassRepo.find({
+        const userClasses = await this.userClassRepository.find({
           studentId: user.id,
         });
         //push user class to array
         for (const uc of userClasses) {
-          const classById = await this.classRepo.findOne(uc.classId);
+          const classById = await this.classRepository.findOne(uc.classId);
           classes.push(classById);
           classIds.push(classById.id);
         }
@@ -320,18 +324,20 @@ export class CurriculumService {
       if (user.role == Role.Teacher) {
         const classIds = [];
         //find user's class
-        const userClasses = await this.userClassRepo.find({
+        const userClasses = await this.userClassRepository.find({
           teacherId: user.id,
         });
         //push user class to array
         for (const uc of userClasses) {
-          const classById = await this.classRepo.findOne(uc.classId);
+          const classById = await this.classRepository.findOne(uc.classId);
           classes.push(classById);
           classIds.push(classById.id);
         }
         const adminIds = [];
         //push admin ids to array
-        const admins = await this.userRepo.find({ role: Role.Administrator });
+        const admins = await this.userRepository.find({
+          role: Role.Administrator,
+        });
         for (const admin of admins) {
           adminIds.push(admin.id);
         }
@@ -372,13 +378,14 @@ export class CurriculumService {
       Object.assign(rawPaginate, { grades: grades, classes: classes });
       for (const curri of rawPaginate.items) {
         const createrName = (
-          await this.userRepo
+          await this.userRepository
             .createQueryBuilder('u')
             .select('u.fullName')
             .where('u.id = :id', { id: curri.createdBy })
             .getOne()
         ).fullName;
-        const className = (await this.classRepo.findOne(curri.classId)).name;
+        const className = (await this.classRepository.findOne(curri.classId))
+          .name;
         Object.assign(curri, {
           creatorName: createrName,
           className: className,
@@ -392,26 +399,26 @@ export class CurriculumService {
 
   async findAllLessonByCurriculumId(id: number): Promise<Lesson[]> {
     try {
-      const data = await this.curriculumRepo.findOne(id);
+      const data = await this.curriculumRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
-      const lessons = await this.lessonRepo
+      const lessons = await this.lessonRepository
         .createQueryBuilder()
         .where('curriculum_id = :id', { id: id })
         .orderBy('position', 'ASC')
         .getMany();
       for (const lesson of lessons) {
-        const lessonMaterials = await this.lessonMaterialRepo.find({
+        const lessonMaterials = await this.lessonMaterialRepository.find({
           lessonId: lesson.id,
         });
-        const lessonLecture = await this.lessonLectureRepo.find({
+        const lessonLecture = await this.lessonLectureRepository.find({
           lessonId: lesson.id,
         });
         const lectures = [];
         await Promise.all(
           lessonLecture.map(async (ll: LessonLecture) => {
-            lectures.push(await this.lectureRepo.findOne(ll.lectureId));
+            lectures.push(await this.lectureRepository.findOne(ll.lectureId));
           }),
         );
         lectures.sort((a, b) => (a.id > b.id ? 1 : b.id > a.id ? -1 : 0));
@@ -428,11 +435,11 @@ export class CurriculumService {
 
   async swapLessonPosition(id1: number, id2: number) {
     try {
-      const data1 = await this.lessonRepo.findOne(id1);
+      const data1 = await this.lessonRepository.findOne(id1);
       if (!data1) {
         throw new NotFoundException(`Lesson with id ${id1} not exist`);
       }
-      const data2 = await this.lessonRepo.findOne(id2);
+      const data2 = await this.lessonRepository.findOne(id2);
       if (!data2) {
         throw new NotFoundException(`Lesson with id ${id2} not exist`);
       }
@@ -450,12 +457,12 @@ export class CurriculumService {
 
   async findOne(id: number): Promise<Curriculum> {
     try {
-      const data = await this.curriculumRepo.findOne(id);
+      const data = await this.curriculumRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
-      const classById = await this.classRepo.findOne(data.classId);
-      const createrName = await this.userRepo
+      const classById = await this.classRepository.findOne(data.classId);
+      const createrName = await this.userRepository
         .createQueryBuilder('u')
         .select('u.fullName')
         .where('u.id = :id', { id: data.createdBy })
@@ -472,11 +479,11 @@ export class CurriculumService {
 
   async findOneLesson(id: number): Promise<Lesson> {
     try {
-      const data = await this.lessonRepo.findOne(id);
+      const data = await this.lessonRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Lesson not exist');
       }
-      const lessonMaterials = await this.lessonMaterialRepo.find({
+      const lessonMaterials = await this.lessonMaterialRepository.find({
         lessonId: data.id,
       });
       Object.assign(data, { lessonMaterials: lessonMaterials });
@@ -492,20 +499,20 @@ export class CurriculumService {
     try {
       const { gradeId, classId, parentId } = updateCurriculumDto;
       //check curriculum
-      const curri = await this.curriculumRepo.findOne(id);
+      const curri = await this.curriculumRepository.findOne(id);
       if (!curri) {
         throw new NotFoundException('Curriculum not found');
       }
       if (gradeId) {
         //check grade id
-        const grade = await this.gradeRepo.findOne(gradeId);
+        const grade = await this.gradeRepository.findOne(gradeId);
         if (!grade) {
           throw new NotFoundException('Grade not found');
         }
       }
       //check class id
       if (classId) {
-        const classById = await this.classRepo.findOne(classId);
+        const classById = await this.classRepository.findOne(classId);
         if (!classById) {
           throw new NotFoundException('Class not found');
         }
@@ -515,7 +522,9 @@ export class CurriculumService {
       }
       //check parent id, if curriculum does not have parent id means its a template
       if (parentId) {
-        const curriculumById = await this.curriculumRepo.findOne(parentId);
+        const curriculumById = await this.curriculumRepository.findOne(
+          parentId,
+        );
         if (!curriculumById) {
           throw new NotFoundException('Parent curriculum not found');
         }
@@ -523,8 +532,8 @@ export class CurriculumService {
       if (parentId == id) {
         throw new BadRequestException('Can not clone itself');
       }
-      await this.curriculumRepo.update(id, updateCurriculumDto);
-      return await this.curriculumRepo.findOne(id);
+      await this.curriculumRepository.update(id, updateCurriculumDto);
+      return await this.curriculumRepository.findOne(id);
     } catch (error) {
       throw error;
     }
@@ -535,12 +544,12 @@ export class CurriculumService {
     updateLessonDto: UpdateLesssonDto,
   ): Promise<Lesson> {
     try {
-      const data = await this.lessonRepo.findOne(id);
+      const data = await this.lessonRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Lesson not exist');
       }
-      await this.lessonRepo.update(id, updateLessonDto);
-      return await this.lessonRepo.findOne(id);
+      await this.lessonRepository.update(id, updateLessonDto);
+      return await this.lessonRepository.findOne(id);
     } catch (error) {
       throw error;
     }
@@ -549,23 +558,23 @@ export class CurriculumService {
   async remove(id: number) {
     try {
       //check curriculum
-      const curri = await this.curriculumRepo.findOne(id);
+      const curri = await this.curriculumRepository.findOne(id);
       if (!curri) {
         throw new NotFoundException('Curriculum not found');
       }
-      const lessons = await this.lessonRepo
+      const lessons = await this.lessonRepository
         .createQueryBuilder()
         .where('curriculum_id = :id', { id: curri.id })
         .getMany();
       for (const lesson of lessons) {
-        await this.lessonMaterialRepo
+        await this.lessonMaterialRepository
           .createQueryBuilder()
           .delete()
           .where('lesson_id = :id', { id: lesson.id })
           .execute();
       }
-      await this.curriculumRepo.delete(id);
-      await this.lessonRepo
+      await this.curriculumRepository.delete(id);
+      await this.lessonRepository
         .createQueryBuilder()
         .delete()
         .where('curriculum_id = :id', { id: id })
@@ -578,18 +587,29 @@ export class CurriculumService {
   async removeLesson(id: number) {
     try {
       //check lesson
-      const lesson = await this.lessonRepo.findOne(id);
+      const lesson = await this.lessonRepository.findOne(id);
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
-      await this.lessonMaterialRepo
+      await this.lessonMaterialRepository
         .createQueryBuilder()
         .delete()
         .where('lesson_id = :id', { id: lesson.id })
         .execute();
-      await this.lessonRepo.delete(id);
+      await this.lessonRepository.delete(id);
     } catch (error) {
       throw error;
     }
+  }
+
+  async getFilteredCurriculum(
+    teacherId: number,
+    schoolYearId: number,
+    gradeId: number,
+    classId: number,
+  ) {
+    const schoolYear = schoolYearId
+      ? await this.schoolYearRepository.findOne(schoolYearId)
+      : await this.schoolYearRepository.findOne({ where: { isActive: true } });
   }
 }

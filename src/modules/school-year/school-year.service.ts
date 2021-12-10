@@ -3,18 +3,14 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYear } from './entities/school-year.entity';
+import { SchoolYearRepository } from './repository/school-year.repository';
 
 @Injectable()
 export class SchoolYearService {
-  constructor(
-    @InjectRepository(SchoolYear)
-    private schoolYearRepo: Repository<SchoolYear>,
-  ) {}
+  constructor(private schoolYearRepository: SchoolYearRepository) {}
   async create(createSchoolYearDto: CreateSchoolYearDto): Promise<SchoolYear> {
     try {
       const schoolYear = new SchoolYear();
@@ -27,7 +23,7 @@ export class SchoolYearService {
 
   async findAll(): Promise<SchoolYear[]> {
     try {
-      return await this.schoolYearRepo.createQueryBuilder().getMany();
+      return await this.schoolYearRepository.createQueryBuilder().getMany();
     } catch (error) {
       throw new InternalServerErrorException('Error while getting school year');
     }
@@ -35,7 +31,7 @@ export class SchoolYearService {
 
   async findOne(id: number): Promise<SchoolYear> {
     try {
-      const data = await this.schoolYearRepo.findOne(id);
+      const data = await this.schoolYearRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('School year does not exist');
       }
@@ -47,11 +43,11 @@ export class SchoolYearService {
 
   async update(id: number, updateSchoolYearDto: UpdateSchoolYearDto) {
     try {
-      const data = await this.schoolYearRepo.findOne(id);
+      const data = await this.schoolYearRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('School year does not exist');
       }
-      await this.schoolYearRepo.update(id, updateSchoolYearDto);
+      await this.schoolYearRepository.update(id, updateSchoolYearDto);
     } catch (error) {
       throw error;
     }
@@ -59,11 +55,11 @@ export class SchoolYearService {
 
   async remove(id: number) {
     try {
-      const data = await this.schoolYearRepo.findOne(id);
+      const data = await this.schoolYearRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('School year does not exist');
       }
-      await this.schoolYearRepo.delete(id);
+      await this.schoolYearRepository.delete(id);
     } catch (error) {
       throw error;
     }
@@ -71,7 +67,7 @@ export class SchoolYearService {
 
   async changeStatus(id: number, isActive: boolean) {
     try {
-      const data = await this.schoolYearRepo.findOne(id);
+      const data = await this.schoolYearRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('School year does not exist');
       }
@@ -80,5 +76,18 @@ export class SchoolYearService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async setActiveSchoolYear(schoolYearId: number) {
+    await this.schoolYearRepository
+      .createQueryBuilder('s')
+      .update()
+      .set({ isActive: false })
+      .where('is_active = true')
+      .execute();
+
+    return await this.schoolYearRepository.update(schoolYearId, {
+      isActive: true,
+    });
   }
 }
