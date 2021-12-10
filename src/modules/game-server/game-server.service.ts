@@ -801,7 +801,7 @@ export class GameServerService {
     }
 
     if (isHost) {
-      const studentsStatistics = await this.getStudentsStatistics(gameId);
+      const studentsStatistics = await this.getPlayersStatistics(gameId);
       recoveredGameStateData = {
         recoveredGameStateData,
         studentsStatistics,
@@ -823,7 +823,7 @@ export class GameServerService {
     });
   }
 
-  async getStudentsStatistics(gameId: number) {
+  async getPlayersStatistics(gameId: number) {
     try {
       const players = await this.playerRepository.find({ where: { gameId } });
 
@@ -845,7 +845,7 @@ export class GameServerService {
         const playerStats = await this.playerDataRepository.find({
           select: ['id', 'questionId', 'isCorrect'],
           where: { playerId: player.id },
-          order: { createdAt: 'DESC' },
+          order: { createdAt: 'ASC' },
         });
         playersStats.push({
           id: user.id,

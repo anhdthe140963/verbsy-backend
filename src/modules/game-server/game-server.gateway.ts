@@ -558,7 +558,7 @@ export class GameServerGateway
       });
 
       const studentsStatistics =
-        await this.gameServerService.getStudentsStatistics(data.gameId);
+        await this.gameServerService.getPlayersStatistics(data.gameId);
 
       this.server
         .to(room)
@@ -693,7 +693,7 @@ export class GameServerGateway
   ) {
     try {
       const studentsStatistics =
-        await this.gameServerService.getStudentsStatistics(data.gameId);
+        await this.gameServerService.getPlayersStatistics(data.gameId);
       socc.emit('receive_students_statistics', studentsStatistics);
     } catch (error) {
       return socc.emit('error', error);

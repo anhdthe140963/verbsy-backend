@@ -483,6 +483,7 @@ export class GameStatisticsService {
       .addSelect('q.duration', 'duration')
       .addSelect('q.level', 'difficulty')
       .where('qr.game_id = :gameId', { gameId })
+      .andWhere('qtc.game_id = :gameId', { gameId })
       .getRawMany();
 
     for (const q of questions) {
