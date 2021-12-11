@@ -38,7 +38,7 @@ export class CurriculumService {
   constructor(
     private readonly curriculumRepository: CurriculumRepository,
     private readonly userRepository: UserRepository,
-    private readonly classRepository: ClassesRepository,
+    private readonly classesRepository: ClassesRepository,
     private readonly lessonRepository: LessonRepository,
     private readonly lessonMaterialRepository: LessonMaterialRepository,
     private readonly lessonLectureRepository: LessonLectureRepository,
@@ -68,7 +68,7 @@ export class CurriculumService {
       }
       //check class id
       if (classId) {
-        const classById = await this.classRepository.findOne(classId);
+        const classById = await this.classesRepository.findOne(classId);
         if (!classById) {
           throw new NotFoundException('Class not found');
         }
@@ -261,7 +261,7 @@ export class CurriculumService {
       const grades = await this.gradeRepository.find();
       const classesBySyId = [];
       if (filter.schoolYearId) {
-        const classes = await this.classRepository.find({
+        const classes = await this.classesRepository.find({
           schoolYearId: filter.schoolYearId,
         });
         for (const c of classes) {
@@ -273,7 +273,7 @@ export class CurriculumService {
       }
       if (user.role == Role.Administrator) {
         //check if user is a Admin
-        classes.push(await this.classRepository.find());
+        classes.push(await this.classesRepository.find());
         //check if filter is inputed
         if (filter.classId) {
           query.andWhere('class_id = :classId', { classId: filter.classId });
@@ -299,7 +299,7 @@ export class CurriculumService {
         });
         //push user class to array
         for (const uc of userClasses) {
-          const classById = await this.classRepository.findOne(uc.classId);
+          const classById = await this.classesRepository.findOne(uc.classId);
           classes.push(classById);
           classIds.push(classById.id);
         }
@@ -329,7 +329,7 @@ export class CurriculumService {
         });
         //push user class to array
         for (const uc of userClasses) {
-          const classById = await this.classRepository.findOne(uc.classId);
+          const classById = await this.classesRepository.findOne(uc.classId);
           classes.push(classById);
           classIds.push(classById.id);
         }
@@ -384,7 +384,7 @@ export class CurriculumService {
             .where('u.id = :id', { id: curri.createdBy })
             .getOne()
         ).fullName;
-        const className = (await this.classRepository.findOne(curri.classId))
+        const className = (await this.classesRepository.findOne(curri.classId))
           .name;
         Object.assign(curri, {
           creatorName: createrName,
@@ -461,7 +461,7 @@ export class CurriculumService {
       if (!data) {
         throw new NotFoundException('Curriculum not exist');
       }
-      const classById = await this.classRepository.findOne(data.classId);
+      const classById = await this.classesRepository.findOne(data.classId);
       const createrName = await this.userRepository
         .createQueryBuilder('u')
         .select('u.fullName')
@@ -512,7 +512,7 @@ export class CurriculumService {
       }
       //check class id
       if (classId) {
-        const classById = await this.classRepository.findOne(classId);
+        const classById = await this.classesRepository.findOne(classId);
         if (!classById) {
           throw new NotFoundException('Class not found');
         }
@@ -611,5 +611,17 @@ export class CurriculumService {
     const schoolYear = schoolYearId
       ? await this.schoolYearRepository.findOne(schoolYearId)
       : await this.schoolYearRepository.findOne({ where: { isActive: true } });
+
+    const grade = gradeId
+      ? await this.gradeRepository.find({ where: { id: gradeId } })
+      : await this.gradeRepository.find();
+
+    const classes = classId
+      ? await this.classesRepository.find({ where: { id: classId } })
+      : await this.classesRepository.find();
+
+    const curriculums = await this.curriculumRepository.createQueryBuilder(
+      'cu',
+    );
   }
 }

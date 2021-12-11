@@ -435,11 +435,22 @@ export class GameStatisticsService {
   }
 
   async getQuestionDetailedStats(gameId: number, questionId: number) {
-    const question = await this.questionRepository.findOne({
-      where: { id: questionId },
-      select: ['id', 'question'],
-      loadEagerRelations: false,
-    });
+    // const question = await this.questionRepository.findOne({
+    //   where: { id: questionId },
+    //   select: ['id', 'question'],
+    //   loadEagerRelations: false,
+    // });
+
+    const question = await this.questionRepository
+      .createQueryBuilder('q')
+      .innerJoin(QuestionTypeConfig, 'qtc', 'q.id = qtc.question_id')
+      .select('q.id', 'id')
+      .addSelect('q.question', 'question')
+      .addSelect('qtc.question_type', 'questionType')
+      .where('qtc.game_id =:gameId', { gameId })
+      .andWhere('qtc.question_id =:questionId', { questionId })
+      .getRawOne();
+
     const answersStats = await this.getAnswerStatistics(gameId, questionId);
 
     const players = await this.playerRepository.find({ where: { gameId } });
@@ -451,6 +462,13 @@ export class GameStatisticsService {
     // const playersData = await this.playerDataRepository.find({
     //   where: { playerId: In(playersIds), questionId },
     // });
+
+    const averageAnswerTime = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .select('AVG(pd.answer_time)', 'averageAnswerTime')
+      .where('pd.player_id IN(:playersIds)', { playersIds })
+      .andWhere('pd.question_id =:questionId', { questionId })
+      .getRawOne();
 
     const playersData = await this.playerDataRepository
       .createQueryBuilder('pd')
@@ -468,6 +486,17 @@ export class GameStatisticsService {
     return {
       ...question,
       answers: answersStats,
+      summary: {
+        completionRate: await this.getQuestionCompletionRate(
+          gameId,
+          questionId,
+        ),
+        averageAnswerTime: Number.parseFloat(
+          averageAnswerTime.averageAnswerTime,
+        ),
+        answeredPlayers:
+          playersData.length - answersStats.noAnswer + '/' + playersData.length,
+      },
       playersData,
     };
   }
