@@ -35,7 +35,7 @@ export class Game extends BaseEntity {
 
   @Column({
     name: 'questions_config',
-    type: 'text',
+    type: 'json',
     nullable: true,
   })
   questionsConfig: {
