@@ -89,7 +89,9 @@ export class CurriculumService {
         const curri = await curriculum.save();
         const lessons = await this.lessonRepository
           .createQueryBuilder()
-          .where('curriculum_id = :id', { id: curriculumById.id })
+          .where('curriculum_id = :curriculumId', {
+            curriculumId: curriculumById.id,
+          })
           .getMany();
         //clone curriculum's lessons
         for (const lesson of lessons) {
@@ -101,7 +103,7 @@ export class CurriculumService {
           //clone lesson's material
           const lessonMaterials = await this.lessonMaterialRepository
             .createQueryBuilder()
-            .where('lesson_id = :id', { id: lesson.id })
+            .where('lesson_id = :lessonId', { lessonId: lesson.id })
             .getMany();
           for (const lessonMaterial of lessonMaterials) {
             await this.lessonMaterialRepository.insert({
@@ -114,7 +116,7 @@ export class CurriculumService {
           //clone lectures
           const lessonLectures = await this.lessonLectureRepository
             .createQueryBuilder()
-            .where('lesson_id = :id', { id: lesson.id })
+            .where('lesson_id = :lessonId', { lessonId: lesson.id })
             .getMany();
           for (const ll of lessonLectures) {
             //clone lecture
@@ -194,7 +196,9 @@ export class CurriculumService {
       const curri = await curriculum.save();
       const lessons = await this.lessonRepository
         .createQueryBuilder()
-        .where('curriculum_id = :id', { id: curriculumById.id })
+        .where('curriculum_id = :curriculumId', {
+          curriculumId: curriculumById.id,
+        })
         .getMany();
       //clone curriculum's lessons
       for (const lesson of lessons) {
@@ -206,7 +210,7 @@ export class CurriculumService {
         //clone lesson's material
         const lessonMaterials = await this.lessonMaterialRepository
           .createQueryBuilder()
-          .where('lesson_id = :id', { id: lesson.id })
+          .where('lesson_id = :lessonId', { lessonId: lesson.id })
           .getMany();
         for (const lessonMaterial of lessonMaterials) {
           await this.lessonMaterialRepository.insert({
@@ -219,7 +223,7 @@ export class CurriculumService {
         //clone lectures
         const lessonLectures = await this.lessonLectureRepository
           .createQueryBuilder()
-          .where('lesson_id = :id', { id: lesson.id })
+          .where('lesson_id = :lessonId', { lessonId: lesson.id })
           .getMany();
         for (const ll of lessonLectures) {
           //clone lecture
