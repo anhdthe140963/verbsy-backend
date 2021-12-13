@@ -402,9 +402,11 @@ export class GameStatisticsService {
 
     const playerData = await this.playerDataRepository
       .createQueryBuilder('pd')
+      .innerJoin(Question, 'q', 'pd.question_id = q.id')
       .leftJoin(QuestionTypeConfig, 'qtc', 'pd.question_id = qtc.question_id')
       .select('qtc.question_id', 'id')
       .addSelect('pd.question', 'question')
+      .addSelect('q.level', 'difficulty')
       .addSelect('qtc.question_type', 'questionType')
       .addSelect('pd.answer', 'answer')
       .addSelect('pd.is_correct', 'isCorrect')
@@ -446,6 +448,7 @@ export class GameStatisticsService {
       .innerJoin(QuestionTypeConfig, 'qtc', 'q.id = qtc.question_id')
       .select('q.id', 'id')
       .addSelect('q.question', 'question')
+      .addSelect('q.level', 'difficulty')
       .addSelect('qtc.question_type', 'questionType')
       .where('qtc.game_id =:gameId', { gameId })
       .andWhere('qtc.question_id =:questionId', { questionId })
