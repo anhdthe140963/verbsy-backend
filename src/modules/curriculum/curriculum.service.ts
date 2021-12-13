@@ -3,20 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
-import { Grade } from '../grade/entities/grade.entity';
-import { GradeRepository } from '../grade/repository/school-year.repository';
+import { GradeRepository } from '../grade/repository/grade.repository';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
 import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
-import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';

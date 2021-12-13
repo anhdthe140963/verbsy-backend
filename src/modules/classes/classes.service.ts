@@ -4,16 +4,15 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { Repository, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
 import { Grade } from '../grade/entities/grade.entity';
-import { GradeRepository } from '../grade/repository/school-year.repository';
+import { GradeRepository } from '../grade/repository/grade.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClass } from '../user-class/entity/user-class.entity';

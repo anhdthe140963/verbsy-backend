@@ -8,7 +8,7 @@ import { UserRepository } from '../user/repository/user.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { StudentInfoRepository } from '../user/repository/student-info.repository';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
-import { GradeRepository } from '../grade/repository/school-year.repository';
+import { GradeRepository } from '../grade/repository/grade.repository';
 
 @Module({
   imports: [
