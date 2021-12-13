@@ -15,7 +15,7 @@ export class Answer extends BaseEntity {
   @Column()
   content: string;
 
-  @Column({ name: 'is_correct', type: 'boolean' })
+  @Column({ name: 'is_correct', type: 'boolean', default: false })
   isCorrect: boolean;
 
   @ManyToOne(() => Question, (question) => question.answers, {

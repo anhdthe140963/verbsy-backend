@@ -1,0 +1,17 @@
+{
+  "header": {
+    "rows": 1
+  },
+  "sheets": ["Questions"],
+  "columnToKey": {
+    "B": "question",
+    "C": "imageUrl",
+    "D": "duration",
+    "E": "level",
+    "F": "answer1",
+    "G": "answer2",
+    "H": "answer3",
+    "I": "answer4",
+    "J": "correctAnswer"
+  }
+}

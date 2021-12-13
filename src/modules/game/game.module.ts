@@ -8,6 +8,10 @@ import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { PlayerRepository } from '../player/repository/player.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
+import { LectureRepository } from '../lecture/repository/lecture.repository';
+import { UserRepository } from '../user/repository/user.repository';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
 
 @Module({
   imports: [
@@ -18,6 +22,10 @@ import { PlayerDataRepository } from '../player-data/repository/player-data.repo
       UserClassRepository,
       PlayerRepository,
       PlayerDataRepository,
+      LectureRepository,
+      UserRepository,
+      LessonLectureRepository,
+      LessonRepository,
     ]),
   ],
   controllers: [GameController],
