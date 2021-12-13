@@ -161,7 +161,110 @@ export class CurriculumService {
       throw error;
     }
   }
+  async clone(
+    user: User,
+    createCurriculumDto: CreateCurriculumDto,
+  ): Promise<Curriculum> {
+    try {
+      const { name, gradeId, classId, parentId } = createCurriculumDto;
+      const curriculum = new Curriculum();
+      curriculum.name = name;
+      curriculum.createdBy = user.id;
 
+      const grade = await this.gradeRepository.findOne(gradeId);
+      if (!grade) {
+        throw new NotFoundException('Grade not found');
+      }
+      curriculum.gradeId = gradeId;
+
+      const classById = await this.classesRepository.findOne(classId);
+      if (!classById) {
+        throw new NotFoundException('Class not found');
+      }
+      if (classById.gradeId !== gradeId) {
+        throw new NotFoundException('Class not in selected grade');
+      }
+      curriculum.classId = classId;
+
+      const curriculumById = await this.curriculumRepository.findOne(parentId);
+      if (!curriculumById) {
+        throw new NotFoundException('Curriculum not found');
+      }
+      curriculum.parentId = parentId;
+      const curri = await curriculum.save();
+      const lessons = await this.lessonRepository
+        .createQueryBuilder()
+        .where('curriculum_id = :id', { id: curriculumById.id })
+        .getMany();
+      //clone curriculum's lessons
+      for (const lesson of lessons) {
+        const ls = new Lesson();
+        ls.name = lesson.name;
+        ls.position = lesson.position;
+        ls.curriculumId = curri.id;
+        await ls.save();
+        //clone lesson's material
+        const lessonMaterials = await this.lessonMaterialRepository
+          .createQueryBuilder()
+          .where('lesson_id = :id', { id: lesson.id })
+          .getMany();
+        for (const lessonMaterial of lessonMaterials) {
+          await this.lessonMaterialRepository.insert({
+            displayName: lessonMaterial.displayName,
+            url: lessonMaterial.url,
+            uploaderId: lessonMaterial.uploaderId,
+            lessonId: ls.id,
+          });
+        }
+        //clone lectures
+        const lessonLectures = await this.lessonLectureRepository
+          .createQueryBuilder()
+          .where('lesson_id = :id', { id: lesson.id })
+          .getMany();
+        for (const ll of lessonLectures) {
+          //clone lecture
+          const lecture = await this.lectureRepository.findOne(ll.lectureId);
+          const newLec = new Lecture();
+          newLec.name = lecture.name;
+          newLec.content = lecture.content;
+          newLec.ownerId = user.id;
+          await newLec.save();
+          await this.lessonLectureRepository.insert({
+            lessonId: ls.id,
+            lectureId: newLec.id,
+          });
+
+          //clone lecture's question
+          const questions = await this.questionRepository.find({
+            lectureId: lecture.id,
+          });
+          for (const question of questions) {
+            const newQ = new Question();
+            newQ.lectureId = newLec.id;
+            newQ.question = question.question;
+            newQ.imageUrl = question.imageUrl;
+            newQ.duration = question.duration;
+            await newQ.save();
+
+            //clone answer
+            const answers = await this.answerRepository.find({
+              question: question,
+            });
+            for (const answer of answers) {
+              await this.answerRepository.insert({
+                content: answer.content,
+                isCorrect: answer.isCorrect,
+                question: newQ,
+              });
+            }
+          }
+        }
+      }
+      return await curriculum.save();
+    } catch (error) {
+      throw error;
+    }
+  }
   async createLesson(createLessonDto: CreateLessonDto): Promise<Lesson> {
     try {
       //check curriculum
@@ -623,5 +726,23 @@ export class CurriculumService {
     const curriculums = await this.curriculumRepository.createQueryBuilder(
       'cu',
     );
+  }
+
+  async getCurriculumIdByLectureId(lectureId: number): Promise<number> {
+    try {
+      const lecture = await this.lectureRepository.findOne(lectureId);
+      if (!lecture) {
+        throw new NotFoundException('Lecture not exist');
+      }
+      const curriculum = await this.curriculumRepository
+        .createQueryBuilder('c')
+        .innerJoin(Lesson, 'l', 'l.curriculum_id = c.id')
+        .innerJoin(LessonLecture, 'll', 'll.lesson_id = l.id')
+        .where('ll.lecture_id = :lectureId', { lectureId: lectureId })
+        .getOne();
+      return curriculum.id;
+    } catch (error) {
+      throw error;
+    }
   }
 }

@@ -41,6 +41,20 @@ export class CurriculumController {
       data: await this.curriculumService.create(user, createCurriculumDto),
     };
   }
+  @Post('clone')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher)
+  async clone(
+    @GetUser() user,
+    @Body() createCurriculumDto: CreateCurriculumDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Curriculum cloned',
+      data: await this.curriculumService.clone(user, createCurriculumDto),
+    };
+  }
   @Post('lesson')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator, Role.Teacher)
@@ -191,6 +205,20 @@ export class CurriculumController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Lesson deleted',
+    };
+  }
+
+  @Get('curriculum-id/:lectureId')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher, Role.Student)
+  async getCurriculumIdByLectureId(
+    @Param('lectureId') lectureId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get curriculum id successfully',
+      data: await this.curriculumService.getCurriculumIdByLectureId(lectureId),
     };
   }
 }
