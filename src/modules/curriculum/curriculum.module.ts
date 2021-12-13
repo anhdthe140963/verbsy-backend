@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
-import { GradeRepository } from '../grade/repository/school-year.repository';
+import { GradeRepository } from '../grade/repository/grade.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
-import { GradeRepository } from './repository/school-year.repository';
+import { GradeRepository } from './repository/grade.repository';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 
 @Module({

@@ -7,7 +7,7 @@ import { User } from '../user/entity/user.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { Grade } from './entities/grade.entity';
-import { GradeRepository } from './repository/school-year.repository';
+import { GradeRepository } from './repository/grade.repository';
 
 @Injectable()
 export class GradeService {
