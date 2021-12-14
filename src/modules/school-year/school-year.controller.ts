@@ -38,7 +38,7 @@ export class SchoolYearController {
 
   @Get()
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator)
+  @Roles(Role.Administrator, Role.Teacher)
   async findAll(): Promise<{ statusCode; error; message; data }> {
     return {
       statusCode: HttpStatus.OK,
