@@ -676,7 +676,9 @@ export class GameStatisticsService {
     const totalScore = await this.playerDataRepository
       .createQueryBuilder('pd')
       .select('SUM(pd.score)', 'totalScore')
-      .where('pd.player_id IN(:playersIds)', { playersIds })
+      .where('pd.player_id IN(:playersIds)', {
+        playersIds: playersIds.toString(),
+      })
       .getRawOne();
 
     return {
