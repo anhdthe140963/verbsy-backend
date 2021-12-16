@@ -3,10 +3,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import {
+  IPaginationOptions,
+  paginate,
+  paginateRaw,
+} from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
 import { Brackets } from 'typeorm';
+import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
+import { Grade } from '../grade/entities/grade.entity';
 import { GradeRepository } from '../grade/repository/grade.repository';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
@@ -17,6 +23,7 @@ import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
@@ -707,26 +714,82 @@ export class CurriculumService {
   }
 
   async getFilteredCurriculum(
-    teacherId: number,
-    schoolYearId: number,
-    gradeId: number,
-    classId: number,
+    user: User,
+    filter: {
+      includeSample: boolean;
+      limit: number;
+      page: number;
+      schoolYearId: number;
+      gradeId: number;
+      classId: number;
+      curriculumName: string;
+      dateFrom: Date;
+      dateTo: Date;
+    },
   ) {
-    const schoolYear = schoolYearId
-      ? await this.schoolYearRepository.findOne(schoolYearId)
-      : await this.schoolYearRepository.findOne({ where: { isActive: true } });
+    let queryBuilder = await this.curriculumRepository
+      .createQueryBuilder('c')
+      .innerJoin(Grade, 'g', 'c.grade_id = g.id')
+      .innerJoin(Classes, 'cl', 'cl.id = c.class_id')
+      .innerJoin(User, 'u', 'c.created_by = u.id')
+      .select('c.id', 'id')
+      .addSelect('c.name', 'name')
+      .addSelect('g.id', 'gradeId')
+      .addSelect('g.name', 'gradeName')
+      .addSelect('c.id', 'classId')
+      .addSelect('c.name', 'className')
+      .addSelect('u.id', 'userId')
+      .addSelect('u.full_name', 'creatorName')
+      .addSelect('c.created_at', 'createdAt');
 
-    const grade = gradeId
-      ? await this.gradeRepository.find({ where: { id: gradeId } })
-      : await this.gradeRepository.find();
+    //Role
+    queryBuilder =
+      user.role == Role.Teacher
+        ? queryBuilder.andWhere('c.created_by =:userId', { userId: user.id })
+        : queryBuilder;
 
-    const classes = classId
-      ? await this.classesRepository.find({ where: { id: classId } })
-      : await this.classesRepository.find();
+    //Include Sample
+    queryBuilder =
+      user.role == Role.Teacher && filter.includeSample
+        ? queryBuilder.andWhere('u.role =:role', { role: Role.Administrator })
+        : queryBuilder;
 
-    const curriculums = await this.curriculumRepository.createQueryBuilder(
-      'cu',
-    );
+    //School Year
+    queryBuilder = filter.schoolYearId
+      ? queryBuilder
+          .innerJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
+          .andWhere('s.id =:schoolYearId', {
+            schoolYearId: filter.schoolYearId,
+          })
+      : queryBuilder;
+
+    //Grade
+    queryBuilder = filter.gradeId
+      ? queryBuilder.andWhere('c.grade_id =:gradeId', {
+          gradeId: filter.gradeId,
+        })
+      : queryBuilder;
+
+    //Classes
+    queryBuilder = filter.classId
+      ? queryBuilder.andWhere('c.class_id =:classId', {
+          classId: filter.classId,
+        })
+      : queryBuilder;
+
+    //Name
+    queryBuilder = filter.curriculumName
+      ? queryBuilder.andWhere('c.name LIKE :curriculumName', {
+          curriculumName: '%' + filter.curriculumName + '%',
+        })
+      : queryBuilder;
+
+    const paginatedRaw = paginateRaw(queryBuilder, {
+      limit: filter.limit ?? 10,
+      page: filter.page ?? 1,
+    });
+
+    return paginatedRaw;
   }
 
   async getCurriculumIdByLectureId(lectureId: number): Promise<number> {

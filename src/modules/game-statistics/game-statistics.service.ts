@@ -618,6 +618,7 @@ export class GameStatisticsService {
       .innerJoin(Lesson, 'l', 'g.lesson_id = l.id')
       .select('g.id', 'gameId')
       .addSelect('l.curriculum_id', 'curriculumId')
+      .addSelect('g.lecture_id', 'lectureId')
       .addSelect('l.id', 'lessonId')
       .addSelect('l.name', 'lessonName')
       .addSelect('g.created_at', 'createdAt')
@@ -647,6 +648,7 @@ export class GameStatisticsService {
       scores.push({
         gameId: g.id,
         curriculumId: lesson.curriculumId,
+        lectureId: g.lectureId,
         lessonId: lesson.id,
         lessonName: lesson.name,
         createdAt: g.createdAt,
