@@ -379,7 +379,7 @@ export class CurriculumService {
           classesBySyId.push(c.id);
         }
         if (classesBySyId.length == 0) {
-          return null;
+          return [];
         }
       }
       if (user.role == Role.Administrator) {
