@@ -742,16 +742,24 @@ export class CurriculumService {
       .addSelect('u.full_name', 'creatorName')
       .addSelect('c.created_at', 'createdAt');
 
+    //Include Sample
+    const creatorsIds = [];
+    if (filter.includeSample) {
+      const admins = await this.userRepository.find({
+        where: { role: Role.Administrator },
+      });
+
+      for (const a of admins) {
+        creatorsIds.push(a.id);
+      }
+    }
+
     //Role
     queryBuilder =
       user.role == Role.Teacher
-        ? queryBuilder.andWhere('c.created_by =:userId', { userId: user.id })
-        : queryBuilder;
-
-    //Include Sample
-    queryBuilder =
-      user.role == Role.Teacher && filter.includeSample
-        ? queryBuilder.andWhere('u.role =:role', { role: Role.Administrator })
+        ? queryBuilder.andWhere('c.created_by IN(:creatorsIds)', {
+            creatorsIds: creatorsIds.toString(),
+          })
         : queryBuilder;
 
     //School Year
@@ -781,6 +789,24 @@ export class CurriculumService {
     queryBuilder = filter.curriculumName
       ? queryBuilder.andWhere('c.name LIKE :curriculumName', {
           curriculumName: '%' + filter.curriculumName + '%',
+        })
+      : queryBuilder;
+
+    //Date From
+    console.log(filter.dateFrom);
+
+    queryBuilder = filter.dateFrom
+      ? queryBuilder.andWhere('c.created_at > :dateFrom', {
+          dateFrom: filter.dateFrom,
+        })
+      : queryBuilder;
+
+    //Date To
+    console.log(filter.dateTo);
+
+    queryBuilder = filter.dateTo
+      ? queryBuilder.andWhere('c.created_at < :dateTo', {
+          dateTo: filter.dateTo,
         })
       : queryBuilder;
 
