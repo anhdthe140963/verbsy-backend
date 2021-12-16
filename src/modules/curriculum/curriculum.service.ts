@@ -372,7 +372,7 @@ export class CurriculumService {
           classesBySyId.push(c.id);
         }
         if (classesBySyId.length == 0) {
-          throw new NotFoundException('None class in selected school year');
+          return null;
         }
       }
       if (user.role == Role.Administrator) {

@@ -12,6 +12,7 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { User } from '../user/entity/user.entity';
 import { GameStatisticsService } from './game-statistics.service';
 
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('game-statistics')
 export class GameStatisticsController {
   constructor(private readonly gameStatisticsService: GameStatisticsService) {}
@@ -116,6 +117,45 @@ export class GameStatisticsController {
       status: HttpStatus.OK,
       message: 'h',
       data: questionStats,
+    };
+  }
+
+  @Get('class/game/:gameId')
+  async getGameAttendance(
+    @GetUser() user: User,
+    @Param('gameId') gameId: number,
+  ) {
+    const gameAttendance = await this.gameStatisticsService.getGameAttendance(
+      gameId,
+    );
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: gameAttendance,
+    };
+  }
+
+  @Get('class/:classId')
+  async getClassStats(
+    @GetUser() user: User,
+    @Param('classId') classId: number,
+  ) {
+    const classGeneralInfo =
+      await this.gameStatisticsService.getClassGeneralInfo(user.id, classId);
+
+    const classAttendance = await this.gameStatisticsService.getClassAttendance(
+      user.id,
+      classId,
+    );
+
+    const classScoreStats = await this.gameStatisticsService.getClassScoreStats(
+      user.id,
+      classId,
+    );
+    return {
+      status: HttpStatus.OK,
+      message: 'h',
+      data: { classGeneralInfo, classAttendance, classScoreStats },
     };
   }
 }
