@@ -650,9 +650,15 @@ export class GameStatisticsService {
         lessonId: lesson.id,
         lessonName: lesson.name,
         createdAt: g.createdAt,
-        highestScore: Number.parseInt(leaderboard[0].score),
+        highestScore: Number.parseInt(
+          leaderboard[0] ? leaderboard[0].score : '0',
+        ),
         averageScore: Math.floor(totalScore / leaderboard.length),
-        lowestScore: Number.parseInt(leaderboard[leaderboard.length - 1].score),
+        lowestScore: Number.parseInt(
+          leaderboard[leaderboard.length - 1]
+            ? leaderboard[leaderboard.length - 1].score
+            : '0',
+        ),
       });
     }
 
