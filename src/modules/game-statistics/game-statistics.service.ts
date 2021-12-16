@@ -787,7 +787,7 @@ export class GameStatisticsService {
       .innerJoin(User, 'u', 'uc.student_id = u.id')
       .select('u.id', 'id')
       .addSelect('u.full_name', 'fullName')
-      .where('u.id NOT IN(:usersIds)', { usersIds })
+      .where('u.id NOT IN(:usersIds)', { usersIds: usersIds.toString() })
       .getRawMany();
 
     const absent = [];
