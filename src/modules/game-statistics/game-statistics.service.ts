@@ -10,6 +10,7 @@ import { Lesson } from '../curriculum/entities/lesson.entity';
 import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
 import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
@@ -616,7 +617,11 @@ export class GameStatisticsService {
       .createQueryBuilder('g')
       .innerJoin(Player, 'p', 'g.id = p.game_id')
       .innerJoin(Lesson, 'l', 'g.lesson_id = l.id')
+      .innerJoin(Lecture, 'lec', 'lec.id = g.lecture_id')
       .select('g.id', 'gameId')
+      .addSelect('g.lesson_id', 'lessonId')
+      .addSelect('lec.id', 'lectureId')
+      .addSelect('lec.name', 'lectureName')
       .addSelect('l.curriculum_id', 'curriculumId')
       .addSelect('l.id', 'lessonId')
       .addSelect('l.name', 'lessonName')
@@ -639,6 +644,7 @@ export class GameStatisticsService {
     const scores = [];
     for (const g of games) {
       const lesson = await this.lessonRepository.findOne(g.lessonId);
+      const lecture = await this.lectureRepository.findOne(g.lectureId);
       const leaderboard = await this.getLeaderboard(g.id);
       let totalScore = 0;
       for (const l of leaderboard) {
@@ -647,6 +653,8 @@ export class GameStatisticsService {
       scores.push({
         gameId: g.id,
         curriculumId: lesson.curriculumId,
+        lectureId: g.lectureId,
+        lectureName: lecture.name,
         lessonId: lesson.id,
         lessonName: lesson.name,
         createdAt: g.createdAt,
@@ -712,7 +720,11 @@ export class GameStatisticsService {
       .createQueryBuilder('g')
       .innerJoin(Player, 'p', 'g.id = p.game_id')
       .innerJoin(Lesson, 'l', 'g.lesson_id = l.id')
+      .innerJoin(Lecture, 'lec', 'lec.id = g.lecture_id')
       .select('g.id', 'gameId')
+      .addSelect('g.lesson_id', 'lessonId')
+      .addSelect('lec.id', 'lectureId')
+      .addSelect('lec.name', 'lectureName')
       .addSelect('l.name', 'lessonName')
       .addSelect('g.created_at', 'createdAt')
       .addSelect('COUNT(p.id)', 'playersJoined')

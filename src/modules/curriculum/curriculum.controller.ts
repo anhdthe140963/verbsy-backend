@@ -22,10 +22,36 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { CurriculumFilter } from './dto/curriculum.filter';
 import { UpdateCurriculumDto } from './dto/update-curriculum.dto';
 import { UpdateLesssonDto } from './dto/update-lesson.dto';
-
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('curriculum')
 export class CurriculumController {
   constructor(private readonly curriculumService: CurriculumService) {}
+
+  @Get('filtered')
+  @Roles(Role.Administrator, Role.Teacher, Role.Student)
+  async getFilteredCurriculum(
+    @GetUser() user,
+    @Query()
+    filter: {
+      limit: number;
+      page: number;
+      includeSample: boolean;
+      schoolYearId: number;
+      gradeId: number;
+      classId: number;
+      curriculumName: string;
+      dateFrom: Date;
+      dateTo: Date;
+    },
+  ) {
+    const filteredCurriculums =
+      await this.curriculumService.getFilteredCurriculum(user, filter);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get curriculums successfully',
+      data: filteredCurriculums,
+    };
+  }
 
   @Post()
   @UseGuards(AuthGuard(), RolesGuard)
