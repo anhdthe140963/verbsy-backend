@@ -736,8 +736,8 @@ export class CurriculumService {
       .addSelect('c.name', 'name')
       .addSelect('g.id', 'gradeId')
       .addSelect('g.name', 'gradeName')
-      .addSelect('c.id', 'classId')
-      .addSelect('c.name', 'className')
+      .addSelect('cl.id', 'classId')
+      .addSelect('cl.name', 'className')
       .addSelect('u.id', 'userId')
       .addSelect('u.full_name', 'creatorName')
       .addSelect('c.created_at', 'createdAt');
