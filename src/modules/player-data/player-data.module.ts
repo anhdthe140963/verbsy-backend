@@ -4,6 +4,6 @@ import { PlayerDataController } from './player-data.controller';
 
 @Module({
   controllers: [PlayerDataController],
-  providers: [PlayerDataService]
+  providers: [PlayerDataService],
 })
 export class PlayerDataModule {}

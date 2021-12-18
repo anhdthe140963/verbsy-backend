@@ -1,5 +1,5 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
-import { convertCsvToJson } from "./convert/convert-csv-to-json";
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import { convertCsvToJson } from './convert/convert-csv-to-json';
 
 export class insertAnswer1637998622159 implements MigrationInterface {
 
@@ -11,6 +11,9 @@ export class insertAnswer1637998622159 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-    }
 
+    }
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {}
 }

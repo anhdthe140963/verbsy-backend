@@ -17,6 +17,7 @@ import { UserClassRepository } from '../user-class/repository/question.repositor
 import { UserRepository } from '../user/repository/user.repository';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
+import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { CurriculumRepository } from '../curriculum/repository/curriculum.reposi
       LessonRepository,
       CurriculumRepository,
       QuestionTypeConfigRepository,
+      BlacklistRepository,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
