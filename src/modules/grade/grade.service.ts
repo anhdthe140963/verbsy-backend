@@ -27,8 +27,13 @@ export class GradeService {
     }
   }
 
-  async getGradesForUser(user: User): Promise<Grade[]> {
+  async getGradesForUser(user: User, schoolYearId: number): Promise<Grade[]> {
     try {
+      const schoolYear = schoolYearId
+        ? await this.schoolYearRepository.findOne(schoolYearId)
+        : await this.schoolYearRepository.findOne({
+            where: { isActive: true },
+          });
       const grades = await this.gradeRepository.find({
         order: { name: 'ASC' },
       });
@@ -36,7 +41,7 @@ export class GradeService {
         let classes = [];
         if (user.role == Role.Administrator) {
           classes = await this.classRepository.find({
-            where: { gradeId: grade.id },
+            where: { gradeId: grade.id, schoolYearId: schoolYear.id },
             order: { name: 'ASC' },
           });
         } else {
@@ -44,8 +49,10 @@ export class GradeService {
             teacherId: user.id,
           });
           for (const uc of userClasses) {
-            const cl = await this.classRepository.findOne(uc.classId);
-            if (cl.gradeId == grade.id) {
+            const cl = await this.classRepository.findOne({
+              where: { id: uc.classId, schoolYearId: schoolYear.id },
+            });
+            if (cl && cl.gradeId == grade.id) {
               classes.push(cl);
             }
           }
