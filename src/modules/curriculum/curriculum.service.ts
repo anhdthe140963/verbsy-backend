@@ -787,6 +787,12 @@ export class CurriculumService {
       for (const cl of classes) {
         classesIds.push(cl.classId);
       }
+
+      console.log('teaching classes: ', classesIds);
+
+      queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
+        classesIds: classesIds,
+      });
     }
 
     //Classes
@@ -794,11 +800,7 @@ export class CurriculumService {
       ? queryBuilder.andWhere('c.class_id =:classId', {
           classId: filter.classId,
         })
-      : user.role == Role.Administrator
-      ? queryBuilder
-      : queryBuilder.andWhere('c.class_id IN(:classesIds)', {
-          classesIds: classesIds,
-        });
+      : queryBuilder;
 
     //Name
     queryBuilder = filter.curriculumName
