@@ -232,6 +232,10 @@ export class ClassesService {
     filter: ClassFilter,
     user: User,
   ) {
+    filter.schoolYearId =
+      filter.schoolYearId ??
+      (await this.schoolYearRepository.findOne({ where: { isActive: true } }))
+        .id;
     let rawPagination;
     if (user.role == Role.Administrator) {
       rawPagination = await paginate(this.classesRepository, options, {
