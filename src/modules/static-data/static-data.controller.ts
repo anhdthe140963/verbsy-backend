@@ -64,7 +64,7 @@ export class StaticDataController {
     const data = await this.staticDataService.getStaticData();
     return {
       statusCode: HttpStatus.OK,
-      message: 'Static Data imported succesfully',
+      message: 'Get Static Data succesfully',
       data: data,
     };
   }
