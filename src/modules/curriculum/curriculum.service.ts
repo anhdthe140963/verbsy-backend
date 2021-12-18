@@ -127,7 +127,6 @@ export class CurriculumService {
             const lecture = await this.lectureRepository.findOne(ll.lectureId);
             const newLec = new Lecture();
             newLec.name = lecture.name;
-            newLec.content = lecture.content;
             newLec.ownerId = user.id;
             await newLec.save();
             await this.lessonLectureRepository.insert({
@@ -234,7 +233,6 @@ export class CurriculumService {
           const lecture = await this.lectureRepository.findOne(ll.lectureId);
           const newLec = new Lecture();
           newLec.name = lecture.name;
-          newLec.content = lecture.content;
           newLec.ownerId = user.id;
           await newLec.save();
           await this.lessonLectureRepository.insert({

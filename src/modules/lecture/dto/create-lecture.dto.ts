@@ -5,10 +5,6 @@ export class CreateLectureDto {
   @IsString()
   name: string;
 
-  @IsOptional()
-  @IsString()
-  content: string;
-
   @IsNotEmpty()
   @IsInt()
   @IsOptional()
