@@ -33,8 +33,8 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   avatar: string;
 
-  @Column({ name: 'last_login', type: 'date', nullable: true })
-  lastLogin: string;
+  @Column({ name: 'last_login', nullable: true })
+  lastLogin: Date;
 
   @Column({ nullable: true, select: false })
   salt: string;

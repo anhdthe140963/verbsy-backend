@@ -34,6 +34,10 @@ export class UserRepository extends Repository<User> {
       .addSelect('u.password')
       .getOne();
     if (user && (await user.validatePassword(logInDto.password))) {
+      await this.update(
+        { id: user.id },
+        { lastLogin: new Date().toLocaleString() },
+      );
       return user;
     }
     return null;
