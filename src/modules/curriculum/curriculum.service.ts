@@ -778,12 +778,27 @@ export class CurriculumService {
         })
       : queryBuilder;
 
+    const classesIds = [];
+    if (user.role != Role.Administrator) {
+      const classes = await this.userClassRepository.find({
+        where: { teacherId: user.id },
+      });
+
+      for (const cl of classes) {
+        classesIds.push(cl.classId);
+      }
+    }
+
     //Classes
     queryBuilder = filter.classId
       ? queryBuilder.andWhere('c.class_id =:classId', {
           classId: filter.classId,
         })
-      : queryBuilder;
+      : user.role == Role.Administrator
+      ? queryBuilder
+      : queryBuilder.andWhere('c.class_id IN(:classesIds)', {
+          classesIds: classesIds,
+        });
 
     //Name
     queryBuilder = filter.curriculumName
