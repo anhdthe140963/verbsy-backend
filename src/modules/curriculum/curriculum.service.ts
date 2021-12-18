@@ -780,15 +780,20 @@ export class CurriculumService {
 
     const classesIds = [];
     if (user.role != Role.Administrator) {
-      const classes = await this.userClassRepository.find({
-        where: { teacherId: user.id },
-      });
+      const classes =
+        user.role == Role.Teacher
+          ? await this.userClassRepository.find({
+              where: { teacherId: user.id },
+            })
+          : await this.userClassRepository.find({
+              where: { studentId: user.id },
+            });
 
       for (const cl of classes) {
         classesIds.push(cl.classId);
       }
 
-      console.log('teaching classes: ', classesIds);
+      console.log('classes: ', classesIds);
 
       queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
         classesIds: classesIds,
