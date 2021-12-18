@@ -755,12 +755,12 @@ export class CurriculumService {
     }
 
     //Role
-    queryBuilder =
-      user.role == Role.Teacher
-        ? queryBuilder.andWhere('c.created_by IN(:creatorsIds)', {
-            creatorsIds: creatorsIds.toString(),
-          })
-        : queryBuilder;
+    // queryBuilder =
+    //   user.role == Role.Teacher
+    //     ? queryBuilder.andWhere('c.created_by IN(:creatorsIds)', {
+    //         creatorsIds: creatorsIds.toString(),
+    //       })
+    //     : queryBuilder;
 
     //School Year
     queryBuilder = filter.schoolYearId
