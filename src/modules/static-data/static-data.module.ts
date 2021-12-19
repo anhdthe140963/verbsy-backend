@@ -7,6 +7,7 @@ import { ContractTypeRepository } from './repositories/contract-type.repository'
 import { QualificationRepository } from './repositories/qualification.repository';
 import { StudentStatusRepository } from './repositories/student-status.repository';
 import { TeacherStatusRepository } from './repositories/teacher-status.repository';
+import { SubjectRepository } from './repositories/subject.repository';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TeacherStatusRepository } from './repositories/teacher-status.repositor
       QualificationRepository,
       StudentStatusRepository,
       TeacherStatusRepository,
+      SubjectRepository,
     ]),
   ],
 

@@ -142,7 +142,6 @@ export class UserController {
         gender: string;
         phone: string;
         position: string;
-        title: string;
         contractType: string;
         qualification: string;
         teachingSubject: string;
@@ -156,8 +155,6 @@ export class UserController {
             dob: row.dob,
             gender: row.gender == 'Nam' ? true : false,
             phone: row.phone,
-            position: row.position,
-            title: row.title,
             contractType: row.contractType,
             qualification: row.qualification,
             teachingSubject: row.teachingSubject,
