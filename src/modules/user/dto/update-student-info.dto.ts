@@ -11,22 +11,10 @@ export class UpdateStudentInfoDto extends PartialType(StudentInfo) {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  ethnic: string;
+  ethnic: number;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  status: string;
-
-  @IsNotEmpty()
-  @IsOptional()
-  currentExp: number;
-
-  @IsNotEmpty()
-  @IsOptional()
-  reqExp: number;
-
-  @IsNotEmpty()
-  @IsOptional()
-  level: number;
+  status: number;
 }

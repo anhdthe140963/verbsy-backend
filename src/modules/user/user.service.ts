@@ -256,9 +256,12 @@ export class UserService {
         },
       );
 
-      await this.studentInfoRepository.insert(
-        Object.assign(createStudentDto, { userId: user.id }),
-      );
+      await this.studentInfoRepository.insert({
+        userId: user.id,
+        ethnic: createStudentDto.ethnic,
+        status: createStudentDto.status,
+        studentCode: createStudentDto.studentCode,
+      });
       await this.userClassRepository.insert({
         classId: classById.id,
         studentId: user.id,
@@ -343,9 +346,20 @@ export class UserService {
             { dob: student.dob, gender: student.gender, phone: student.phone },
           );
 
-          await this.studentInfoRepository.insert(
-            Object.assign(student, { userId: user.id }),
-          );
+          const ethnic = await this.ethnicRepository.findOne({
+            where: { name: student.ethnic },
+          });
+
+          const status = await this.studentStatusRepository.findOne({
+            where: { name: student.status },
+          });
+
+          await this.studentInfoRepository.insert({
+            userId: user.id,
+            ethnic: ethnic ? ethnic.id : null,
+            status: status ? status.id : null,
+            studentCode: student.studentCode,
+          });
 
           if (
             !(await this.userClassRepository.findOne({

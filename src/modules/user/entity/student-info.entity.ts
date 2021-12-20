@@ -10,9 +10,9 @@ export class StudentInfo extends BaseEntity {
   @Column({ name: 'student_code', type: 'varchar', unique: true })
   studentCode: string;
 
-  @Column({ name: 'ethnic', type: 'varchar' })
-  ethnic: string;
+  @Column({ name: 'ethnic_id', nullable: true })
+  ethnic: number;
 
-  @Column({ name: 'status', type: 'varchar', nullable: true })
-  status: string;
+  @Column({ name: 'status_id', nullable: true })
+  status: number;
 }
