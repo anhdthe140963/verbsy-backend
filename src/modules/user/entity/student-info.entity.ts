@@ -13,6 +13,6 @@ export class StudentInfo extends BaseEntity {
   @Column({ name: 'ethnic_id', nullable: true })
   ethnic: number;
 
-  @Column({ name: 'status_id', nullable: true })
+  @Column({ name: 'status_id', default: 1, nullable: true })
   status: number;
 }
