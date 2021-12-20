@@ -15,6 +15,9 @@ export class Game extends BaseEntity {
   @Column({ name: 'lecture_id' })
   lectureId: number;
 
+  @Column({ name: 'lesson_id', nullable: true })
+  lessonId: number;
+
   @Column({ name: 'class_id' })
   classId: number;
 
@@ -35,13 +38,24 @@ export class Game extends BaseEntity {
     type: 'json',
     nullable: true,
   })
-  questionsConfig: { shuffle: boolean; questionTypes: QuestionType[] };
+  questionsConfig: {
+    questions: number;
+    timeFactorWeight: number;
+    questionTypes: QuestionType[];
+  };
 
   @Column({
-    name: 'created_at',
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
+    name: 'difficulty_config',
+    type: 'json',
+    nullable: true,
   })
+  difficultyConfig: {
+    easy: number;
+    medium: number;
+    hard: number;
+  };
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Column({ name: 'ended_at', nullable: true, default: null })

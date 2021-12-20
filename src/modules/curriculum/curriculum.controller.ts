@@ -22,10 +22,36 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { CurriculumFilter } from './dto/curriculum.filter';
 import { UpdateCurriculumDto } from './dto/update-curriculum.dto';
 import { UpdateLesssonDto } from './dto/update-lesson.dto';
-
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('curriculum')
 export class CurriculumController {
   constructor(private readonly curriculumService: CurriculumService) {}
+
+  @Get('filtered')
+  @Roles(Role.Administrator, Role.Teacher, Role.Student)
+  async getFilteredCurriculum(
+    @GetUser() user,
+    @Query()
+    filter: {
+      limit: number;
+      page: number;
+      includeSample: boolean;
+      schoolYearId: number;
+      gradeId: number;
+      classId: number;
+      curriculumName: string;
+      dateFrom: Date;
+      dateTo: Date;
+    },
+  ) {
+    const filteredCurriculums =
+      await this.curriculumService.getFilteredCurriculum(user, filter);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get curriculums successfully',
+      data: filteredCurriculums,
+    };
+  }
 
   @Post()
   @UseGuards(AuthGuard(), RolesGuard)
@@ -39,6 +65,20 @@ export class CurriculumController {
       error: null,
       message: 'Curriculum created',
       data: await this.curriculumService.create(user, createCurriculumDto),
+    };
+  }
+  @Post('clone')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher)
+  async clone(
+    @GetUser() user,
+    @Body() createCurriculumDto: CreateCurriculumDto,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Curriculum cloned',
+      data: await this.curriculumService.clone(user, createCurriculumDto),
     };
   }
   @Post('lesson')
@@ -191,6 +231,20 @@ export class CurriculumController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Lesson deleted',
+    };
+  }
+
+  @Get('curriculum-id/:lectureId')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(Role.Administrator, Role.Teacher, Role.Student)
+  async getCurriculumIdByLectureId(
+    @Param('lectureId') lectureId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get curriculum id successfully',
+      data: await this.curriculumService.getCurriculumIdByLectureId(lectureId),
     };
   }
 }

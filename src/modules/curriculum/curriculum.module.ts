@@ -2,33 +2,35 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
-import { Grade } from '../grade/entities/grade.entity';
+import { GradeRepository } from '../grade/repository/grade.repository';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
-import { LessonLecture } from '../lesson-lecture/entities/lesson-lecture.entity';
+import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
 import { LessonMaterialRepository } from '../lesson-material/repository/lesson-material.repository';
-import { Answer } from '../question/entity/answer.entity';
+import { LessonRepository } from '../lesson/repository/lesson.repository';
+import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { CurriculumController } from './curriculum.controller';
 import { CurriculumService } from './curriculum.service';
-import { Curriculum } from './entities/curriculum.entity';
-import { Lesson } from './entities/lesson.entity';
+import { CurriculumRepository } from './repository/curriculum.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Grade,
+      CurriculumRepository,
       ClassesRepository,
       UserRepository,
-      Curriculum,
-      Lesson,
+      LessonRepository,
       LessonMaterialRepository,
-      LessonLecture,
+      LessonLectureRepository,
       LectureRepository,
       UserClassRepository,
       QuestionRepository,
-      Answer,
+      GradeRepository,
+      SchoolYearRepository,
+      AnswerRepository,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],

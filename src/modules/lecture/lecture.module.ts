@@ -8,6 +8,7 @@ import { UserRepository } from '../user/repository/user.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
 import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lecture.repository';
+import { QuestionRepository } from '../question/repository/question.repository';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { LessonLectureRepository } from '../lesson-lecture/repository/lesson-lec
       LessonRepository,
       CurriculumRepository,
       LessonLectureRepository,
+      QuestionRepository,
     ]),
   ],
   controllers: [LectureController],

@@ -17,6 +17,8 @@ import { LessonModule } from './modules/lesson/lesson.module';
 import { LessonLectureModule } from './modules/lesson-lecture/lesson-lecture.module';
 import { GameServerModule } from './modules/game-server/game-server.module';
 import { GameModule } from './modules/game/game.module';
+import { GameStatisticsModule } from './modules/game-statistics/game-statistics.module';
+import { StaticDataModule } from './modules/static-data/static-data.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -41,6 +43,8 @@ import { GameModule } from './modules/game/game.module';
     LessonLectureModule,
     GameServerModule,
     GameModule,
+    GameStatisticsModule,
+    StaticDataModule,
   ],
 })
 export class AppModule {}

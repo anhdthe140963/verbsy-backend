@@ -1,29 +1,21 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from 'src/constant/role.enum';
-import { Repository } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
-import { SchoolYear } from '../school-year/entities/school-year.entity';
-import { UserClass } from '../user-class/entity/user-class.entity';
+import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { Grade } from './entities/grade.entity';
+import { GradeRepository } from './repository/grade.repository';
 
 @Injectable()
 export class GradeService {
   constructor(
-    @InjectRepository(Grade)
-    private gradeRepo: Repository<Grade>,
-    @InjectRepository(SchoolYear)
-    private schoolYearRepo: Repository<SchoolYear>,
-    private classRepo: ClassesRepository,
-    private userClassRepo: UserClassRepository,
+    private gradeRepository: GradeRepository,
+    private schoolYearRepository: SchoolYearRepository,
+    private classRepository: ClassesRepository,
+    private userClassRepository: UserClassRepository,
   ) {}
   async create(createGrade: CreateGradeDto): Promise<Grade> {
     try {
@@ -35,23 +27,32 @@ export class GradeService {
     }
   }
 
-  async getGradesForUser(user: User): Promise<Grade[]> {
+  async getGradesForUser(user: User, schoolYearId: number): Promise<Grade[]> {
     try {
-      const grades = await this.gradeRepo.find({ order: { name: 'ASC' } });
+      const schoolYear = schoolYearId
+        ? await this.schoolYearRepository.findOne(schoolYearId)
+        : await this.schoolYearRepository.findOne({
+            where: { isActive: true },
+          });
+      const grades = await this.gradeRepository.find({
+        order: { name: 'ASC' },
+      });
       for (let grade of grades) {
         let classes = [];
         if (user.role == Role.Administrator) {
-          classes = await this.classRepo.find({
-            where: { gradeId: grade.id },
+          classes = await this.classRepository.find({
+            where: { gradeId: grade.id, schoolYearId: schoolYear.id },
             order: { name: 'ASC' },
           });
         } else {
-          const userClasses = await this.userClassRepo.find({
+          const userClasses = await this.userClassRepository.find({
             teacherId: user.id,
           });
           for (const uc of userClasses) {
-            const cl = await this.classRepo.findOne(uc.classId);
-            if (cl.gradeId == grade.id) {
+            const cl = await this.classRepository.findOne({
+              where: { id: uc.classId, schoolYearId: schoolYear.id },
+            });
+            if (cl && cl.gradeId == grade.id) {
               classes.push(cl);
             }
           }
@@ -66,7 +67,7 @@ export class GradeService {
 
   async findOne(id: number): Promise<Grade> {
     try {
-      const data = await this.gradeRepo.findOne(id);
+      const data = await this.gradeRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
       }
@@ -78,11 +79,11 @@ export class GradeService {
 
   async update(id: number, updateGradeDto: UpdateGradeDto) {
     try {
-      const data = await this.gradeRepo.findOne(id);
+      const data = await this.gradeRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
       }
-      await this.gradeRepo.update(id, updateGradeDto);
+      await this.gradeRepository.update(id, updateGradeDto);
     } catch (error) {
       throw error;
     }
@@ -90,11 +91,11 @@ export class GradeService {
 
   async remove(id: number) {
     try {
-      const data = await this.gradeRepo.findOne(id);
+      const data = await this.gradeRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
       }
-      await this.gradeRepo.delete(id);
+      await this.gradeRepository.delete(id);
     } catch (error) {
       throw error;
     }

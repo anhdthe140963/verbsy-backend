@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,12 +19,12 @@ import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { GradeService } from './grade.service';
 
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('grade')
 export class GradeController {
   constructor(private readonly gradeService: GradeService) {}
 
   @Post()
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async create(
     @Body() createGradeDto: CreateGradeDto,
@@ -37,21 +38,20 @@ export class GradeController {
   }
 
   @Get()
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator, Role.Teacher)
   async findAll(
     @GetUser() user,
+    @Query('schoolYearId') schoolYearId: number,
   ): Promise<{ statusCode; error; message; data }> {
     return {
       statusCode: HttpStatus.OK,
       error: null,
-      message: 'Get all grade successfully',
-      data: await this.gradeService.getGradesForUser(user),
+      message: 'Get grade successfully',
+      data: await this.gradeService.getGradesForUser(user, schoolYearId),
     };
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async findOne(
     @Param('id') id: number,
@@ -65,7 +65,6 @@ export class GradeController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async update(
     @Param('id') id: number,
@@ -80,7 +79,6 @@ export class GradeController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async remove(
     @Param('id') id: number,

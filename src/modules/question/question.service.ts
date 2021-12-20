@@ -42,6 +42,7 @@ export class QuestionService {
     question.imageUrl = createQuestionDto.imageUrl;
     question.lectureId = createQuestionDto.lectureId;
     question.question = createQuestionDto.question;
+    question.level = createQuestionDto.level;
     return await question.save();
   }
 
@@ -53,7 +54,7 @@ export class QuestionService {
     questionId: number,
     updateQuestionDto: UpdateQuestionDto,
   ): Promise<Question> {
-    const { lectureId, question, imageUrl, answers, duration } =
+    const { lectureId, question, imageUrl, answers, duration, level } =
       updateQuestionDto;
     const questionById = await this.questionRepo.findOne(questionId);
     //check if question by id exist
@@ -81,9 +82,12 @@ export class QuestionService {
     if (duration) {
       questionById.duration = duration;
     }
+    if (level) {
+      questionById.level = level;
+    }
     const data = await questionById.save();
     //check if answers need update
-    if (answers.length != 0) {
+    if (answers.length != 0 || answers) {
       await Promise.all(
         answers.map(async (answer) => {
           //
@@ -151,5 +155,9 @@ export class QuestionService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async importQuestion(questions: Question[]): Promise<Question[]> {
+    return await this.questionRepo.save(questions);
   }
 }

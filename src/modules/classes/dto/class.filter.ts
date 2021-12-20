@@ -11,9 +11,9 @@ export class ClassFilter extends BasePagination {
 
   @IsOptional()
   @IsString()
-  gradeId?: string;
+  gradeId?: number;
 
   @IsOptional()
   @IsString()
-  schoolYearId?: string;
+  schoolYearId?: number;
 }

@@ -1,15 +1,17 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { QuestionType } from 'src/constant/question-type.enum';
 
 export class HostGameDto {
-  @IsNotEmpty()
-  @IsInt()
+  lessonId: number;
   lectureId: number;
-
-  @IsNotEmpty()
-  @IsInt()
-  hostId: number;
-
-  @IsNotEmpty()
-  @IsInt()
   classId: number;
+  questionsConfig: {
+    questions: number;
+    timeFactorWeight: number;
+    questionTypes: QuestionType[];
+  };
+  difficultyConfig: {
+    easy: number;
+    medium: number;
+    hard: number;
+  };
 }

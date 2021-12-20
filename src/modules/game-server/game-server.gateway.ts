@@ -4,6 +4,7 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -12,13 +13,16 @@ import {
 import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
+import { ScreenState } from 'src/constant/screen-state.enum';
 import { User } from '../user/entity/user.entity';
+import { GameStateDto } from './dto/game-state.dto';
+import { HostGameDto } from './dto/host-game.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { GameServerService } from './game-server.service';
 
 @WebSocketGateway({ cors: true })
 export class GameServerGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   @WebSocketServer()
   server: Server = new Server({});
@@ -29,6 +33,9 @@ export class GameServerGateway
     private readonly jwtService: JwtService,
     private readonly gameServerService: GameServerService,
   ) {}
+  afterInit(server: Server) {
+    return console.log('Server initialized');
+  }
 
   //Utils
   getRoom(gameId: number): string {
@@ -79,12 +86,37 @@ export class GameServerGateway
 
         if (socket.data.isHost) {
           this.server.to(room).emit('host_disconnected');
+          this.server.to(room).emit('game_paused');
+          const usersInRoom = await this.server
+            .to(room)
+            .except(socket.id)
+            .fetchSockets();
+
+          const playerSockets = [];
+          for (const p of usersInRoom) {
+            const user: User = p.data.user;
+            console.log('user in room: ', p.data.user);
+            if (user.role == Role.Student) {
+              playerSockets.push(p);
+            }
+          }
+
+          const randomPlayerIndex = Math.floor(
+            Math.random() * playerSockets.length,
+          );
+          console.log('index: ', randomPlayerIndex);
+
+          const chosenPlayer = playerSockets[randomPlayerIndex];
+          console.log('chosen: ', playerSockets[randomPlayerIndex].data);
+
+          chosenPlayer.emit('request_game_state');
+        } else {
+          //Leave room and emit to room
+          socket.leave(room);
+          this.server
+            .to(room)
+            .emit('lobby_updated', await this.getInGameStudentList(gameId));
         }
-        //Leave room and emit to room
-        socket.leave(room);
-        this.server
-          .to(room)
-          .emit('lobby_updated', await this.getInGameStudentList(gameId));
 
         //Check if anyone left in room
         const socketsInGameRoom = (await this.server.to(room).allSockets())
@@ -96,10 +128,29 @@ export class GameServerGateway
 
       console.log(socket.rooms);
       console.log(socket.data.user.username + ' has disconnected');
+      socket.disconnect(true);
     } catch (error) {
+      console.log(error);
       socket.emit('error', error);
     }
   }
+
+  // @SubscribeMessage('disconnecting')
+  // async handleDisconnecting(
+  //   @ConnectedSocket()
+  //   socc: Socket,
+  // ) {
+  //   try {
+  //     if (socc.data.room) {
+  //       const user: User = socc.data.user;
+  //       const room = socc.data.room;
+  //       return this.server.to(room).emit('game_paused');
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     return socc.emit('error', error);
+  //   }
+  // }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     try {
@@ -121,6 +172,13 @@ export class GameServerGateway
         'socket_connected',
         'username ' + socket.data.user.username + ' has connected',
       );
+
+      console.log('Connected Sockets');
+
+      for (const s of await this.server.fetchSockets()) {
+        const u: User = s.data.user;
+        console.log(u.username, s.id);
+      }
     } catch (error) {
       console.log(error);
       socket.emit('error', error);
@@ -158,18 +216,28 @@ export class GameServerGateway
     }
   }
 
+  @SubscribeMessage('get_ongoing_games')
+  async getOngoingGames(@ConnectedSocket() socc: Socket): Promise<boolean> {
+    try {
+      const user: User = socc.data.user;
+      const ongoingGames = await this.gameServerService.getOngoingGames(
+        user.id,
+      );
+      return socc.emit('receive_ongoing_games', { lectureIds: ongoingGames });
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
   @SubscribeMessage('host_game')
   async hostGame(
-    @MessageBody() data: { lectureId: number; classId: number },
+    @MessageBody() data: HostGameDto,
     @ConnectedSocket() socc: Socket,
   ) {
     try {
       const user: User = socc.data.user;
-      const game = await this.gameServerService.hostGame(
-        data.lectureId,
-        data.classId,
-        user.id,
-      );
+      const game = await this.gameServerService.hostGame(user.id, data);
       const room = this.getRoom(game.id);
 
       socc.join(room);
@@ -227,6 +295,15 @@ export class GameServerGateway
     try {
       const user: User = socc.data.user;
       const room = this.getRoom(data.gameId);
+      const canJoinGame = await this.gameServerService.canJoinGame(
+        user.id,
+        data.gameId,
+      );
+
+      if (!canJoinGame) {
+        throw new WsException('User is not in the designated class');
+      }
+
       const blacklist = await this.gameServerService.getBlacklist(data.gameId);
 
       for (const bl of blacklist) {
@@ -248,8 +325,30 @@ export class GameServerGateway
         user.id,
       );
       if (isReconnect) {
-        return this.server.to(room).emit('player_has_reconnected', user);
+        this.server.to(room).emit('player_has_reconnected', user);
       }
+
+      this.server.to(room).emit('game_joined', user);
+
+      return this.server
+        .to(room)
+        .emit('lobby_updated', await this.getInGameStudentList(data.gameId));
+    } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('host_join_game')
+  async hostJoinGame(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const user: User = socc.data.user;
+      const room = this.getRoom(data.gameId);
+
+      socc.join(room);
+      socc.data.room = room;
 
       this.server.to(room).emit('game_joined', user);
       return this.server
@@ -260,20 +359,32 @@ export class GameServerGateway
     }
   }
 
-  @SubscribeMessage('save_game_state')
+  @SubscribeMessage('send_game_state')
   async saveGameState(
-    @MessageBody()
-    data: { gameId: number; currentQuestionId: number; timeLeft: number },
+    @MessageBody() data: GameStateDto,
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      const gameState = await this.gameServerService.saveGameState(
-        data.gameId,
-        data.currentQuestionId,
-        data.timeLeft,
-      );
+      const gameState = await this.gameServerService.saveGameState(data);
 
       return socc.emit('saved_game_state', gameState);
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('recover_game_state')
+  async recoverGameState(
+    @MessageBody() data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const user: User = socc.data.user;
+      const recoveredGameStateData =
+        await this.gameServerService.recoverGameState(data.gameId, user.id);
+
+      return socc.emit('recovered_game_state', recoveredGameStateData);
     } catch (error) {
       console.log(error);
       return socc.emit('error', error);
@@ -391,8 +502,12 @@ export class GameServerGateway
         data.gameId,
         await this.getInGameStudentList(data.gameId),
       );
-      return this.server.to(room).emit('game_started', 'Game Started');
+      await this.gameServerService.prepareQuestionType(data.gameId);
+
+      const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
+      return this.server.to(room).emit('game_started', gameInfo);
     } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }
@@ -407,8 +522,6 @@ export class GameServerGateway
 
       const nextQuestion = await this.gameServerService.getNextQuestion(
         data.gameId,
-        false,
-        data.questionType,
       );
 
       return this.server.to(room).emit('receive_next_question', nextQuestion);
@@ -430,21 +543,31 @@ export class GameServerGateway
         data,
       );
 
-      const questionRecord = await this.gameServerService.getAnsweredPlayers(
+      socc.emit('answer_submitted', submittedAnswer);
+
+      const answeredPlayers = await this.gameServerService.getAnsweredPlayers(
         data.gameId,
         data.questionId,
       );
 
-      socc.emit('answer_submitted', submittedAnswer);
+      const students = await this.getInGameStudentList(data.gameId);
 
       this.server.to(room).emit('answered_players_changed', {
-        answeredPlayers: questionRecord.answeredPlayers,
+        answeredPlayers,
+        totalPlayers: students.length,
       });
+
+      const studentsStatistics =
+        await this.gameServerService.getPlayersStatistics(data.gameId);
+
+      this.server
+        .to(room)
+        .emit('receive_students_statistics', studentsStatistics);
 
       const roomStudents = (await this.getInGameStudentList(data.gameId))
         .length;
 
-      if (questionRecord.answeredPlayers == roomStudents) {
+      if (answeredPlayers == roomStudents) {
         await this.finishQuestion(data.gameId, data.questionId);
       }
     } catch (error) {
@@ -454,7 +577,7 @@ export class GameServerGateway
 
   @SubscribeMessage('get_leaderboard')
   async getLeaderBoard(
-    @MessageBody() data: { gameId: number; questionId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -487,13 +610,14 @@ export class GameServerGateway
     @ConnectedSocket() socc: Socket,
   ) {
     try {
-      if (!socc.data.isHost) {
+      const user: User = socc.data.user;
+      if (!(await this.gameServerService.isHost(user.id, data.gameId))) {
         throw new WsException('Only Host can end game');
       }
       const room = this.getRoom(data.gameId);
       const game = await this.gameServerService.endGame(data.gameId);
       this.server.to(room).emit('game_ended', game);
-      return this.server.to(room).disconnectSockets(true);
+      return this.server.to(room).except(socc.id).disconnectSockets(true);
     } catch (error) {
       return socc.emit('error', error);
     }
@@ -520,8 +644,7 @@ export class GameServerGateway
 
   @SubscribeMessage('player_left')
   async handlePlayerLeft(
-    @MessageBody()
-    data: { gameId: number },
+    @MessageBody() data: { gameId: number },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
@@ -532,23 +655,29 @@ export class GameServerGateway
     }
   }
 
-  @SubscribeMessage('transfer_question_to_player')
-  async handlePlayerReconnect(
+  @SubscribeMessage('recover_game_state_for_player')
+  async recoverGameStateForPlayer(
     @MessageBody()
     data: {
       gameId: number;
       userId: number;
-      info: { questionId: number; timeLeft: number };
+      gameState: GameStateDto;
     },
     @ConnectedSocket() socc: Socket,
   ) {
     try {
+      await this.gameServerService.saveGameState(data.gameState);
+
       const room = this.getRoom(data.gameId);
       const sockets = await this.server.to(room).fetchSockets();
       for (const socket of sockets) {
         const user: User = socket.data.user;
         if (user.id == data.userId) {
-          return socket.emit('receive_info', data.info);
+          const gameStateData = await this.gameServerService.recoverGameState(
+            data.gameId,
+            data.userId,
+          );
+          return socket.emit('recovered_game_state', gameStateData);
         }
       }
     } catch (error) {
@@ -564,9 +693,45 @@ export class GameServerGateway
   ) {
     try {
       const studentsStatistics =
-        await this.gameServerService.getStudentsStatistics(data.gameId);
+        await this.gameServerService.getPlayersStatistics(data.gameId);
       socc.emit('receive_students_statistics', studentsStatistics);
     } catch (error) {
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('pause_game')
+  async pauseGame(
+    @MessageBody()
+    data: GameStateDto,
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const room = this.getRoom(data.gameId);
+      const gameState = await this.gameServerService.saveGameState(data);
+      return this.server.to(room).emit('game_paused', gameState);
+    } catch (error) {
+      console.log(error);
+      return socc.emit('error', error);
+    }
+  }
+
+  @SubscribeMessage('resume_game')
+  async resumeGame(
+    @MessageBody()
+    data: { gameId: number },
+    @ConnectedSocket() socc: Socket,
+  ) {
+    try {
+      const user: User = socc.data.user;
+      const room = this.getRoom(data.gameId);
+      const gameState = this.gameServerService.recoverGameState(
+        data.gameId,
+        user.id,
+      );
+      return this.server.to(room).emit('game_resumed', gameState);
+    } catch (error) {
+      console.log(error);
       return socc.emit('error', error);
     }
   }

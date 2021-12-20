@@ -4,6 +4,6 @@ import { QuestionRecordController } from './question-record.controller';
 
 @Module({
   controllers: [QuestionRecordController],
-  providers: [QuestionRecordService]
+  providers: [QuestionRecordService],
 })
 export class QuestionRecordModule {}

@@ -7,8 +7,8 @@ import { PassportModule } from '@nestjs/passport';
 import { UserRepository } from '../user/repository/user.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { StudentInfoRepository } from '../user/repository/student-info.repository';
-import { SchoolYear } from '../school-year/entities/school-year.entity';
-import { Grade } from '../grade/entities/grade.entity';
+import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
+import { GradeRepository } from '../grade/repository/grade.repository';
 
 @Module({
   imports: [
@@ -18,8 +18,8 @@ import { Grade } from '../grade/entities/grade.entity';
       UserRepository,
       UserClassRepository,
       StudentInfoRepository,
-      SchoolYear,
-      Grade,
+      SchoolYearRepository,
+      GradeRepository,
     ]),
   ],
   controllers: [ClassesController],

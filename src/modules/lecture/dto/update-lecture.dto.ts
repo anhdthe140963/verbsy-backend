@@ -9,11 +9,6 @@ export class UpdateLectureDto extends PartialType(CreateLectureDto) {
   name: string;
 
   @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  content: string;
-
-  @IsNotEmpty()
   @IsNumber()
   @IsOptional()
   ownerId: number;

@@ -17,5 +17,9 @@ export class CurriculumFilter extends BasePagination {
 
   @IsNotEmpty()
   @IsOptional()
-  parentId?: number;
+  sample?: number;
+
+  @IsNotEmpty()
+  @IsOptional()
+  schoolYearId?: number;
 }

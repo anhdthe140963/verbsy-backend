@@ -22,16 +22,49 @@ import { GetUser } from 'src/decorator/get-user-decorator';
 import { Roles } from 'src/decorator/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
 import fileExcelFilter from '../../filter/file.excel.filter';
+import { User } from '../user/entity/user.entity';
 import { ClassesService } from './classes.service';
 import { addClassDto } from './dto/add-class.dto';
 import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
 import { StudentFilter } from './dto/student.filter';
 import { UpdateClassDto } from './dto/update-classes.dto';
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('class')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
-  @UseGuards(AuthGuard(), RolesGuard)
+
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('all-classes')
+  async getAllClasses(
+    @Query('teacherId') teacherId?: number,
+    @Query('gradeId') gradeId?: number,
+    @Query('schoolYearId') schoolYearId?: number,
+  ) {
+    const data = await this.classesService.getAllClasses(
+      teacherId,
+      gradeId,
+      schoolYearId,
+    );
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class detail successfully',
+      data: data,
+    };
+  }
+
+  @Roles(Role.Teacher)
+  @Get('teacher-classes')
+  async getTeacherClasses(@GetUser() user: User) {
+    const classes = await this.classesService.getTeacherClasses(user.id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Get classes successfully',
+      data: classes,
+    };
+  }
+
   @Roles(Role.Teacher, Role.Administrator)
   @Post()
   async createClass(
@@ -46,7 +79,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':classId')
   async updateClass(
@@ -61,7 +93,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Post('import')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -113,7 +144,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('list')
   async getClassList(
@@ -142,7 +172,7 @@ export class ClassesController {
       ),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get('list/:teacherId')
   async getClassListByTeacherId(
@@ -155,7 +185,21 @@ export class ClassesController {
       data: await this.classesService.getClassListByTeacherId(teacherId),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
+  @Roles(Role.Teacher, Role.Administrator)
+  @Get('teaching-classes/:gradeId')
+  async getUserClassList(
+    @GetUser() user,
+    @Param('gradeId') gradeId: number,
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.OK,
+      error: null,
+      message: 'Get class list successfully',
+      data: await this.classesService.getTeachingClasses(gradeId, user.id),
+    };
+  }
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get('students/:classId')
   async getStudentsByClassId(
@@ -182,7 +226,7 @@ export class ClassesController {
       data: data,
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get(':classId')
   async getClassDetail(
@@ -197,7 +241,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Delete(':classId')
   async delete(
