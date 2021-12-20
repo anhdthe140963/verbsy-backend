@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateStudentDto {
   @IsString()
@@ -12,12 +12,12 @@ export class CreateStudentDto {
   dob: string;
   @IsNotEmpty()
   gender: boolean;
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
-  ethnic: string;
-  @IsString()
+  ethnic: number;
+  @IsInt()
   @IsNotEmpty()
-  status: string;
+  status: number;
   @IsString()
   @IsNotEmpty()
   phone: string;

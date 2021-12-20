@@ -16,6 +16,12 @@ import { Role } from 'src/constant/role.enum';
 import { GenerateAccountOption } from 'src/interfaces/generate-account-option.interface';
 import { removeVietnameseTones } from 'src/utils/convertVie';
 import { ClassesRepository } from '../classes/repository/classes.repository';
+import { ContractTypeRepository } from '../static-data/repositories/contract-type.repository';
+import { EthnicRepository } from '../static-data/repositories/ethnic.repository';
+import { QualificationRepository } from '../static-data/repositories/qualification.repository';
+import { StudentStatusRepository } from '../static-data/repositories/student-status.repository';
+import { SubjectRepository } from '../static-data/repositories/subject.repository';
+import { TeacherStatusRepository } from '../static-data/repositories/teacher-status.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
@@ -40,6 +46,12 @@ export class UserService {
     private studentInfoRepository: StudentInfoRepository,
     private userClassRepository: UserClassRepository,
     private classesRepository: ClassesRepository,
+    private readonly ethnicRepository: EthnicRepository,
+    private readonly contractTypeRepository: ContractTypeRepository,
+    private readonly qualificationRepository: QualificationRepository,
+    private readonly studentStatusRepository: StudentStatusRepository,
+    private readonly teacherStatusRepository: TeacherStatusRepository,
+    private readonly subjectRepository: SubjectRepository,
   ) {}
 
   async getUserDetail(userId: number): Promise<GetUserDto> {
@@ -206,9 +218,13 @@ export class UserService {
         },
       );
 
-      await this.teacherInfoRepository.insert(
-        Object.assign(createTeacherDto, { userId: user.id }),
-      );
+      await this.teacherInfoRepository.insert({
+        userId: user.id,
+        contractType: createTeacherDto.contractType,
+        qualification: createTeacherDto.qualification,
+        teacherCode: createTeacherDto.teacherCode,
+        subject: createTeacherDto.teachingSubject,
+      });
       return createTeacherDto;
     } catch (error) {
       throw error;
@@ -240,9 +256,12 @@ export class UserService {
         },
       );
 
-      await this.studentInfoRepository.insert(
-        Object.assign(createStudentDto, { userId: user.id }),
-      );
+      await this.studentInfoRepository.insert({
+        userId: user.id,
+        ethnic: createStudentDto.ethnic,
+        status: createStudentDto.status,
+        studentCode: createStudentDto.studentCode,
+      });
       await this.userClassRepository.insert({
         classId: classById.id,
         studentId: user.id,
@@ -271,9 +290,25 @@ export class UserService {
             { dob: teacher.dob, gender: teacher.gender, phone: teacher.phone },
           );
 
-          await this.teacherInfoRepository.insert(
-            Object.assign(teacher, { userId: user.id }),
-          );
+          const qualification = await this.qualificationRepository.findOne({
+            where: { name: teacher.qualification },
+          });
+
+          const subject = await this.subjectRepository.findOne({
+            where: { name: teacher.teachingSubject },
+          });
+
+          const contractType = await this.contractTypeRepository.findOne({
+            where: { name: teacher.contractType },
+          });
+
+          await this.teacherInfoRepository.insert({
+            userId: user.id,
+            teacherCode: teacher.teacherCode,
+            contractType: contractType ? contractType.id : null,
+            qualification: qualification ? qualification.id : null,
+            subject: subject ? subject.id : null,
+          });
 
           addedTeachers.push(teacher);
         } catch (error) {
@@ -311,9 +346,20 @@ export class UserService {
             { dob: student.dob, gender: student.gender, phone: student.phone },
           );
 
-          await this.studentInfoRepository.insert(
-            Object.assign(student, { userId: user.id }),
-          );
+          const ethnic = await this.ethnicRepository.findOne({
+            where: { name: student.ethnic },
+          });
+
+          const status = await this.studentStatusRepository.findOne({
+            where: { name: student.status },
+          });
+
+          await this.studentInfoRepository.insert({
+            userId: user.id,
+            ethnic: ethnic ? ethnic.id : null,
+            status: status ? status.id : null,
+            studentCode: student.studentCode,
+          });
 
           if (
             !(await this.userClassRepository.findOne({

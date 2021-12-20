@@ -10,18 +10,12 @@ export class TeacherInfo extends BaseEntity {
   @Column({ name: 'teacher_code', type: 'varchar', unique: true })
   teacherCode: string;
 
-  @Column({ name: 'position', type: 'varchar' })
-  position: string;
+  @Column({ name: 'contract_type_id', nullable: true })
+  contractType: number;
 
-  @Column({ name: 'title', type: 'varchar', nullable: true })
-  title: string;
+  @Column({ name: 'qualification_id', nullable: true })
+  qualification: number;
 
-  @Column({ name: 'contract_type', type: 'varchar' })
-  contractType: string;
-
-  @Column({ name: 'qualification', type: 'varchar' })
-  qualification: string;
-
-  @Column({ name: 'teaching_subject', type: 'varchar', nullable: true })
-  teachingSubject: string;
+  @Column({ name: 'subject_id', nullable: true })
+  subject: number;
 }
