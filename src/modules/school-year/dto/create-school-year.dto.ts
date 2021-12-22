@@ -4,8 +4,4 @@ export class CreateSchoolYearDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  isActive: boolean;
 }
