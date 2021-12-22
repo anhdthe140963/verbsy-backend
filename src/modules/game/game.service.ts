@@ -4,8 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { number } from 'joi';
+import { GameStatus } from 'src/constant/game-status.enum';
 import { Role } from 'src/constant/role.enum';
-import { IsNull, Not } from 'typeorm';
+import { In, IsNull, Not } from 'typeorm';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Curriculum } from '../curriculum/entities/curriculum.entity';
@@ -70,7 +71,9 @@ export class GameService {
       .leftJoin(Lesson, 'les', 'lec.lesson_id = les.id')
       .leftJoin(Curriculum, 'c', 'les.curriculum_id = c.id')
       .where('c.id = :curriculumId', { curriculumId })
-      .andWhere('g.is_game_live = :isGameLive', { isGameLive: true })
+      .andWhere('g.status IN(:gameStatuses)', {
+        gameStatuses: [GameStatus.Started, GameStatus.Hosted],
+      })
       .getMany();
 
     return games;
@@ -147,7 +150,7 @@ export class GameService {
     try {
       const games = await this.gameRepository.find({
         hostId: user.id,
-        isGameLive: true,
+        status: In([GameStatus.Hosted, GameStatus.Started]),
       });
       for (const game of games) {
         const studentNumber = (

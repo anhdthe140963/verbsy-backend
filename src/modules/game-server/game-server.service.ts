@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
+import { GameStatus } from 'src/constant/game-status.enum';
 import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { ScreenState } from 'src/constant/screen-state.enum';
@@ -98,7 +100,7 @@ export class GameServerService {
 
   async getOngoingGames(hostId: number) {
     const ongoingGames = await this.gameRepository.find({
-      where: { hostId, isGameLive: true },
+      where: { hostId, status: In([GameStatus.Hosted, GameStatus.Started]) },
     });
 
     const lecturesWithOngoingGamesIds = [];
@@ -456,9 +458,15 @@ export class GameServerService {
   }
 
   async endGame(gameId: number) {
+    const playersCount = await this.playerRepository.count({
+      where: { gameId },
+    });
     return await this.gameRepository.update(
       { id: gameId },
-      { isGameLive: false, endedAt: new Date().toLocaleString() },
+      {
+        status: playersCount == 0 ? GameStatus.Voided : GameStatus.Ended,
+        endedAt: new Date().toLocaleString(),
+      },
     );
   }
 
@@ -470,6 +478,7 @@ export class GameServerService {
       lectureId: hostGameDto.lectureId,
       questionsConfig: hostGameDto.questionsConfig,
       difficultyConfig: hostGameDto.difficultyConfig,
+      status: GameStatus.Hosted,
     });
     return game;
   }
@@ -497,11 +506,24 @@ export class GameServerService {
   }
 
   async startGame(gameId: number, students: User[]) {
-    for (const student of students) {
-      await this.playerRepository.save({
-        gameId: gameId,
-        studentId: student.id,
-      });
+    const game = await this.gameRepository.findOne(gameId);
+    if (!game) {
+      throw new BadRequestException('Game not exist');
+    }
+    if (game.status == GameStatus.Hosted) {
+      for (const student of students) {
+        await this.playerRepository.save({
+          gameId: gameId,
+          studentId: student.id,
+        });
+      }
+      await this.prepareQuestionType(gameId);
+      await this.gameRepository.update(
+        { id: gameId },
+        { status: GameStatus.Started },
+      );
+    } else {
+      throw new BadRequestException('Game is already started');
     }
   }
 
