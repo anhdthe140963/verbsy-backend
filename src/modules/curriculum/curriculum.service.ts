@@ -7,6 +7,7 @@ import {
   IPaginationOptions,
   paginate,
   paginateRaw,
+  PaginationTypeEnum,
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
 import { Brackets } from 'typeorm';
@@ -36,6 +37,7 @@ import { UpdateLesssonDto } from './dto/update-lesson.dto';
 import { Curriculum } from './entities/curriculum.entity';
 import { Lesson } from './entities/lesson.entity';
 import { CurriculumRepository } from './repository/curriculum.repository';
+import { PaginationEnum } from '../../constant/pagination.enum';
 
 @Injectable()
 export class CurriculumService {
@@ -728,8 +730,8 @@ export class CurriculumService {
     let queryBuilder = await this.curriculumRepository
       .createQueryBuilder('c')
       .leftJoin(Grade, 'g', 'c.grade_id = g.id')
-      .leftJoin(Classes, 'cl', 'cl.id = c.class_id')
       .leftJoin(User, 'u', 'c.created_by = u.id')
+      .leftJoin(Classes, 'cl', 'cl.id = c.class_id')
       .select('c.id', 'id')
       .addSelect('c.name', 'name')
       .addSelect('g.id', 'gradeId')
@@ -790,13 +792,16 @@ export class CurriculumService {
       for (const cl of classes) {
         classesIds.push(cl.classId);
       }
-      classesIds.push(null);
 
       console.log('classes: ', classesIds);
 
       queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
         classesIds: classesIds,
       });
+
+      queryBuilder = filter.includeSample
+        ? queryBuilder.orWhere('cl.id IS null')
+        : queryBuilder;
     }
 
     //Classes
@@ -832,8 +837,8 @@ export class CurriculumService {
       : queryBuilder;
 
     const paginatedRaw = paginateRaw(queryBuilder, {
-      limit: filter.limit ?? 10,
-      page: filter.page ?? 1,
+      limit: filter.limit ?? PaginationEnum.DefaultLimit,
+      page: filter.page ?? PaginationEnum.DefaultPage,
     });
 
     return paginatedRaw;
