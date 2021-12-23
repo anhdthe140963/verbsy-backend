@@ -16,13 +16,12 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYearService } from './school-year.service';
-
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('school-year')
 export class SchoolYearController {
   constructor(private readonly schoolYearService: SchoolYearService) {}
 
   @Post()
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async create(
     @Body() createSchoolYearDto: CreateSchoolYearDto,
@@ -36,8 +35,7 @@ export class SchoolYearController {
   }
 
   @Get()
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator, Role.Teacher)
+  @Roles(Role.Administrator, Role.Teacher, Role.Student)
   async findAll(): Promise<{ statusCode; error; message; data }> {
     return {
       statusCode: HttpStatus.OK,

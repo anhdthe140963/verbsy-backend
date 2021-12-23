@@ -28,9 +28,6 @@ export class Game extends BaseEntity {
   @Column({ name: 'status', default: GameStatus.Hosted })
   status: GameStatus;
 
-  @Column({ name: 'config_id', nullable: true })
-  configId: number;
-
   @Column({
     name: 'questions_config',
     type: 'json',
