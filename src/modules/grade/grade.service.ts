@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Role } from 'src/constant/role.enum';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
@@ -94,6 +98,12 @@ export class GradeService {
       const data = await this.gradeRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
+      }
+      const classes = await this.classRepository.find({ gradeId: id });
+      if (classes.length != 0) {
+        throw new BadRequestException(
+          'Can not delete grade with existing classes',
+        );
       }
       await this.gradeRepository.delete(id);
     } catch (error) {
