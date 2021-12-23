@@ -727,9 +727,9 @@ export class CurriculumService {
   ) {
     let queryBuilder = await this.curriculumRepository
       .createQueryBuilder('c')
-      .innerJoin(Grade, 'g', 'c.grade_id = g.id')
-      .innerJoin(Classes, 'cl', 'cl.id = c.class_id')
-      .innerJoin(User, 'u', 'c.created_by = u.id')
+      .leftJoin(Grade, 'g', 'c.grade_id = g.id')
+      .leftJoin(Classes, 'cl', 'cl.id = c.class_id')
+      .leftJoin(User, 'u', 'c.created_by = u.id')
       .select('c.id', 'id')
       .addSelect('c.name', 'name')
       .addSelect('g.id', 'gradeId')

@@ -17,7 +17,4 @@ export class QuestionRecord {
 
   @Column({ name: 'answered_players' })
   answeredPlayers: number;
-
-  @Column({ name: 'is_question_live', default: true })
-  isQuestionLive: boolean;
 }
