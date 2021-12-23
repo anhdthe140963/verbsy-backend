@@ -46,7 +46,6 @@ export class SchoolYearController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async findOne(
     @Param('id') id: number,
@@ -75,7 +74,6 @@ export class SchoolYearController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async remove(
     @Param('id') id: number,
@@ -89,7 +87,6 @@ export class SchoolYearController {
   }
 
   @Put('change-status/:id')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async changeSchoolYearStatus(
     @Param('id') id: number,
@@ -104,7 +101,6 @@ export class SchoolYearController {
   }
 
   @Put('set-active/:schoolYearId')
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   async setActiveSchoolYear(@Param('schoolYearId') schoolYearId: number) {
     await this.schoolYearService.setActiveSchoolYear(schoolYearId);

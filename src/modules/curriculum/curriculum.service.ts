@@ -790,6 +790,7 @@ export class CurriculumService {
       for (const cl of classes) {
         classesIds.push(cl.classId);
       }
+      classesIds.push(null);
 
       console.log('classes: ', classesIds);
 
