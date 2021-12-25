@@ -7,10 +7,11 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { Game } from './entities/game.entity';
 import { GameService } from './game.service';
 
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('game')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Get('active-games')
   async findActiveGames(
     @GetUser() user,
@@ -23,7 +24,6 @@ export class GameController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Get('curriculum/:curriculumId')
   async getGamesOfCurriculum(
     @Param('curriculumId') curirculumId: number,
@@ -37,7 +37,6 @@ export class GameController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator, Role.Teacher)
   @Get('games/:lectureId')
   async getGamesByLectureId(@Param('lectureId') lectureId: number): Promise<{
@@ -52,8 +51,6 @@ export class GameController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(Role.Administrator, Role.Teacher)
   @Get('game-history/:gameId')
   async getGameHistoryByGameId(
     @Param('gameId') gameId: number,
@@ -65,7 +62,6 @@ export class GameController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher)
   @Get('teacher-games')
   async getTeacherActiveGames(
@@ -78,7 +74,6 @@ export class GameController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher)
   @Get('recent-game')
   async getRecentGameStatistic(

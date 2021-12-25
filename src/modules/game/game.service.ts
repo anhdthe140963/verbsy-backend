@@ -55,7 +55,9 @@ export class GameService {
         .addSelect('cl.name', 'className')
         .addSelect('g.created_at', 'createdAt')
         .where('g.classId IN(:classesIds)', { classesIds: classesIds })
-        .andWhere('g.status =:status', { status: GameStatus.Hosted })
+        .andWhere('g.status IN(:status)', {
+          status: [GameStatus.Hosted, GameStatus.Started],
+        })
         .orderBy('g.created_at')
         .getRawMany();
       return games;
