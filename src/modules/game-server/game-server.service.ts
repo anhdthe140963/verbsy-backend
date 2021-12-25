@@ -729,7 +729,7 @@ export class GameServerService {
     }
   }
 
-  async saveGameState(gameState: GameStateDto, isPause = false) {
+  async saveGameState(gameState: GameStateDto, isPause?: boolean) {
     const existGameState = await this.gameStateRepository.findOne({
       where: { gameId: gameState.gameId },
     });
