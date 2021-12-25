@@ -252,6 +252,7 @@ export class CurriculumService {
             newQ.question = question.question;
             newQ.imageUrl = question.imageUrl;
             newQ.duration = question.duration;
+            newQ.level = question.level;
             await newQ.save();
 
             //clone answer

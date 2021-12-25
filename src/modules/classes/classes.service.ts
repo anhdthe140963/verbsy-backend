@@ -212,6 +212,14 @@ export class ClassesService {
       if (!data) {
         throw new BadRequestException('Class does not exist');
       }
+      const userclasses = await this.userClassRepository.find({
+        classId: classId,
+      });
+      if (userclasses.length != 0) {
+        throw new BadRequestException(
+          'Can not delete class with existing participants',
+        );
+      }
       await this.userClassRepository
         .createQueryBuilder()
         .where('class_id = :classId', { classId: data.id })
