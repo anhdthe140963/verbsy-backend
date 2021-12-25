@@ -706,7 +706,7 @@ export class GameServerGateway
   ) {
     try {
       const room = this.getRoom(data.gameId);
-      const gameState = await this.gameServerService.saveGameState(data);
+      const gameState = await this.gameServerService.saveGameState(data, true);
       return this.server.to(room).emit('game_paused', gameState);
     } catch (error) {
       console.log(error);
