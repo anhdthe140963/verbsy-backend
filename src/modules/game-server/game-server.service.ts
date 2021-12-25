@@ -737,13 +737,15 @@ export class GameServerService {
     if (!existGameState) {
       return await this.gameStateRepository.insert(gameState);
     } else {
-      gameState.screenState = isPause
-        ? ScreenState.Paused
-        : gameState.screenState;
-      return await this.gameStateRepository.update(
-        existGameState.id,
-        gameState,
-      );
+      // if (isPause) {
+      //   gameState.screenState = ScreenState.Paused;
+      // }
+      return await this.gameStateRepository.update(existGameState.id, {
+        screenState: isPause ? ScreenState.Paused : gameState.screenState,
+        currentQuestionId: gameState.currentQuestionId ?? null,
+        gameId: gameState.gameId,
+        timeLeft: gameState.timeLeft ?? null,
+      });
     }
   }
 
