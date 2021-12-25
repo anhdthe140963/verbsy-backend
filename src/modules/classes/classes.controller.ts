@@ -93,25 +93,22 @@ export class ClassesController {
     };
   }
 
-  @Post('import')
+  @Post('import/:schoolYearId')
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: fileExcelFilter,
     }),
   )
   async importClassList(
+    @Param('schoolYearId') schoolYearId: number,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const excelToJson = require('convert-excel-to-json');
-    const excel = excelToJson(
-      Object.assign(
-        {
-          source: file.buffer,
-        },
-        excelClassesFormat,
-      ),
-    );
+    const excel = excelToJson({
+      source: file.buffer,
+      ...excelClassesFormat,
+    });
 
     //typescript implementation is retarded
     // const tsFile = new File([file.buffer], file.filename);
@@ -128,7 +125,7 @@ export class ClassesController {
       const schoolyear = rawData[0].name.replace('Năm học: ', '');
       //desirable data is from index 2 onward
       for (let i = 2; i < rawData.length; i++) {
-        classes.push(Object.assign(rawData[i], { schoolYear: schoolyear }));
+        classes.push({ ...rawData[i], schoolYear: schoolyear });
       }
     } catch (error) {
       throw new BadRequestException('Invalid Excel File Format');
@@ -140,7 +137,7 @@ export class ClassesController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Classes added succesfully',
-      data: await this.classesService.addClasses(classes),
+      data: await this.classesService.importClasses(classes, schoolYearId),
     };
   }
 

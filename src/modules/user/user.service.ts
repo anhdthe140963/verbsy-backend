@@ -224,6 +224,8 @@ export class UserService {
         qualification: createTeacherDto.qualification,
         teacherCode: createTeacherDto.teacherCode,
         subject: createTeacherDto.teachingSubject,
+        ethnic: createTeacherDto.ethnic,
+        status: createTeacherDto.status,
       });
       return createTeacherDto;
     } catch (error) {
@@ -289,6 +291,13 @@ export class UserService {
             Role.Teacher,
             { dob: teacher.dob, gender: teacher.gender, phone: teacher.phone },
           );
+          const status = await this.teacherStatusRepository.findOne({
+            where: { name: teacher.status },
+          });
+
+          const ethnic = await this.ethnicRepository.findOne({
+            where: { name: teacher.ethnic },
+          });
 
           const qualification = await this.qualificationRepository.findOne({
             where: { name: teacher.qualification },
@@ -308,6 +317,8 @@ export class UserService {
             contractType: contractType ? contractType.id : null,
             qualification: qualification ? qualification.id : null,
             subject: subject ? subject.id : null,
+            ethnic: ethnic ? ethnic.id : null,
+            status: status ? status.id : null,
           });
 
           addedTeachers.push(teacher);

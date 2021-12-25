@@ -22,4 +22,14 @@ export class UpdateTeacherInfoDto extends PartialType(TeacherInfo) {
   @IsNotEmpty()
   @IsOptional()
   subject: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  status: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  ethnic: number;
 }

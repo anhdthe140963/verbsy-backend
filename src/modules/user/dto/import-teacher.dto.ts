@@ -3,6 +3,8 @@ export class ImportTeacherDto {
   fullName: string;
   dob: string;
   gender: boolean;
+  status: string;
+  ethnic: string;
   phone: string;
   contractType: string;
   qualification: string;

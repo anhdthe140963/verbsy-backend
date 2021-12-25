@@ -18,4 +18,10 @@ export class TeacherInfo extends BaseEntity {
 
   @Column({ name: 'subject_id', nullable: true })
   subject: number;
+
+  @Column({ name: 'status_id', nullable: true })
+  status: number;
+
+  @Column({ name: 'ethnic_id', nullable: true })
+  ethnic: number;
 }

@@ -157,38 +157,35 @@ export class ClassesService {
     }
   }
 
-  async addClasses(classes: addClassDto[]) {
+  async importClasses(classes: addClassDto[], schoolYearId: number) {
     const duplicatedClasses: addClassDto[] = [];
     const addedClasses: addClassDto[] = [];
     for (const cl of classes) {
-      // const duplicatedClass = await this.classesRepository.findOne({
-      //   where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
-      // });
-      const duplicatedClass = await this.classesRepository
-        .createQueryBuilder('c')
-        .innerJoin(Grade, 'g', 'c.grade_id = g.id')
-        .innerJoin(SchoolYear, 's', 'c.school_year_id = s.id')
-        .where('g.name = :gName', { gName: cl.grade })
-        .andWhere('s.name = :sName', { sName: cl.schoolYear })
-        .andWhere('c.name = :name', { name: cl.name })
-        .getOne();
+      let grade = await this.gradeRepository.findOne({
+        where: { name: cl.grade },
+      });
+      const schoolYear = await this.schoolYearRepository.findOne(schoolYearId);
+      const duplicatedClass = await this.classesRepository.findOne({
+        where: {
+          name: cl.name,
+          gradeId: grade ? grade.id : -1,
+          schoolYearId: schoolYear ? schoolYear.id : -1,
+        },
+      });
+
       if (duplicatedClass) {
         duplicatedClasses.push(cl);
       } else {
         try {
-          let grade = await this.gradeRepository.findOne({ name: cl.grade });
           if (!grade) {
             await this.gradeRepository.insert({ name: cl.grade });
             grade = await this.gradeRepository.findOne({ name: cl.grade });
           }
-          let schoolYear = await this.schoolYearRepository.findOne({
-            name: cl.schoolYear,
-          });
+          const schoolYear = await this.schoolYearRepository.findOne(
+            schoolYearId,
+          );
           if (!schoolYear) {
-            await this.schoolYearRepository.insert({ name: cl.schoolYear });
-            schoolYear = await this.schoolYearRepository.findOne({
-              name: cl.schoolYear,
-            });
+            throw new BadRequestException('School year not exist');
           }
           // await this.classesRepository.insert(cl);
           await this.classesRepository.insert({
@@ -199,7 +196,6 @@ export class ClassesService {
           addedClasses.push(cl);
         } catch (error) {
           console.log(error);
-
           throw new InternalServerErrorException('Error during insertion');
         }
       }

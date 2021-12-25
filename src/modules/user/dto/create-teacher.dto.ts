@@ -39,4 +39,14 @@ export class CreateTeacherDto {
   @IsNotEmpty()
   @IsOptional()
   teachingSubject: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  status: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  ethnic: number;
 }
