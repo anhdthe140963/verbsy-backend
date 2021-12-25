@@ -784,6 +784,7 @@ export class GameServerService {
       case ScreenState.Lobby:
         break;
       case ScreenState.Question:
+      case ScreenState.Paused:
         recoveredGameStateData = {
           question: nextQuestion,
           timeLeft: gameState.timeLeft,
