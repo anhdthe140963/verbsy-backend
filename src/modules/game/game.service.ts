@@ -177,7 +177,7 @@ export class GameService {
             .name,
           hostName: (await this.userRepository.findOne(game.hostId)).fullName,
           className: (await this.classRepository.findOne(game.classId)).name,
-          lessonName: lesson.name,
+          lessonName: lesson ? lesson.name : null,
           joined: `${playerJoin}/${studentNumber}`,
         });
       }
