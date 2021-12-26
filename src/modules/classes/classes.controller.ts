@@ -93,14 +93,14 @@ export class ClassesController {
     };
   }
 
-  @Post('import/:schoolYearId')
+  @Post('import')
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: fileExcelFilter,
     }),
   )
   async importClassList(
-    @Param('schoolYearId') schoolYearId: number,
+    @Query('schoolYearId') schoolYearId: number,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -122,10 +122,10 @@ export class ClassesController {
     try {
       const rawData: { name: string; grade: string }[] = excel['Sheet1'];
       //get schoolyear from index 0
-      const schoolyear = rawData[0].name.replace('Năm học: ', '');
+
       //desirable data is from index 2 onward
-      for (let i = 2; i < rawData.length; i++) {
-        classes.push({ ...rawData[i], schoolYear: schoolyear });
+      for (const cl of rawData) {
+        classes.push(cl);
       }
     } catch (error) {
       throw new BadRequestException('Invalid Excel File Format');

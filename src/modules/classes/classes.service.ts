@@ -164,7 +164,13 @@ export class ClassesService {
       let grade = await this.gradeRepository.findOne({
         where: { name: cl.grade },
       });
-      const schoolYear = await this.schoolYearRepository.findOne(schoolYearId);
+      console.log('schoolYear from query: ', schoolYearId);
+
+      const schoolYear = schoolYearId
+        ? await this.schoolYearRepository.findOne(schoolYearId)
+        : await this.schoolYearRepository.findOne({
+            where: { isActive: true },
+          });
       const duplicatedClass = await this.classesRepository.findOne({
         where: {
           name: cl.name,
@@ -181,13 +187,13 @@ export class ClassesService {
             await this.gradeRepository.insert({ name: cl.grade });
             grade = await this.gradeRepository.findOne({ name: cl.grade });
           }
-          const schoolYear = await this.schoolYearRepository.findOne(
-            schoolYearId,
-          );
+
           if (!schoolYear) {
             throw new BadRequestException('School year not exist');
           }
           // await this.classesRepository.insert(cl);
+          console.log('schoolYear boutta insert: ', schoolYear);
+
           await this.classesRepository.insert({
             name: cl.name,
             gradeId: grade.id,

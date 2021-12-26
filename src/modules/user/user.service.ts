@@ -66,7 +66,6 @@ export class UserService {
     getUserDto.phone = user.phone;
     getUserDto.id = user.id;
     getUserDto.role = user.role;
-    getUserDto.avatar = user.avatar;
     return getUserDto;
   }
 

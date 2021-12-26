@@ -1,17 +1,15 @@
-import { Curriculum } from 'src/modules/curriculum/entities/curriculum.entity';
+import { Grade } from 'src/modules/grade/entities/grade.entity';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { convertCsvToJson } from './convert/convert-csv-to-json';
 
-export class insertCurriculum1637998574809 implements MigrationInterface {
+export class insertGrade1640506175488 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const curriculumJson = await convertCsvToJson(
-      'src/migration/csv/curriculum.csv',
-    );
+    const grades = await convertCsvToJson('src/migration/csv/grade.csv');
     await queryRunner.manager
       .createQueryBuilder()
       .insert()
-      .into(Curriculum)
-      .values(curriculumJson)
+      .into(Grade)
+      .values(grades)
       .execute();
   }
 

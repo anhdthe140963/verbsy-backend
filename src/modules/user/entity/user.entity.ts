@@ -24,14 +24,11 @@ export class User extends BaseEntity {
   @Column({ name: 'gender', type: 'boolean', default: true })
   gender: boolean;
 
-  @Column({ name: 'role', type: 'tinyint', default: Role.Teacher })
-  role: number;
+  @Column({ name: 'role', default: Role.Teacher })
+  role: Role;
 
   @Column({ name: 'dob', type: 'date', nullable: true })
   dob: string;
-
-  @Column({ type: 'text', nullable: true })
-  avatar: string;
 
   @Column({ name: 'last_login', nullable: true })
   lastLogin: Date;

@@ -766,10 +766,13 @@ export class CurriculumService {
     //School Year
     queryBuilder = filter.schoolYearId
       ? queryBuilder
-          .innerJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
+          .leftJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
           .andWhere('s.id =:schoolYearId', {
             schoolYearId: filter.schoolYearId,
           })
+      : queryBuilder;
+    queryBuilder = filter.includeSample
+      ? queryBuilder.orWhere('cl.school_year_id IS null')
       : queryBuilder;
 
     //Grade
