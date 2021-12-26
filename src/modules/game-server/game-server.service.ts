@@ -465,7 +465,7 @@ export class GameServerService {
       { id: gameId },
       {
         status: playersCount == 0 ? GameStatus.Voided : GameStatus.Ended,
-        endedAt: new Date().toLocaleString(),
+        endedAt: new Date().toISOString(),
       },
     );
   }
@@ -748,6 +748,16 @@ export class GameServerService {
     }
   }
 
+  async getPlayerTotalScore(playerId: number) {
+    const score = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .select('SUM(pd.score)', 'totalScore')
+      .where('pd.player_id = :playerId', { playerId })
+      .groupBy('pd.player_id')
+      .getRawOne();
+    return score['totalScore'];
+  }
+
   async recoverGameState(gameId: number, userId: number) {
     const game = await this.gameRepository.findOne(gameId);
     const isHost = game.hostId == userId;
@@ -766,10 +776,13 @@ export class GameServerService {
     );
 
     let playerData: PlayerData = null;
+    let currentScore: number = null;
     if (!isHost) {
       const player = await this.playerRepository.findOne({
         where: { gameId, studentId: userId },
       });
+
+      currentScore = await this.getPlayerTotalScore(player.id);
 
       playerData = await this.playerDataRepository.findOne({
         where: {
@@ -823,6 +836,7 @@ export class GameServerService {
     if (!isHost) {
       recoveredGameStateData = {
         playerData,
+        currentScore,
         recoveredGameStateData,
       };
     }
