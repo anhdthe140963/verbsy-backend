@@ -10,8 +10,6 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { UpdateResult } from 'typeorm';
-import { Grade } from '../grade/entities/grade.entity';
 import { GradeRepository } from '../grade/repository/grade.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
@@ -96,11 +94,9 @@ export class ClassesService {
     }
   }
 
-  async updateClass(
-    classId: number,
-    updateClassDto: UpdateClassDto,
-  ): Promise<UpdateResult> {
+  async updateClass(classId: number, updateClassDto: UpdateClassDto) {
     try {
+      const { gradeId, name } = updateClassDto;
       //check class
       const data = await this.classesRepository.findOne({ id: classId });
       if (!data) {
@@ -114,15 +110,11 @@ export class ClassesService {
         if (!grade) {
           throw new NotFoundException('Grade not exist');
         }
+        data.gradeId = gradeId;
       }
-      //check school year
-      if (updateClassDto.schoolYearId) {
-        const schoolYear = await this.schoolYearRepository.findOne(
-          updateClassDto.schoolYearId,
-        );
-        if (!schoolYear) {
-          throw new NotFoundException('School year not exist');
-        }
+      //check name
+      if (updateClassDto.name) {
+        data.name = name;
       }
       const teacherIds = updateClassDto.teacherIds;
       delete updateClassDto.teacherIds;
@@ -151,7 +143,7 @@ export class ClassesService {
           }
         }
       }
-      return await this.classesRepository.update(classId, updateClassDto);
+      return await data.save();
     } catch (error) {
       throw error;
     }
