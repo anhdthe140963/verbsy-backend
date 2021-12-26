@@ -1,4 +1,4 @@
-name;isActive
-2018-2019;false
-2019-2020;false
-2020-2021;true
+name;is_active
+2018-2019;0
+2019-2020;0
+2020-2021;1
