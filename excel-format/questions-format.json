@@ -5,12 +5,12 @@
   "sheets": ["Questions"],
   "columnToKey": {
     "B": "question",
-    "D": "duration",
-    "E": "level",
-    "F": "answer1",
-    "G": "answer2",
-    "H": "answer3",
-    "I": "answer4",
-    "J": "correctAnswer"
+    "C": "duration",
+    "D": "level",
+    "E": "answer1",
+    "F": "answer2",
+    "G": "answer3",
+    "H": "answer4",
+    "I": "correctAnswer"
   }
 }
