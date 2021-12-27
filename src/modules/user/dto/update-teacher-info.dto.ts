@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TeacherInfo } from '../entity/teacher-info.entity';
 
 export class UpdateTeacherInfoDto extends PartialType(TeacherInfo) {
@@ -8,28 +8,28 @@ export class UpdateTeacherInfoDto extends PartialType(TeacherInfo) {
   @IsOptional()
   teacherCode: string;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  position: string;
+  contractType: number;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  title: string;
+  qualification: number;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  contractType: string;
+  subject: number;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  qualification: string;
+  status: number;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  teachingSubject: string;
+  ethnic: number;
 }

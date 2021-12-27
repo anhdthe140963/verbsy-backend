@@ -3,9 +3,9 @@ export class ImportTeacherDto {
   fullName: string;
   dob: string;
   gender: boolean;
+  status: string;
+  ethnic: string;
   phone: string;
-  position: string;
-  title: string;
   contractType: string;
   qualification: string;
   teachingSubject: string;

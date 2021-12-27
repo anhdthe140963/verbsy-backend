@@ -82,12 +82,12 @@ export class QuestionService {
     if (duration) {
       questionById.duration = duration;
     }
-    if (level) {
+    if (level == 0 || level == 1 || level == 2) {
       questionById.level = level;
     }
     const data = await questionById.save();
     //check if answers need update
-    if (answers.length != 0 || answers) {
+    if (answers && answers.length != 0) {
       await Promise.all(
         answers.map(async (answer) => {
           //

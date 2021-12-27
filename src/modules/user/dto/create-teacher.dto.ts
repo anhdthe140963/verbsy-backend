@@ -1,4 +1,10 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateTeacherDto {
   @IsString()
@@ -21,24 +27,26 @@ export class CreateTeacherDto {
   @IsNotEmpty()
   phone: string;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
-  position: string;
+  contractType: number;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
-  title: string;
+  qualification: number;
 
-  @IsString()
-  @IsNotEmpty()
-  contractType: string;
-
-  @IsString()
-  @IsNotEmpty()
-  qualification: string;
-
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  teachingSubject: string;
+  teachingSubject: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  status: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @IsOptional()
+  ethnic: number;
 }

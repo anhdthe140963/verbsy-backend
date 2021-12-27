@@ -1,3 +1,4 @@
+import { GameStatus } from 'src/constant/game-status.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
 import {
   BaseEntity,
@@ -21,17 +22,11 @@ export class Game extends BaseEntity {
   @Column({ name: 'class_id' })
   classId: number;
 
-  @Column({ name: 'game_type', type: 'tinyint', default: 0 })
-  gameType: number;
-
   @Column({ name: 'host_id' })
   hostId: number;
 
-  @Column({ name: 'is_game_live', type: 'boolean', default: true })
-  isGameLive: boolean;
-
-  @Column({ name: 'config_id', nullable: true })
-  configId: number;
+  @Column({ name: 'status', default: GameStatus.Hosted })
+  status: GameStatus;
 
   @Column({
     name: 'questions_config',

@@ -1,14 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { paginateRaw } from 'nestjs-typeorm-paginate';
+import { GameStatus } from 'src/constant/game-status.enum';
 import { QuestionLevel } from 'src/constant/question-level.enum';
 import { QuestionType } from 'src/constant/question-type.enum';
-import { In, Like, Not } from 'typeorm';
+import { In, Like } from 'typeorm';
+import { BlacklistRepository } from '../blacklist/repository/blacklist.repository';
 import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { Lesson } from '../curriculum/entities/lesson.entity';
 import { CurriculumRepository } from '../curriculum/repository/curriculum.repository';
-import { GameServerService } from '../game-server/game-server.service';
 import { GameRepository } from '../game/repositoty/game.repository';
+import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
 import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { PlayerDataRepository } from '../player-data/repository/player-data.repository';
@@ -17,10 +18,10 @@ import { PlayerRepository } from '../player/repository/player.repository';
 import { QuestionRecordRepository } from '../question-record/repository/question-record.repository';
 import { QuestionTypeConfig } from '../question-type-config/entities/question-type-config.entity';
 import { QuestionTypeConfigRepository } from '../question-type-config/repository/question-type-config.repository';
-import { Answer } from '../question/entity/answer.entity';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
 import { UserRepository } from '../user/repository/user.repository';
@@ -41,11 +42,37 @@ export class GameStatisticsService {
     private readonly classesRepository: ClassesRepository,
     private readonly curriculumRepository: CurriculumRepository,
     private readonly lessonRepository: LessonRepository,
+    private readonly blacklistRepository: BlacklistRepository,
   ) {}
+
+  convertTime(timeInMs: number): string {
+    const time = timeInMs / 1000;
+
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time - minutes * 60);
+
+    return hours != 0
+      ? hours + ' hours ' + minutes + ' minutes ' + seconds + ' seconds'
+      : minutes != 0
+      ? minutes + ' minutes ' + seconds + ' seconds'
+      : seconds + ' seconds';
+  }
+
+  async getPlayersIdsOfGame(gamesIds: number[]) {
+    const players = await this.playerRepository.find({
+      where: { gameId: In(gamesIds) },
+    });
+    const playersIds = [];
+    for (const p of players) {
+      playersIds.push(p.id);
+    }
+    return playersIds;
+  }
 
   async getLatestGame(hostId: number) {
     return await this.gameRepository.findOne({
-      where: { hostId: hostId },
+      where: { hostId: hostId, status: GameStatus.Ended },
       order: { endedAt: 'DESC' },
     });
   }
@@ -64,7 +91,7 @@ export class GameStatisticsService {
       .addSelect('g.questions_config', 'questionsConfig')
       .addSelect('g.created_at', 'createdAt')
       .where('g.lecture_id =:lectureId', { lectureId })
-      .andWhere('g.is_game_live = false')
+      .andWhere('g.status =:gameStatus', { gameStatus: GameStatus.Ended })
       .orderBy('g.created_at', 'DESC')
       .getRawMany();
 
@@ -238,11 +265,8 @@ export class GameStatisticsService {
       throw new BadRequestException('Question not in game');
     }
 
-    const players = await this.playerRepository.find({ where: { gameId } });
-    const playersIds = [];
-    for (const player of players) {
-      playersIds.push(player.id);
-    }
+    // const players = await this.playerRepository.find({ where: { gameId } });
+    const playersIds = await this.getPlayersIdsOfGame([gameId]);
     let answerStats = [];
     switch (questionTypeConfig.questionType) {
       case QuestionType.MultipleChoice:
@@ -335,7 +359,7 @@ export class GameStatisticsService {
       playerId: number;
       username: string;
       fullName: string;
-      score: number;
+      score: string;
     }[]
   > {
     const records = await this.playerDataRepository
@@ -402,9 +426,11 @@ export class GameStatisticsService {
 
     const playerData = await this.playerDataRepository
       .createQueryBuilder('pd')
+      .innerJoin(Question, 'q', 'pd.question_id = q.id')
       .leftJoin(QuestionTypeConfig, 'qtc', 'pd.question_id = qtc.question_id')
       .select('qtc.question_id', 'id')
       .addSelect('pd.question', 'question')
+      .addSelect('q.level', 'difficulty')
       .addSelect('qtc.question_type', 'questionType')
       .addSelect('pd.answer', 'answer')
       .addSelect('pd.is_correct', 'isCorrect')
@@ -446,6 +472,7 @@ export class GameStatisticsService {
       .innerJoin(QuestionTypeConfig, 'qtc', 'q.id = qtc.question_id')
       .select('q.id', 'id')
       .addSelect('q.question', 'question')
+      .addSelect('q.level', 'difficulty')
       .addSelect('qtc.question_type', 'questionType')
       .where('qtc.game_id =:gameId', { gameId })
       .andWhere('qtc.question_id =:questionId', { questionId })
@@ -576,5 +603,220 @@ export class GameStatisticsService {
     };
   }
 
-  async getNeedHelpPlayers(gameId: number) {}
+  async getNeedHelpPlayers(gameId: number) {
+    return gameId;
+  }
+
+  async getClassAttendance(teacherId: number, classId: number) {
+    const attendance = await this.gameRepository
+      .createQueryBuilder('g')
+      .innerJoin(Player, 'p', 'g.id = p.game_id')
+      .leftJoin(Lesson, 'l', 'g.lesson_id = l.id')
+      .innerJoin(Lecture, 'lec', 'lec.id = g.lecture_id')
+      .select('g.id', 'gameId')
+      .addSelect('g.lesson_id', 'lessonId')
+      .addSelect('lec.id', 'lectureId')
+      .addSelect('lec.name', 'lectureName')
+      .addSelect('l.curriculum_id', 'curriculumId')
+      .addSelect('l.id', 'lessonId')
+      .addSelect('l.name', 'lessonName')
+      .addSelect('g.created_at', 'createdAt')
+      .addSelect('COUNT(p.id)', 'playersJoined')
+      // .where('g.host_id =:teacherId', { teacherId })
+      .andWhere('g.class_id =:classId', { classId })
+      .andWhere('g.status =:gameStatus', { gameStatus: GameStatus.Ended })
+      .groupBy('gameId')
+      .orderBy('createdAt')
+      .getRawMany();
+
+    return attendance;
+  }
+
+  async getClassScoreStats(teacherId: number, classId: number) {
+    const games = await this.gameRepository.find({
+      where: { classId: classId, hostId: teacherId, status: GameStatus.Ended },
+    });
+
+    const scores = [];
+    for (const g of games) {
+      const lesson = await this.lessonRepository.findOne(g.lessonId);
+      const lecture = await this.lectureRepository.findOne(g.lectureId);
+      const leaderboard = await this.getLeaderboard(g.id);
+      let totalScore = 0;
+      for (const l of leaderboard) {
+        totalScore += Number.parseInt(l.score);
+      }
+      scores.push({
+        gameId: g.id,
+        curriculumId: lesson.curriculumId,
+        lectureId: g.lectureId,
+        lectureName: lecture.name,
+        lessonId: lesson.id,
+        lessonName: lesson.name,
+        createdAt: g.createdAt,
+        highestScore: Number.parseInt(
+          leaderboard[0] ? leaderboard[0].score : '0',
+        ),
+        averageScore: Math.floor(totalScore / leaderboard.length),
+        lowestScore: Number.parseInt(
+          leaderboard[leaderboard.length - 1]
+            ? leaderboard[leaderboard.length - 1].score
+            : '0',
+        ),
+      });
+    }
+
+    return scores;
+  }
+
+  async getGameAverageScore(
+    gameId: number,
+  ): Promise<{ gameId: number; averageScore: number; maxScore: number }> {
+    const game = await this.gameRepository.findOne(gameId);
+    const gameConfig = game.questionsConfig;
+
+    const totalQuestion = await this.questionRecordRepository.count({
+      where: { gameId },
+    });
+
+    const maxPossibleScore =
+      totalQuestion * 100 * (1 + gameConfig.timeFactorWeight);
+
+    const playersIds = await this.getPlayersIdsOfGame([game.id]);
+    const totalScore = await this.playerDataRepository
+      .createQueryBuilder('pd')
+      .select('SUM(pd.score)', 'totalScore')
+      .where('pd.player_id IN(:playersIds)', {
+        playersIds: playersIds.toString(),
+      })
+      .getRawOne();
+
+    return {
+      gameId: game.id,
+      averageScore: Number.parseInt(totalScore.totalScore) / playersIds.length,
+      maxScore: maxPossibleScore,
+    };
+  }
+
+  async getClassGeneralInfo(teacherId: number, classId: number) {
+    const cl = await this.classesRepository
+      .createQueryBuilder('c')
+      .innerJoin(SchoolYear, 's', 'c.school_year_id = s.id')
+      .select('c.id', 'classId')
+      .addSelect('c.name', 'className')
+      .addSelect('s.name', 'schoolYear')
+      .where('c.id =:classId', { classId })
+      .getRawOne();
+
+    const classStudents = await this.userClassRepository.count({
+      where: { classId, teacherId: null },
+    });
+
+    const attendance = await this.gameRepository
+      .createQueryBuilder('g')
+      .innerJoin(Player, 'p', 'g.id = p.game_id')
+      .leftJoin(Lesson, 'l', 'g.lesson_id = l.id')
+      .innerJoin(Lecture, 'lec', 'lec.id = g.lecture_id')
+      .select('g.id', 'gameId')
+      .addSelect('g.lesson_id', 'lessonId')
+      .addSelect('lec.id', 'lectureId')
+      .addSelect('lec.name', 'lectureName')
+      .addSelect('l.name', 'lessonName')
+      .addSelect('g.created_at', 'createdAt')
+      .addSelect('COUNT(p.id)', 'playersJoined')
+      // .where('g.host_id =:teacherId', { teacherId })
+      .andWhere('g.class_id =:classId', { classId })
+      .andWhere('g.status =:gameStatus', { gameStatus: GameStatus.Ended })
+      .groupBy('gameId')
+      .orderBy('createdAt')
+      .getRawMany();
+
+    let totalAttendance = 0;
+    const leaderboards = [];
+    for (const a of attendance) {
+      const att: {
+        gameId: number;
+        lessonName: string;
+        createdAt: Date;
+        playersJoined: string;
+      } = a;
+      totalAttendance += Number.parseInt(att.playersJoined);
+
+      leaderboards.push(await this.getLeaderboard(att.gameId));
+    }
+
+    const games = await this.gameRepository.find({
+      where: { classId, hostId: teacherId, status: GameStatus.Ended },
+    });
+
+    const gamesIds = [];
+    for (const g of games) {
+      gamesIds.push(g.id);
+    }
+
+    let totalScore = 0;
+    let averageScore = 0;
+    let totalGameTime = 0;
+    for (const g of games) {
+      const avg = await this.getGameAverageScore(g.id);
+      averageScore += avg.averageScore;
+      totalScore += avg.maxScore;
+      const createdAt = g.createdAt ? g.createdAt.getTime() : 0;
+      totalGameTime += g.endedAt.getTime() - createdAt;
+    }
+
+    const averageGameTime = this.convertTime(
+      Math.floor(totalGameTime / games.length),
+    );
+
+    return {
+      ...cl,
+      totalStudents: classStudents,
+      averageStudentsAttended: Math.floor(totalAttendance / attendance.length),
+      totalScore: totalScore,
+      averageScore: Math.floor(averageScore),
+      totalGames: games.length,
+      averageGameTime: averageGameTime,
+    };
+  }
+
+  async getGameAttendance(gameId: number) {
+    const leaderboard = await this.getLeaderboard(gameId);
+
+    const players = await this.playerRepository.find({ where: { gameId } });
+    const usersIds = [];
+    for (const p of players) {
+      usersIds.push(p.studentId);
+    }
+
+    const blacklist = await this.blacklistRepository.find({
+      where: { gameId },
+    });
+    const blacklistIds = [];
+    for (const b of blacklist) {
+      blacklistIds.push(b.userId);
+    }
+
+    const absentStudents = await this.userClassRepository
+      .createQueryBuilder('uc')
+      .innerJoin(User, 'u', 'uc.student_id = u.id')
+      .select('u.id', 'id')
+      .addSelect('u.full_name', 'fullName')
+      .where('u.id NOT IN(:usersIds)', { usersIds: usersIds.toString() })
+      .getRawMany();
+
+    const absent = [];
+    for (const a of absentStudents) {
+      absent.push(
+        blacklistIds.indexOf(a.id) != -1
+          ? { id: a.id, fullName: a.fullName, blacklist: true }
+          : { id: a.id, fullName: a.fullName, blacklist: false },
+      );
+    }
+
+    return {
+      present: leaderboard,
+      absent,
+    };
+  }
 }

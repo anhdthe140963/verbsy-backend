@@ -3,10 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import {
+  IPaginationOptions,
+  paginate,
+  paginateRaw,
+  PaginationTypeEnum,
+} from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
 import { Brackets } from 'typeorm';
+import { Classes } from '../classes/entity/classes.entity';
 import { ClassesRepository } from '../classes/repository/classes.repository';
+import { Grade } from '../grade/entities/grade.entity';
 import { GradeRepository } from '../grade/repository/grade.repository';
 import { Lecture } from '../lecture/entity/lecture.entity';
 import { LectureRepository } from '../lecture/repository/lecture.repository';
@@ -17,6 +24,7 @@ import { LessonRepository } from '../lesson/repository/lesson.repository';
 import { Question } from '../question/entity/question.entity';
 import { AnswerRepository } from '../question/repository/answer.repository';
 import { QuestionRepository } from '../question/repository/question.repository';
+import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
 import { UserClassRepository } from '../user-class/repository/question.repository';
 import { User } from '../user/entity/user.entity';
@@ -29,6 +37,7 @@ import { UpdateLesssonDto } from './dto/update-lesson.dto';
 import { Curriculum } from './entities/curriculum.entity';
 import { Lesson } from './entities/lesson.entity';
 import { CurriculumRepository } from './repository/curriculum.repository';
+import { PaginationEnum } from '../../constant/pagination.enum';
 
 @Injectable()
 export class CurriculumService {
@@ -86,7 +95,9 @@ export class CurriculumService {
         const curri = await curriculum.save();
         const lessons = await this.lessonRepository
           .createQueryBuilder()
-          .where('curriculum_id = :id', { id: curriculumById.id })
+          .where('curriculum_id = :curriculumId', {
+            curriculumId: curriculumById.id,
+          })
           .getMany();
         //clone curriculum's lessons
         for (const lesson of lessons) {
@@ -98,7 +109,7 @@ export class CurriculumService {
           //clone lesson's material
           const lessonMaterials = await this.lessonMaterialRepository
             .createQueryBuilder()
-            .where('lesson_id = :id', { id: lesson.id })
+            .where('lesson_id = :lessonId', { lessonId: lesson.id })
             .getMany();
           for (const lessonMaterial of lessonMaterials) {
             await this.lessonMaterialRepository.insert({
@@ -111,14 +122,13 @@ export class CurriculumService {
           //clone lectures
           const lessonLectures = await this.lessonLectureRepository
             .createQueryBuilder()
-            .where('lesson_id = :id', { id: lesson.id })
+            .where('lesson_id = :lessonId', { lessonId: lesson.id })
             .getMany();
           for (const ll of lessonLectures) {
             //clone lecture
             const lecture = await this.lectureRepository.findOne(ll.lectureId);
             const newLec = new Lecture();
             newLec.name = lecture.name;
-            newLec.content = lecture.content;
             newLec.ownerId = user.id;
             await newLec.save();
             await this.lessonLectureRepository.insert({
@@ -191,7 +201,9 @@ export class CurriculumService {
       const curri = await curriculum.save();
       const lessons = await this.lessonRepository
         .createQueryBuilder()
-        .where('curriculum_id = :id', { id: curriculumById.id })
+        .where('curriculum_id = :curriculumId', {
+          curriculumId: curriculumById.id,
+        })
         .getMany();
       //clone curriculum's lessons
       for (const lesson of lessons) {
@@ -203,7 +215,7 @@ export class CurriculumService {
         //clone lesson's material
         const lessonMaterials = await this.lessonMaterialRepository
           .createQueryBuilder()
-          .where('lesson_id = :id', { id: lesson.id })
+          .where('lesson_id = :lessonId', { lessonId: lesson.id })
           .getMany();
         for (const lessonMaterial of lessonMaterials) {
           await this.lessonMaterialRepository.insert({
@@ -216,14 +228,13 @@ export class CurriculumService {
         //clone lectures
         const lessonLectures = await this.lessonLectureRepository
           .createQueryBuilder()
-          .where('lesson_id = :id', { id: lesson.id })
+          .where('lesson_id = :lessonId', { lessonId: lesson.id })
           .getMany();
         for (const ll of lessonLectures) {
           //clone lecture
           const lecture = await this.lectureRepository.findOne(ll.lectureId);
           const newLec = new Lecture();
           newLec.name = lecture.name;
-          newLec.content = lecture.content;
           newLec.ownerId = user.id;
           await newLec.save();
           await this.lessonLectureRepository.insert({
@@ -241,6 +252,7 @@ export class CurriculumService {
             newQ.question = question.question;
             newQ.imageUrl = question.imageUrl;
             newQ.duration = question.duration;
+            newQ.level = question.level;
             await newQ.save();
 
             //clone answer
@@ -368,7 +380,7 @@ export class CurriculumService {
           classesBySyId.push(c.id);
         }
         if (classesBySyId.length == 0) {
-          throw new NotFoundException('None class in selected school year');
+          return [];
         }
       }
       if (user.role == Role.Administrator) {
@@ -703,26 +715,137 @@ export class CurriculumService {
   }
 
   async getFilteredCurriculum(
-    teacherId: number,
-    schoolYearId: number,
-    gradeId: number,
-    classId: number,
+    user: User,
+    filter: {
+      includeSample: boolean;
+      limit: number;
+      page: number;
+      schoolYearId: number;
+      gradeId: number;
+      classId: number;
+      curriculumName: string;
+      dateFrom: Date;
+      dateTo: Date;
+    },
   ) {
-    const schoolYear = schoolYearId
-      ? await this.schoolYearRepository.findOne(schoolYearId)
-      : await this.schoolYearRepository.findOne({ where: { isActive: true } });
+    let queryBuilder = await this.curriculumRepository
+      .createQueryBuilder('c')
+      .leftJoin(Grade, 'g', 'c.grade_id = g.id')
+      .leftJoin(User, 'u', 'c.created_by = u.id')
+      .leftJoin(Classes, 'cl', 'cl.id = c.class_id')
+      .select('c.id', 'id')
+      .addSelect('c.name', 'name')
+      .addSelect('g.id', 'gradeId')
+      .addSelect('g.name', 'gradeName')
+      .addSelect('cl.id', 'classId')
+      .addSelect('cl.name', 'className')
+      .addSelect('u.id', 'userId')
+      .addSelect('u.full_name', 'creatorName')
+      .addSelect('c.created_at', 'createdAt');
 
-    const grade = gradeId
-      ? await this.gradeRepository.find({ where: { id: gradeId } })
-      : await this.gradeRepository.find();
+    //Include Sample
+    const creatorsIds = [];
+    if (filter.includeSample) {
+      const admins = await this.userRepository.find({
+        where: { role: Role.Administrator },
+      });
 
-    const classes = classId
-      ? await this.classesRepository.find({ where: { id: classId } })
-      : await this.classesRepository.find();
+      for (const a of admins) {
+        creatorsIds.push(a.id);
+      }
+    }
 
-    const curriculums = await this.curriculumRepository.createQueryBuilder(
-      'cu',
-    );
+    //Role
+    // queryBuilder =
+    //   user.role == Role.Teacher
+    //     ? queryBuilder.andWhere('c.created_by IN(:creatorsIds)', {
+    //         creatorsIds: creatorsIds.toString(),
+    //       })
+    //     : queryBuilder;
+
+    //School Year
+    queryBuilder = filter.schoolYearId
+      ? queryBuilder
+          .leftJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
+          .andWhere('s.id =:schoolYearId', {
+            schoolYearId: filter.schoolYearId,
+          })
+      : queryBuilder;
+    queryBuilder = filter.includeSample
+      ? queryBuilder.orWhere('cl.school_year_id IS null')
+      : queryBuilder;
+
+    //Grade
+    queryBuilder = filter.gradeId
+      ? queryBuilder.andWhere('c.grade_id =:gradeId', {
+          gradeId: filter.gradeId,
+        })
+      : queryBuilder;
+
+    const classesIds = [];
+    if (user.role != Role.Administrator) {
+      const classes =
+        user.role == Role.Teacher
+          ? await this.userClassRepository.find({
+              where: { teacherId: user.id },
+            })
+          : await this.userClassRepository.find({
+              where: { studentId: user.id },
+            });
+
+      for (const cl of classes) {
+        classesIds.push(cl.classId);
+      }
+
+      console.log('classes: ', classesIds);
+
+      queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
+        classesIds: classesIds,
+      });
+
+      queryBuilder = filter.includeSample
+        ? queryBuilder.orWhere('cl.id IS null')
+        : queryBuilder;
+    }
+
+    //Classes
+    queryBuilder = filter.classId
+      ? queryBuilder.andWhere('c.class_id =:classId', {
+          classId: filter.classId,
+        })
+      : queryBuilder;
+
+    //Name
+    queryBuilder = filter.curriculumName
+      ? queryBuilder.andWhere('c.name LIKE :curriculumName', {
+          curriculumName: '%' + filter.curriculumName + '%',
+        })
+      : queryBuilder;
+
+    //Date From
+    console.log(filter.dateFrom);
+
+    queryBuilder = filter.dateFrom
+      ? queryBuilder.andWhere('c.created_at > :dateFrom', {
+          dateFrom: filter.dateFrom,
+        })
+      : queryBuilder;
+
+    //Date To
+    console.log(filter.dateTo);
+
+    queryBuilder = filter.dateTo
+      ? queryBuilder.andWhere('c.created_at < :dateTo', {
+          dateTo: filter.dateTo,
+        })
+      : queryBuilder;
+
+    const paginatedRaw = paginateRaw(queryBuilder, {
+      limit: filter.limit ?? PaginationEnum.DefaultLimit,
+      page: filter.page ?? PaginationEnum.DefaultPage,
+    });
+
+    return paginatedRaw;
   }
 
   async getCurriculumIdByLectureId(lectureId: number): Promise<number> {

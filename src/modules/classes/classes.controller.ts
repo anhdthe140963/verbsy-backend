@@ -29,11 +29,11 @@ import { ClassFilter } from './dto/class.filter';
 import { CreateClassDto } from './dto/create-classes.dto';
 import { StudentFilter } from './dto/student.filter';
 import { UpdateClassDto } from './dto/update-classes.dto';
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('class')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('all-classes')
   async getAllClasses(
@@ -54,7 +54,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher)
   @Get('teacher-classes')
   async getTeacherClasses(@GetUser() user: User) {
@@ -66,7 +65,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Post()
   async createClass(
@@ -81,7 +79,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':classId')
   async updateClass(
@@ -96,7 +93,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Post('import')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -104,18 +100,15 @@ export class ClassesController {
     }),
   )
   async importClassList(
+    @Query('schoolYearId') schoolYearId: number,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const excelToJson = require('convert-excel-to-json');
-    const excel = excelToJson(
-      Object.assign(
-        {
-          source: file.buffer,
-        },
-        excelClassesFormat,
-      ),
-    );
+    const excel = excelToJson({
+      source: file.buffer,
+      ...excelClassesFormat,
+    });
 
     //typescript implementation is retarded
     // const tsFile = new File([file.buffer], file.filename);
@@ -129,10 +122,10 @@ export class ClassesController {
     try {
       const rawData: { name: string; grade: string }[] = excel['Sheet1'];
       //get schoolyear from index 0
-      const schoolyear = rawData[0].name.replace('Năm học: ', '');
+
       //desirable data is from index 2 onward
-      for (let i = 2; i < rawData.length; i++) {
-        classes.push(Object.assign(rawData[i], { schoolYear: schoolyear }));
+      for (const cl of rawData) {
+        classes.push(cl);
       }
     } catch (error) {
       throw new BadRequestException('Invalid Excel File Format');
@@ -144,11 +137,10 @@ export class ClassesController {
       statusCode: HttpStatus.OK,
       error: null,
       message: 'Classes added succesfully',
-      data: await this.classesService.addClasses(classes),
+      data: await this.classesService.importClasses(classes, schoolYearId),
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('list')
   async getClassList(
@@ -177,7 +169,7 @@ export class ClassesController {
       ),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get('list/:teacherId')
   async getClassListByTeacherId(
@@ -191,7 +183,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('teaching-classes/:gradeId')
   async getUserClassList(
@@ -205,7 +196,7 @@ export class ClassesController {
       data: await this.classesService.getTeachingClasses(gradeId, user.id),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get('students/:classId')
   async getStudentsByClassId(
@@ -232,7 +223,7 @@ export class ClassesController {
       data: data,
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get(':classId')
   async getClassDetail(
@@ -247,7 +238,6 @@ export class ClassesController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Delete(':classId')
   async delete(

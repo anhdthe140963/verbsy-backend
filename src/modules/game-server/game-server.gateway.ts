@@ -13,7 +13,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { QuestionType } from 'src/constant/question-type.enum';
 import { Role } from 'src/constant/role.enum';
-import { ScreenState } from 'src/constant/screen-state.enum';
 import { User } from '../user/entity/user.entity';
 import { GameStateDto } from './dto/game-state.dto';
 import { HostGameDto } from './dto/host-game.dto';
@@ -502,7 +501,6 @@ export class GameServerGateway
         data.gameId,
         await this.getInGameStudentList(data.gameId),
       );
-      await this.gameServerService.prepareQuestionType(data.gameId);
 
       const gameInfo = await this.gameServerService.getGameInfo(data.gameId);
       return this.server.to(room).emit('game_started', gameInfo);
@@ -708,7 +706,7 @@ export class GameServerGateway
   ) {
     try {
       const room = this.getRoom(data.gameId);
-      const gameState = await this.gameServerService.saveGameState(data);
+      const gameState = await this.gameServerService.saveGameState(data, true);
       return this.server.to(room).emit('game_paused', gameState);
     } catch (error) {
       console.log(error);

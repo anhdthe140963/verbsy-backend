@@ -33,11 +33,12 @@ import { UpdateTeacherInfoDto } from './dto/update-teacher-info.dto';
 import { updateUserDto } from './dto/update-user.dto';
 import { UserPaginationFilter } from './dto/user-pagination.filter';
 import { UserService } from './user.service';
+
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Post('student/generate-account')
   async generateStudentAccount(
@@ -51,7 +52,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('profile')
   async getUserProfiles(
@@ -77,7 +77,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   @Post('teacher')
   async createTeacher(
@@ -90,7 +89,7 @@ export class UserController {
       data: await this.userService.createTeacher(createTeacherDto),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Administrator)
   @Post('student/:classId')
   async createStudent(
@@ -104,13 +103,12 @@ export class UserController {
       data: await this.userService.createStudent(classId, createStudentDto),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Get(':userId')
   async getUserDetail(@Param('userId') userId: number): Promise<GetUserDto> {
     return await this.userService.getUserDetail(userId);
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Post('import/teachers')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -122,14 +120,10 @@ export class UserController {
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const excelToJson = require('convert-excel-to-json');
-    const excel = excelToJson(
-      Object.assign(
-        {
-          source: file.buffer,
-        },
-        excelTeachersFormat,
-      ),
-    );
+    const excel = excelToJson({
+      source: file.buffer,
+      ...excelTeachersFormat,
+    });
 
     const teachers: ImportTeacherDto[] = [];
 
@@ -140,9 +134,10 @@ export class UserController {
         fullName: string;
         dob: string;
         gender: string;
+        status: string;
+        ethnic: string;
         phone: string;
         position: string;
-        title: string;
         contractType: string;
         qualification: string;
         teachingSubject: string;
@@ -155,9 +150,9 @@ export class UserController {
             fullName: row.fullName,
             dob: row.dob,
             gender: row.gender == 'Nam' ? true : false,
+            status: row.status,
+            ethnic: row.ethnic,
             phone: row.phone,
-            position: row.position,
-            title: row.title,
             contractType: row.contractType,
             qualification: row.qualification,
             teachingSubject: row.teachingSubject,
@@ -178,7 +173,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Post('import/students/:classId')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -191,14 +185,10 @@ export class UserController {
   ): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const excelToJson = require('convert-excel-to-json');
-    const excel = excelToJson(
-      Object.assign(
-        {
-          source: file.buffer,
-        },
-        excelStudentsFormat,
-      ),
-    );
+    const excel = excelToJson({
+      source: file.buffer,
+      ...excelStudentsFormat,
+    });
 
     const students: ImportStudentDto[] = [];
 
@@ -238,7 +228,7 @@ export class UserController {
       data: await this.userService.importStudents(students, classId),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Teacher, Role.Administrator)
   @Get('student/student-info/:userId')
   async getStudentInfoByUserId(
@@ -252,7 +242,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put('student/student-info/:userId')
   async updateStudentInfoByUserId(
@@ -269,7 +258,7 @@ export class UserController {
       message: 'Update student info successfully',
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Administrator)
   @Put('teacher/teacher-info/:userId')
   async updateTeacherInfoByUserId(
@@ -287,7 +276,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Put(':userId')
   async updateUserInfo(
@@ -298,7 +286,6 @@ export class UserController {
     return { statusCode: HttpStatus.OK, error: null, message: 'User updated' };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Get('profile/:userId')
   async getUserProfile(
@@ -312,7 +299,6 @@ export class UserController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Teacher, Role.Administrator)
   @Delete('profile/:userId')
   async deleteUserProfile(

@@ -29,7 +29,6 @@ export class AuthService {
     getUserDto.phone = user.phone;
     getUserDto.id = user.id;
     getUserDto.role = Role.Administrator;
-    getUserDto.avatar = user.avatar;
     return { user: getUserDto, accessToken: accessToken };
   }
 
@@ -50,7 +49,6 @@ export class AuthService {
     getUserDto.phone = user.phone;
     getUserDto.id = user.id;
     getUserDto.role = user.role;
-    getUserDto.avatar = user.avatar;
     return {
       user: getUserDto,
       accessToken: accessToken,

@@ -8,12 +8,11 @@ import { AssignStudentsClassDto } from './dto/assign-student-class.dto';
 import { AssignTeachersClassDto } from './dto/assign-teacher-class.dto';
 import { ChangeStudentsClass } from './dto/change-student-class.dto';
 import { UserClassService } from './user-class.service';
-
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('user-class')
 export class UserClassController {
   constructor(private readonly userClassService: UserClassService) {}
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   @Post('assign-students-to-class')
   async assignStudentsToClass(
@@ -29,7 +28,6 @@ export class UserClassController {
     };
   }
 
-  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(Role.Administrator)
   @Post('assign-teachers-to-class')
   async assignTeachersToClass(
@@ -44,7 +42,7 @@ export class UserClassController {
       ),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Administrator)
   @Post('assign-classes-to-teacher')
   async assignClassToTeacher(
@@ -59,7 +57,7 @@ export class UserClassController {
       ),
     };
   }
-  @UseGuards(AuthGuard(), RolesGuard)
+
   @Roles(Role.Administrator)
   @Post('change-students-class')
   async changeStudentsClass(

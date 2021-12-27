@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Role } from 'src/constant/role.enum';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
@@ -27,8 +31,13 @@ export class GradeService {
     }
   }
 
-  async getGradesForUser(user: User): Promise<Grade[]> {
+  async getGradesForUser(user: User, schoolYearId: number): Promise<Grade[]> {
     try {
+      const schoolYear = schoolYearId
+        ? await this.schoolYearRepository.findOne(schoolYearId)
+        : await this.schoolYearRepository.findOne({
+            where: { isActive: true },
+          });
       const grades = await this.gradeRepository.find({
         order: { name: 'ASC' },
       });
@@ -36,7 +45,7 @@ export class GradeService {
         let classes = [];
         if (user.role == Role.Administrator) {
           classes = await this.classRepository.find({
-            where: { gradeId: grade.id },
+            where: { gradeId: grade.id, schoolYearId: schoolYear.id },
             order: { name: 'ASC' },
           });
         } else {
@@ -44,8 +53,10 @@ export class GradeService {
             teacherId: user.id,
           });
           for (const uc of userClasses) {
-            const cl = await this.classRepository.findOne(uc.classId);
-            if (cl.gradeId == grade.id) {
+            const cl = await this.classRepository.findOne({
+              where: { id: uc.classId, schoolYearId: schoolYear.id },
+            });
+            if (cl && cl.gradeId == grade.id) {
               classes.push(cl);
             }
           }
@@ -87,6 +98,12 @@ export class GradeService {
       const data = await this.gradeRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('Grade does not exist');
+      }
+      const classes = await this.classRepository.find({ gradeId: id });
+      if (classes.length != 0) {
+        throw new BadRequestException(
+          'Can not delete grade with existing classes',
+        );
       }
       await this.gradeRepository.delete(id);
     } catch (error) {

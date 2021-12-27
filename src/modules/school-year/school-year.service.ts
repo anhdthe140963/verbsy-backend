@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ClassesRepository } from '../classes/repository/classes.repository';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYear } from './entities/school-year.entity';
@@ -10,7 +12,10 @@ import { SchoolYearRepository } from './repository/school-year.repository';
 
 @Injectable()
 export class SchoolYearService {
-  constructor(private schoolYearRepository: SchoolYearRepository) {}
+  constructor(
+    private schoolYearRepository: SchoolYearRepository,
+    private classesRepository: ClassesRepository,
+  ) {}
   async create(createSchoolYearDto: CreateSchoolYearDto): Promise<SchoolYear> {
     try {
       const schoolYear = new SchoolYear();
@@ -58,6 +63,12 @@ export class SchoolYearService {
       const data = await this.schoolYearRepository.findOne(id);
       if (!data) {
         throw new NotFoundException('School year does not exist');
+      }
+      const classes = await this.classesRepository.find({ schoolYearId: id });
+      if (classes.length != 0) {
+        throw new BadRequestException(
+          'Can not delete school year with existing classes',
+        );
       }
       await this.schoolYearRepository.delete(id);
     } catch (error) {

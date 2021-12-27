@@ -27,12 +27,12 @@ import { LectureRepository } from './repository/lecture.repository';
 @Injectable()
 export class LectureService {
   constructor(
-    private lectureRepository: LectureRepository,
+    private readonly lectureRepository: LectureRepository,
     private readonly quesitonRepository: QuestionRepository,
-    private userRepository: UserRepository,
-    private lessonRepository: LessonRepository,
-    private curriculumRepository: CurriculumRepository,
-    private lessonLectureRepository: LessonLectureRepository,
+    private readonly userRepository: UserRepository,
+    private readonly lessonRepository: LessonRepository,
+    private readonly curriculumRepository: CurriculumRepository,
+    private readonly lessonLectureRepository: LessonLectureRepository,
   ) {}
 
   async createLecture(
@@ -45,7 +45,6 @@ export class LectureService {
         throw new BadRequestException('Owner can not be a student');
       }
       lecture.name = createLectureDto.name;
-      lecture.content = createLectureDto.content;
       lecture.ownerId = user.id;
       await lecture.save();
 

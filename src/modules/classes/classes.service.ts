@@ -10,8 +10,6 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { Role } from 'src/constant/role.enum';
-import { UpdateResult } from 'typeorm';
-import { Grade } from '../grade/entities/grade.entity';
 import { GradeRepository } from '../grade/repository/grade.repository';
 import { SchoolYear } from '../school-year/entities/school-year.entity';
 import { SchoolYearRepository } from '../school-year/repository/school-year.repository';
@@ -96,11 +94,9 @@ export class ClassesService {
     }
   }
 
-  async updateClass(
-    classId: number,
-    updateClassDto: UpdateClassDto,
-  ): Promise<UpdateResult> {
+  async updateClass(classId: number, updateClassDto: UpdateClassDto) {
     try {
+      const { gradeId, name } = updateClassDto;
       //check class
       const data = await this.classesRepository.findOne({ id: classId });
       if (!data) {
@@ -114,15 +110,11 @@ export class ClassesService {
         if (!grade) {
           throw new NotFoundException('Grade not exist');
         }
+        data.gradeId = gradeId;
       }
-      //check school year
-      if (updateClassDto.schoolYearId) {
-        const schoolYear = await this.schoolYearRepository.findOne(
-          updateClassDto.schoolYearId,
-        );
-        if (!schoolYear) {
-          throw new NotFoundException('School year not exist');
-        }
+      //check name
+      if (updateClassDto.name) {
+        data.name = name;
       }
       const teacherIds = updateClassDto.teacherIds;
       delete updateClassDto.teacherIds;
@@ -151,46 +143,49 @@ export class ClassesService {
           }
         }
       }
-      return await this.classesRepository.update(classId, updateClassDto);
+      return await data.save();
     } catch (error) {
       throw error;
     }
   }
 
-  async addClasses(classes: addClassDto[]) {
+  async importClasses(classes: addClassDto[], schoolYearId: number) {
     const duplicatedClasses: addClassDto[] = [];
     const addedClasses: addClassDto[] = [];
     for (const cl of classes) {
-      // const duplicatedClass = await this.classesRepository.findOne({
-      //   where: { name: cl.name, grade: cl.grade, schoolYear: cl.schoolYear },
-      // });
-      const duplicatedClass = await this.classesRepository
-        .createQueryBuilder('c')
-        .innerJoin(Grade, 'g', 'c.grade_id = g.id')
-        .innerJoin(SchoolYear, 's', 'c.school_year_id = s.id')
-        .where('g.name = :gName', { gName: cl.grade })
-        .andWhere('s.name = :sName', { sName: cl.schoolYear })
-        .andWhere('c.name = :name', { name: cl.name })
-        .getOne();
+      let grade = await this.gradeRepository.findOne({
+        where: { name: cl.grade },
+      });
+      console.log('schoolYear from query: ', schoolYearId);
+
+      const schoolYear = schoolYearId
+        ? await this.schoolYearRepository.findOne(schoolYearId)
+        : await this.schoolYearRepository.findOne({
+            where: { isActive: true },
+          });
+      const duplicatedClass = await this.classesRepository.findOne({
+        where: {
+          name: cl.name,
+          gradeId: grade ? grade.id : -1,
+          schoolYearId: schoolYear ? schoolYear.id : -1,
+        },
+      });
+
       if (duplicatedClass) {
         duplicatedClasses.push(cl);
       } else {
         try {
-          let grade = await this.gradeRepository.findOne({ name: cl.grade });
           if (!grade) {
             await this.gradeRepository.insert({ name: cl.grade });
             grade = await this.gradeRepository.findOne({ name: cl.grade });
           }
-          let schoolYear = await this.schoolYearRepository.findOne({
-            name: cl.schoolYear,
-          });
+
           if (!schoolYear) {
-            await this.schoolYearRepository.insert({ name: cl.schoolYear });
-            schoolYear = await this.schoolYearRepository.findOne({
-              name: cl.schoolYear,
-            });
+            throw new BadRequestException('School year not exist');
           }
           // await this.classesRepository.insert(cl);
+          console.log('schoolYear boutta insert: ', schoolYear);
+
           await this.classesRepository.insert({
             name: cl.name,
             gradeId: grade.id,
@@ -199,7 +194,6 @@ export class ClassesService {
           addedClasses.push(cl);
         } catch (error) {
           console.log(error);
-
           throw new InternalServerErrorException('Error during insertion');
         }
       }
@@ -215,6 +209,14 @@ export class ClassesService {
       const data = await this.classesRepository.findOne({ id: classId });
       if (!data) {
         throw new BadRequestException('Class does not exist');
+      }
+      const userclasses = await this.userClassRepository.find({
+        classId: classId,
+      });
+      if (userclasses.length != 0) {
+        throw new BadRequestException(
+          'Can not delete class with existing participants',
+        );
       }
       await this.userClassRepository
         .createQueryBuilder()
@@ -232,6 +234,10 @@ export class ClassesService {
     filter: ClassFilter,
     user: User,
   ) {
+    filter.schoolYearId =
+      filter.schoolYearId ??
+      (await this.schoolYearRepository.findOne({ where: { isActive: true } }))
+        .id;
     let rawPagination;
     if (user.role == Role.Administrator) {
       rawPagination = await paginate(this.classesRepository, options, {

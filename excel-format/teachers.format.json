@@ -10,9 +10,10 @@
         "C": "fullName",
         "D": "dob",
         "E": "gender",
+        "F":"status",
+        "G":"ethnic",
         "H": "phone",
         "I": "position",
-        "J": "title",
         "K": "contractType",
         "L": "qualification",
         "M": "teachingSubject"

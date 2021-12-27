@@ -3,4 +3,5 @@ export enum ScreenState {
   Question = 1,
   Statistic = 2,
   Leaderboard = 3,
+  Paused = 4,
 }
