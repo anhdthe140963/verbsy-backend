@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from 'src/constant/role.enum';
 import { GetUserDto } from '../user/dto/get-user.dto';
 import { UserRepository } from '../user/repository/user.repository';
 import { LogInDto } from './dto/log-in.dto';
@@ -27,7 +28,7 @@ export class AuthService {
     getUserDto.email = user.email;
     getUserDto.phone = user.phone;
     getUserDto.id = user.id;
-    getUserDto.role = user.role;
+    getUserDto.role = Role.Administrator;
     return { user: getUserDto, accessToken: accessToken };
   }
 
