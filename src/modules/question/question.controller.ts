@@ -152,7 +152,6 @@ export class QuestionController {
     try {
       const rawData: {
         question: string;
-        imageUrl: string;
         duration: number;
         level: string;
         answer1: string;
@@ -174,7 +173,6 @@ export class QuestionController {
         } else if (raw.level == 'Dễ') {
           question.level = QuestionLevel.Easy;
         }
-        question.imageUrl = raw.imageUrl;
         question.lectureId = lectureId;
         //question's answers
         const answers: Answer[] = [];

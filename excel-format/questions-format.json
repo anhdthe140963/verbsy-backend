@@ -5,7 +5,6 @@
   "sheets": ["Questions"],
   "columnToKey": {
     "B": "question",
-    "C": "imageUrl",
     "D": "duration",
     "E": "level",
     "F": "answer1",
