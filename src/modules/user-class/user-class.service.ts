@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { IsNull, Not } from 'typeorm';
 import { ClassesRepository } from '../classes/repository/classes.repository';
 import { UserRepository } from '../user/repository/user.repository';
 import { AssignClassToTeacherDto } from './dto/assign-class-teacher.dto';
@@ -108,27 +109,17 @@ export class UserClassService {
       if (!teacher) {
         throw new NotFoundException('Teacher not exist');
       }
-      const assignedClasses = [];
-      const alreadyAssignedClasses = [];
-      for (const id of assignClassesToTeacher.classIds) {
-        const userCLass = await this.userClassReposiory.findOne({
-          teacherId: teacherId,
+      await this.userClassReposiory
+        .createQueryBuilder()
+        .where('teacher_id = :teacherId', { teacherId: teacher.id })
+        .delete()
+        .execute();
+      for (const id of classIds) {
+        await this.userClassReposiory.insert({
           classId: id,
+          teacherId: teacher.id,
         });
-        if (userCLass) {
-          alreadyAssignedClasses.push(id);
-        } else {
-          await this.userClassReposiory.insert({
-            teacherId: teacherId,
-            classId: id,
-          });
-          assignedClasses.push(id);
-        }
       }
-      return {
-        assignedClasses: assignedClasses,
-        alreadyAssignedClasses: alreadyAssignedClasses,
-      };
     } catch (error) {
       throw error;
     }
@@ -180,6 +171,31 @@ export class UserClassService {
         await this.userClassReposiory.insert({
           studentId: id,
           classId: newClassId,
+        });
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async assignToHigherGrade(oldClassId: number, newClassId: number) {
+    try {
+      const newClass = await this.classRepository.findOne(newClassId);
+      if (!newClass) {
+        throw new NotFoundException(`Class with id ${newClassId} not exist`);
+      }
+      const oldClass = await this.classRepository.findOne(oldClassId);
+      if (!oldClass) {
+        throw new NotFoundException(`Class with id ${oldClassId} not exist`);
+      }
+      const oldUserCLasses = await this.userClassReposiory.find({
+        classId: oldClassId,
+        studentId: Not(IsNull()),
+      });
+      for (const uc of oldUserCLasses) {
+        await this.userClassReposiory.insert({
+          classId: newClassId,
+          studentId: uc.studentId,
         });
       }
     } catch (error) {

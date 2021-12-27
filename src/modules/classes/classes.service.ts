@@ -290,11 +290,13 @@ export class ClassesService {
       for (const uc of userclasses) {
         classIds.add(uc.classId);
       }
+      if (classIds.size == 0) {
+        return [];
+      }
       const classes = await this.classesRepository
         .createQueryBuilder('c')
         .where('c.id IN (:...ids)', { ids: [...classIds] })
         .getMany();
-
       await Promise.all(
         classes.map(async (cl: Classes) => {
           const teachers = await this.userClassRepository

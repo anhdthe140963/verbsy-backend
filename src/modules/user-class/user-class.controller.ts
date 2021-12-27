@@ -70,4 +70,19 @@ export class UserClassController {
       data: await this.userClassService.changeStudentClass(changeStudentClass),
     };
   }
+  @Roles(Role.Administrator)
+  @Post('assign-higher-grade')
+  async assignHigherGrade(
+    @Body() assignDto: { oldClassId: number; newClassId: number },
+  ): Promise<{ statusCode; error; message; data }> {
+    return {
+      statusCode: HttpStatus.CREATED,
+      error: null,
+      message: 'Class changed',
+      data: await this.userClassService.assignToHigherGrade(
+        assignDto.oldClassId,
+        assignDto.newClassId,
+      ),
+    };
+  }
 }
