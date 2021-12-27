@@ -743,36 +743,21 @@ export class CurriculumService {
       .addSelect('u.full_name', 'creatorName')
       .addSelect('c.created_at', 'createdAt');
 
-    //Include Sample
-    const creatorsIds = [];
-    if (filter.includeSample) {
-      const admins = await this.userRepository.find({
-        where: { role: Role.Administrator },
-      });
-
-      for (const a of admins) {
-        creatorsIds.push(a.id);
-      }
-    }
-
-    //Role
-    // queryBuilder =
-    //   user.role == Role.Teacher
-    //     ? queryBuilder.andWhere('c.created_by IN(:creatorsIds)', {
-    //         creatorsIds: creatorsIds.toString(),
-    //       })
-    //     : queryBuilder;
-
     //School Year
     queryBuilder = filter.schoolYearId
       ? queryBuilder
           .leftJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
-          .andWhere('s.id =:schoolYearId', {
-            schoolYearId: filter.schoolYearId,
-          })
-      : queryBuilder;
-    queryBuilder = filter.includeSample
-      ? queryBuilder.orWhere('cl.school_year_id IS null')
+          .where(
+            new Brackets((qb) => {
+              qb = qb.where('s.id =:schoolYearId', {
+                schoolYearId: filter.schoolYearId,
+              });
+              if (filter.includeSample) {
+                qb = qb.orWhere('cl.school_year_id IS null');
+              }
+              return qb;
+            }),
+          )
       : queryBuilder;
 
     //Grade
@@ -802,10 +787,6 @@ export class CurriculumService {
       queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
         classesIds: classesIds,
       });
-
-      queryBuilder = filter.includeSample
-        ? queryBuilder.orWhere('cl.id IS null')
-        : queryBuilder;
     }
 
     //Classes
@@ -845,113 +826,7 @@ export class CurriculumService {
       page: filter.page ?? PaginationEnum.DefaultPage,
     });
 
-    return paginatedRaw;
-  }
-
-  async getFilteredCurriculum2(
-    user: User,
-    filter: {
-      includeSample: boolean;
-      limit: number;
-      page: number;
-      schoolYearId: number;
-      gradeId: number;
-      classId: number;
-      curriculumName: string;
-      dateFrom: Date;
-      dateTo: Date;
-    },
-  ) {
-    let queryBuilder = await this.curriculumRepository
-      .createQueryBuilder('c')
-      .leftJoin(Grade, 'g', 'c.grade_id = g.id')
-      .leftJoin(User, 'u', 'c.created_by = u.id')
-      .leftJoin(Classes, 'cl', 'cl.id = c.class_id')
-      .select('c.id', 'id')
-      .addSelect('c.name', 'name')
-      .addSelect('g.id', 'gradeId')
-      .addSelect('g.name', 'gradeName')
-      .addSelect('cl.id', 'classId')
-      .addSelect('cl.name', 'className')
-      .addSelect('u.id', 'userId')
-      .addSelect('u.full_name', 'creatorName')
-      .addSelect('c.created_at', 'createdAt');
-
-    //School Year
-    queryBuilder = filter.schoolYearId
-      ? queryBuilder
-          .leftJoin(SchoolYear, 's', 'cl.school_year_id = s.id')
-          .andWhere('s.id =:schoolYearId', {
-            schoolYearId: filter.schoolYearId,
-          })
-      : queryBuilder;
-
-    //Grade
-    queryBuilder = filter.gradeId
-      ? queryBuilder.andWhere('c.grade_id =:gradeId', {
-          gradeId: filter.gradeId,
-        })
-      : queryBuilder;
-
-    const classesIds = [];
-    if (user.role != Role.Administrator) {
-      const classes =
-        user.role == Role.Teacher
-          ? await this.userClassRepository.find({
-              where: { teacherId: user.id },
-            })
-          : await this.userClassRepository.find({
-              where: { studentId: user.id },
-            });
-
-      for (const cl of classes) {
-        classesIds.push(cl.classId);
-      }
-
-      console.log('classes: ', classesIds);
-
-      queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
-        classesIds: classesIds,
-      });
-
-    }
-
-    //Classes
-    queryBuilder = filter.classId
-      ? queryBuilder.andWhere('c.class_id =:classId', {
-          classId: filter.classId,
-        })
-      : queryBuilder;
-
-    //Name
-    queryBuilder = filter.curriculumName
-      ? queryBuilder.andWhere('c.name LIKE :curriculumName', {
-          curriculumName: '%' + filter.curriculumName + '%',
-        })
-      : queryBuilder;
-
-    //Date From
-    console.log(filter.dateFrom);
-
-    queryBuilder = filter.dateFrom
-      ? queryBuilder.andWhere('c.created_at > :dateFrom', {
-          dateFrom: filter.dateFrom,
-        })
-      : queryBuilder;
-
-    //Date To
-    console.log(filter.dateTo);
-
-    queryBuilder = filter.dateTo
-      ? queryBuilder.andWhere('c.created_at < :dateTo', {
-          dateTo: filter.dateTo,
-        })
-      : queryBuilder;
-
-    const paginatedRaw = paginateRaw(queryBuilder, {
-      limit: filter.limit ?? PaginationEnum.DefaultLimit,
-      page: filter.page ?? PaginationEnum.DefaultPage,
-    });
+    console.log(queryBuilder.getSql());
 
     return paginatedRaw;
   }
