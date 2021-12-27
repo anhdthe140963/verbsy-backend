@@ -38,7 +38,7 @@ export class CreateTeacherDto {
   @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  teachingSubject: number;
+  subject: number;
 
   @IsInt()
   @IsNotEmpty()

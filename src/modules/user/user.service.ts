@@ -222,7 +222,7 @@ export class UserService {
         contractType: createTeacherDto.contractType,
         qualification: createTeacherDto.qualification,
         teacherCode: createTeacherDto.teacherCode,
-        subject: createTeacherDto.teachingSubject,
+        subject: createTeacherDto.subject,
         ethnic: createTeacherDto.ethnic,
         status: createTeacherDto.status,
       });
