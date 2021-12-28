@@ -743,6 +743,18 @@ export class CurriculumService {
       .addSelect('u.full_name', 'creatorName')
       .addSelect('c.created_at', 'createdAt');
 
+    //Include Sample
+    const creatorsIds = [];
+    if (filter.includeSample) {
+      const admins = await this.userRepository.find({
+        where: { role: Role.Administrator },
+      });
+
+      for (const a of admins) {
+        creatorsIds.push(a.id);
+      }
+    }
+
     //School Year
     queryBuilder = filter.schoolYearId
       ? queryBuilder
@@ -784,9 +796,21 @@ export class CurriculumService {
 
       console.log('classes: ', classesIds);
 
-      queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
-        classesIds: classesIds,
-      });
+      // queryBuilder = queryBuilder.andWhere('c.class_id IN(:classesIds)', {
+      //   classesIds: classesIds,
+      // });
+
+      queryBuilder = queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb = qb.where('c.class_id IN(:classesIds)', {
+            classesIds: classesIds,
+          });
+          if (filter.includeSample) {
+            qb = qb.orWhere('c.class_id IS null');
+          }
+          return qb;
+        }),
+      );
     }
 
     //Classes
