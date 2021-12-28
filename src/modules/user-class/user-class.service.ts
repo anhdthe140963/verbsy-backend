@@ -205,7 +205,7 @@ export class UserClassService {
         }
       }
       for (const sid of studentIds) {
-        const userClass = await this.userClassReposiory.find({
+        const userClass = await this.userClassReposiory.findOne({
           studentId: sid,
           classId: newClassId,
         });
