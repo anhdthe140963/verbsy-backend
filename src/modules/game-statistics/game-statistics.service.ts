@@ -759,7 +759,7 @@ export class GameStatisticsService {
     let totalGameTime = 0;
     for (const g of games) {
       const avg = await this.getGameAverageScore(g.id);
-      averageScore += avg.averageScore;
+      averageScore += Math.floor(avg.averageScore / avg.maxScore);
       totalScore += avg.maxScore;
       const createdAt = g.createdAt ? g.createdAt.getTime() : 0;
       totalGameTime += g.endedAt.getTime() - createdAt;
