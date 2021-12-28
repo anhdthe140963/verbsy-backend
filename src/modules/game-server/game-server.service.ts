@@ -759,8 +759,12 @@ export class GameServerService {
   }
 
   async recoverGameState(gameId: number, userId: number) {
+    console.log('requesting game state: ', userId);
+
     const game = await this.gameRepository.findOne(gameId);
     const isHost = game.hostId == userId;
+
+    console.log('isHost: ', isHost);
 
     const gameState = await this.gameStateRepository.findOne({
       where: { gameId },

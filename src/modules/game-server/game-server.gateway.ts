@@ -632,7 +632,7 @@ export class GameServerGateway
       socc.join(room);
       socc.data.isHost = true;
       socc.data.room = room;
-      this.server.to(room).emit('host_reconnected');
+      this.server.to(room).emit('host_reconnected', 'h');
       const gameState = await this.gameServerService.getGameState(data.gameId);
       socc.emit('receive_game_state', gameState);
     } catch (error) {
