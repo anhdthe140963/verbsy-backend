@@ -188,10 +188,10 @@ export class CurriculumService {
       if (!classById) {
         throw new NotFoundException('Class not found');
       }
-      if (classById.gradeId !== gradeId) {
-        throw new NotFoundException('Class not in selected grade');
-      }
-      curriculum.classId = classId;
+      // if (classById.gradeId !== gradeId) {
+      //   throw new NotFoundException('Class not in selected grade');
+      // }
+      // curriculum.classId = classId;
 
       const curriculumById = await this.curriculumRepository.findOne(parentId);
       if (!curriculumById) {
