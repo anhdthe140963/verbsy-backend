@@ -96,6 +96,7 @@ export class UserClassService {
   async assignClassesToTeacher(
     assignClassesToTeacher: AssignClassToTeacherDto,
   ) {
+    console.log('called');
     try {
       const { classIds, teacherId } = assignClassesToTeacher;
       for (const id of classIds) {
@@ -178,7 +179,11 @@ export class UserClassService {
     }
   }
 
-  async assignToHigherGrade(oldClassId: number, newClassId: number) {
+  async assignToHigherGrade(
+    oldClassId: number,
+    newClassId: number,
+    studentIds: number[],
+  ) {
     try {
       const newClass = await this.classRepository.findOne(newClassId);
       if (!newClass) {
@@ -188,14 +193,32 @@ export class UserClassService {
       if (!oldClass) {
         throw new NotFoundException(`Class with id ${oldClassId} not exist`);
       }
-      const oldUserCLasses = await this.userClassReposiory.find({
-        classId: oldClassId,
-        studentId: Not(IsNull()),
-      });
-      for (const uc of oldUserCLasses) {
+      for (const sid of studentIds) {
+        const userClass = await this.userClassReposiory.find({
+          studentId: sid,
+          classId: oldClassId,
+        });
+        if (!userClass) {
+          throw new NotFoundException(
+            `Student with id ${sid} is not in class with id ${oldClassId}`,
+          );
+        }
+      }
+      for (const sid of studentIds) {
+        const userClass = await this.userClassReposiory.find({
+          studentId: sid,
+          classId: newClassId,
+        });
+        if (userClass) {
+          throw new NotFoundException(
+            `Student with id ${sid} is already in class with id ${newClassId}`,
+          );
+        }
+      }
+      for (const sid of studentIds) {
         await this.userClassReposiory.insert({
           classId: newClassId,
-          studentId: uc.studentId,
+          studentId: sid,
         });
       }
     } catch (error) {
